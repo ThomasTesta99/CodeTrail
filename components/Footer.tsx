@@ -1,11 +1,19 @@
+'use client'
+import { logoutUser } from '@/lib/user-actions/authActions'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 
 const Footer = () => {
-
+    const router = useRouter();
     const user : User = {
         name: "Thomas Testa",
         email: "ttesta99@yahoo.com"
+    }
+
+    const signOut = () => {
+        logoutUser();
+        router.push('/sign-in')
     }
     
     return (
@@ -25,9 +33,9 @@ const Footer = () => {
                 </p>
             </div>
 
-            <div className="footer-image">
+            <button onClick = {signOut} className="footer-image">
                 <Image src="/assets/icons/logout.svg" fill alt="logout" className="brightness-0 invert" />
-            </div>
+            </button>
         </footer>
     )
 }

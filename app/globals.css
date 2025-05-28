@@ -50,7 +50,7 @@
   }
 
   .auth-google-btn {
-    @apply w-full flex items-center justify-center gap-2 bg-white text-black rounded-2xl py-3 font-semibold hover:bg-gray-200 transition;
+    @apply w-full flex items-center justify-center gap-2 bg-white text-black rounded-2xl py-3 font-semibold hover:bg-gray-200 transition cursor-pointer;
   }
 
   .auth-extra-links {
@@ -89,6 +89,6 @@
   }
 
   .footer-image{
-    @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center
+    @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
   }
 }

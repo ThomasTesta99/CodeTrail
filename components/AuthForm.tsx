@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -22,6 +23,11 @@ const signUpSchema = z.object({
 type SignInType = z.infer<typeof signInSchema>;
 type SignUpType = z.infer<typeof signUpSchema>;
 type AuthFormType = SignInType | SignUpType;
+
+const handleGoogleSignIn = async () => {
+  console.log("trying to work")
+  return await authClient.signIn.social({provider: 'google'});
+}
 
 const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
   const router = useRouter();
@@ -97,7 +103,7 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
         <>
           <div className="auth-divider"></div>
           <button
-            onClick={() => console.log('Google Sign In')}
+            onClick={() => handleGoogleSignIn()}
             className="auth-google-btn"
           >
             <Image src="/assets/icons/google.svg" alt="Google" width={20} height={20} />

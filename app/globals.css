@@ -1,32 +1,94 @@
 @import "tailwindcss";
 
-/* @layer base {
-  html, body {
-    @apply text-white bg-[#1E1E2F] font-sans;
+
+@layer components {
+
+  /* AUTH */
+
+  .auth-screen {
+    @apply flex min-h-screen items-center justify-center bg-[#1E1E2F] text-white p-5;
+  }
+
+  .auth-container {
+    @apply w-full max-w-md bg-[#2C325D] rounded-2xl p-8 shadow-lg;
+  }
+
+  .auth-header {
+    @apply text-3xl font-bold text-center;
+  }
+
+  .auth-title {
+    @apply text-xl text-center text-pink-100 mt-2;
+  }
+
+  .auth-form {
+    @apply flex flex-col gap-4 mt-6;
+  }
+
+  .auth-input {
+    @apply border border-gray-400 rounded-2xl px-4 py-3 bg-[#1E1E2F] text-white placeholder-gray-400 focus:outline-pink-100;
+  }
+
+  .auth-error {
+    @apply text-pink-100 text-sm;
+  }
+
+  .auth-submit-btn {
+    @apply bg-blue-500 text-white rounded-2xl py-3 font-semibold hover:bg-blue-600 transition;
+  }
+
+  .auth-footer-text {
+    @apply text-center text-sm mt-4;
+  }
+
+  .auth-link {
+    @apply text-pink-100 hover:underline;
+  }
+
+  .auth-divider {
+    @apply my-4 border-b border-gray-400;
+  }
+
+  .auth-google-btn {
+    @apply w-full flex items-center justify-center gap-2 bg-white text-black rounded-2xl py-3 font-semibold hover:bg-gray-200 transition;
+  }
+
+  .auth-extra-links {
+    @apply flex justify-center mt-4 text-sm;
+  }
+
+  /* SIDEBAR */
+  .sidebar{
+    @apply sticky left-0 top-0 flex h-screen w-[250px] sm:w-[280px] md:w-[300px] items-center flex-col justify-between border-r border-gray-200 bg-[#1E1E2F] text-white p-5
+  }
+
+  .sidebar-logo{
+    @apply text-2xl font-bold tracking-wide text-white
+  }
+
+  .sidebar-link{
+    @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg justify-center xl:justify-start transition-colors duration-200 hover:bg-gray-700
+  }
+
+  .sidebar-label{
+    @apply text-sm font-medium text-white max-xl:hidden
+  }
+
+
+  /* FOOTER */
+  .footer{
+    @apply flex cursor-pointer items-center justify-between gap-4 py-6 w-full
+  }
+
+  .footer-name{
+    @apply flex size-10 items-center justify-center rounded-full bg-gray-600 max-xl:hidden
+  }
+
+  .footer-email{
+    @apply flex flex-1 flex-col justify-center max-xl:hidden
+  }
+
+  .footer-image{
+    @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center
   }
 }
-
-
-@layer utilities {
-/* Root Layout 
-  .root-layout {
-    @apply flex h-16 items-center justify-between p-5  sm:p-8 md:hidden;
-  }
-
-/* Sidebar 
-  .sidebar {
-    @apply sticky left-0 top-0 flex h-screen w-80 flex-col justify-between border-r border-gray-800 bg-[#1E1E2F] text-white p-6;
-  }
-
-  .sidebar-logo {
-    @apply 2xl:text-26 font-ibm-plex-serif text-[26px] font-bold text-black-1 max-xl:hidden;
-  }
-
-  .sidebar-link {
-    @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg justify-center xl:justify-start;
-  }
-
-  .sidebar-label {
-    @apply text-16 font-semibold text-black-2 max-xl:hidden;
-  }
-} */

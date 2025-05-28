@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* @layer base {
+  html, body {
+    @apply text-white bg-[#1E1E2F] font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+
+@layer utilities {
+/* Root Layout 
+  .root-layout {
+    @apply flex h-16 items-center justify-between p-5  sm:p-8 md:hidden;
+  }
+
+/* Sidebar 
+  .sidebar {
+    @apply sticky left-0 top-0 flex h-screen w-80 flex-col justify-between border-r border-gray-800 bg-[#1E1E2F] text-white p-6;
+  }
+
+  .sidebar-logo {
+    @apply 2xl:text-26 font-ibm-plex-serif text-[26px] font-bold text-black-1 max-xl:hidden;
+  }
+
+  .sidebar-link {
+    @apply flex gap-3 items-center py-1 md:p-3 2xl:p-4 rounded-lg justify-center xl:justify-start;
+  }
+
+  .sidebar-label {
+    @apply text-16 font-semibold text-black-2 max-xl:hidden;
+  }
+} */

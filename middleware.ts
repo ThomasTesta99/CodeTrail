@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest, response: NextResponse){
     const session = await auth.api.getSession({
         headers: await headers(),
     })
-    console.log(session)
+    console.log(session, " from middle ware?")
     if(!session){
         return NextResponse.redirect(new URL('/sign-in', request.url))
     }

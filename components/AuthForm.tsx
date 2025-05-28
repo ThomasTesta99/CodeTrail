@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
+import { signUpUser } from '@/lib/user-actions/authActions';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -43,8 +44,15 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
   const onSubmit = async (data: AuthFormType) => {
     setIsLoading(true);
     try {
-      console.log(type === 'sign-in' ? 'Signing In:' : 'Signing Up:', data);
-      router.push('/'); // Redirect
+      if(type === 'sign-up'){
+        const userInfo = data as CreateUserInfo;
+        const result = await signUpUser(userInfo);
+
+        if(result?.data?.token){
+          window.location.href = '/';
+        }
+
+      }
     } catch (err) {
       console.error(err);
     } finally {

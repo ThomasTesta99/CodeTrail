@@ -4,12 +4,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 
-const Footer = () => {
+const Footer = ({user}: UserProps) => {
     const router = useRouter();
-    const user : User = {
-        name: "Thomas Testa",
-        email: "ttesta99@yahoo.com"
-    }
 
     const signOut = () => {
         logoutUser();
@@ -18,26 +14,48 @@ const Footer = () => {
     
     return (
         <footer className="footer">
-            <div className={'footer-name'}>
-                <p className="text-xl font-bold text-white">
-                    {user?.name[0]} {/* Show first letter of name */}
-                </p>
+            <div className={`footer-name ${user?.image ? 'bg-transparent' : 'bg-gray-600'}`}>
+                {user?.image ? (
+                    <Image src={user.image} alt="User image" width={100} height={100} className="rounded-full" />
+                ) : (
+                    <p className="text-xl font-bold text-white">
+                        {user?.name?.[0] ?? ' '}
+                    </p>
+                )}
             </div>
 
-            <div className={ 'footer-email'}>
+            <div className="footer-email">
                 <h1 className="text-sm truncate font-semibold text-white">
-                    {user?.name}
+                    {user?.name ?? ' '}
                 </h1>
                 <p className="text-sm truncate font-normal text-gray-300">
-                    {user?.email}
+                     {user?.email ?? ' '}
                 </p>
             </div>
 
-            <button onClick = {signOut} className="footer-image">
+            <button onClick={signOut} className="footer-image">
                 <Image src="/assets/icons/logout.svg" fill alt="logout" className="brightness-0 invert" />
             </button>
         </footer>
+
     )
 }
 
 export default Footer
+
+
+/*
+useEffect(() => {
+        async function getUser(){
+            const session = await getUserSession();
+            if(!session){
+                throw new Error("Unauthenticated");
+            }
+            const user : User = session.user;
+            console.log('USER FOOTER: ', user);
+            setUser(user);
+        }
+
+        getUser();
+    }, [user])
+*/

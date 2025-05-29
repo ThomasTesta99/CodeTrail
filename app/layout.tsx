@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LeetcodeTracker",
+  title: "CodeTrail",
   description: "Track your leetcode progress today",
 };
 

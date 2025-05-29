@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { signUpUser } from '@/lib/user-actions/authActions';
+import { signInUser, signUpUser } from '@/lib/user-actions/authActions';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -16,7 +16,7 @@ const signInSchema = z.object({
 });
 
 const signUpSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(4, 'Name is required'),
   email: z.string().email('Invalid email').min(1, 'Email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -26,7 +26,6 @@ type SignUpType = z.infer<typeof signUpSchema>;
 type AuthFormType = SignInType | SignUpType;
 
 const handleGoogleSignIn = async () => {
-  console.log("trying to work")
   return await authClient.signIn.social({provider: 'google'});
 }
 
@@ -34,7 +33,7 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<SignInType | SignUpType>({
+  const form = useForm<AuthFormType>({
     resolver: zodResolver(type === 'sign-in' ? signInSchema : signUpSchema),
     defaultValues: type === 'sign-in'
       ? { email: '', password: '' }
@@ -44,14 +43,14 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
   const onSubmit = async (data: AuthFormType) => {
     setIsLoading(true);
     try {
-      if(type === 'sign-up'){
-        const userInfo = data as CreateUserInfo;
-        const result = await signUpUser(userInfo);
+      const userInfo = data as CreateUserInfo | SignInUserInfo;
+      const result = type === 'sign-up'
+        ? await signUpUser(userInfo as CreateUserInfo)
+        : await signInUser(userInfo as SignInUserInfo);
 
-        if(result?.data?.token){
-          window.location.href = '/';
-        }
-
+      if (result && 'token' in result && result.token) {
+        router.refresh(); // optional
+        router.push('/');
       }
     } catch (err) {
       console.error(err);
@@ -62,18 +61,26 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
 
   return (
     <div className="auth-container">
-      <h1 className="auth-header">LeetCode Tracker</h1>
+      <h1 className="auth-header">&lt;CodeTrail /&gt;</h1>
       <h2 className="auth-title">{type === 'sign-in' ? 'Sign In' : 'Sign Up'}</h2>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="auth-form">
         {type === 'sign-up' && (
-          <input
-            type="text"
-            placeholder="Name"
-            {...form.register('name')}
-            className="auth-input"
-          />
+          <>
+            <input
+              type="text"
+              placeholder="Name"
+              {...form.register('name')}
+              className="auth-input"
+            />
+            {'name' in form.formState.errors && (
+              <p className="auth-error">{form.formState.errors.name?.message}</p>
+            )}
+          
+          </>
+        
         )}
+  
 
         <input
           type="email"

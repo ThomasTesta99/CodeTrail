@@ -7,13 +7,13 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 import Footer from './Footer'
 
-const Sidebar = () => {
+const Sidebar = ({user}: UserProps) => {
     const pathName = usePathname();
     return (
         <section className="sidebar">
             <nav className="flex flex-col gap-4">
                 <Link href='/' className='mb-12 cursor-pointer flex items-center gap-2'>
-                    <h1 className="sidebar-logo">LeetCode Tracker</h1>
+                    <h1 className="sidebar-logo">&lt;CodeTrail /&gt;</h1>
                 </Link>
 
                 {sidebarLinks.map((item) => {
@@ -41,7 +41,7 @@ const Sidebar = () => {
                     );
                 })}
             </nav>
-            <Footer />
+            <Footer user = {user}/>
         </section>
     );
 };

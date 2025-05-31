@@ -63,7 +63,7 @@
   }
 
   .sidebar-logo{
-    @apply text-2xl font-bold tracking-wide text-white text-center w-full pt-6
+    @apply text-2xl font-extrabold font-bold tracking-wide text-white text-center w-full pt-6
   }
 
   .sidebar-link{
@@ -90,5 +90,102 @@
 
   .footer-image{
     @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
+  }
+
+
+  /* Layout Container */
+  .dashboard-container {
+    @apply flex flex-col min-h-screen bg-white text-gray-900;
+  }
+
+  .dashboard-main {
+    @apply flex-grow p-6 space-y-16;
+  }
+
+  /* Header Section */
+  .dashboard-header {
+    @apply text-center max-w-3xl mx-auto space-y-6 pt-16;
+  }
+
+  .dashboard-header-title {
+    @apply text-5xl font-extrabold text-[#2C325D] tracking-tight leading-snug;
+  }
+
+  .dashboard-header-desc {
+    @apply text-lg text-gray-700 leading-relaxed;
+  }
+
+  /* Section for Recent Questions */
+  .dashboard-section {
+    @apply max-w-6xl mx-auto space-y-6 mt-12;
+  }
+
+  .dashboard-section-title {
+    @apply text-3xl font-semibold text-[#2C325D] text-center;
+  }
+
+  .dashboard-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  /* Footer */
+  .dashboard-footer {
+    @apply border-t border-gray-200 py-6 text-center text-sm text-gray-600;
+  }
+
+  .dashboard-footer-links {
+    @apply flex justify-center gap-4 mt-2;
+  }
+
+  .dashboard-footer-link {
+    @apply hover:text-[#2C325D] transition-colors;
+  }
+
+  /* Question Card */
+  .question-card {
+    @apply bg-[#2C325D] rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02];
+  }
+
+  .question-card-link {
+    @apply block cursor-pointer;
+  }
+
+  .question-card-header {
+    @apply flex justify-between items-start mb-4;
+  }
+
+  .question-card-title {
+    @apply text-lg font-bold leading-tight;
+  }
+
+  .question-card-badge {
+    @apply px-3 py-1 rounded-full text-xs font-bold;
+  }
+
+  .question-card-desc {
+    @apply text-sm text-gray-300 line-clamp-3 mb-4;
+  }
+
+  .question-card-footer {
+    @apply flex justify-between items-center text-xs text-gray-300;
+  }
+
+  .question-card-external {
+    @apply mt-2 inline-block text-pink-100 text-sm font-medium hover:underline hover:text-pink-200;
+  }
+
+
+  
+
+  .question-detail {
+    @apply space-y-8;
+  }
+
+  .question-detail-top {
+    @apply space-y-4 bg-[#2C325D] text-white p-6 rounded-3xl;
+  }
+
+  .question-detail-attempt {
+    @apply mt-8 bg-gray-100 p-4 rounded-xl space-y-4;
   }
 }

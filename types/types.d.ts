@@ -28,3 +28,22 @@ declare interface SignInUserInfo{
 declare interface UserProps{
   user?: User;
 }
+
+declare interface Attempt {
+  id: string;
+  solutionCode: string;
+  neededHelp: boolean;
+  durationMinutes: number;
+  notes: string;
+  createdAt: string;
+}
+
+declare interface Question {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  link?: string;
+  attempts: Attempt[];
+  createdAt: string;
+}

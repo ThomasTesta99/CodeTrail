@@ -14,11 +14,12 @@ export const logoutUser = async () => {
 
 export const signUpUser = async({name, email, password}: CreateUserInfo) => {
     try {
-        const result = await authClient.signUp.email({
+        const result =  await authClient.signUp.email({
             email, 
             name, 
             password
         })
+        
         console.log(result)
         return result;
     } catch (error) {

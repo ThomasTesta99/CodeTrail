@@ -1,9 +1,14 @@
+import AddQuestionForm from '@/components/AddQuestionForm'
+import { getUserSession } from '@/lib/user-actions/authActions';
 import React from 'react'
 
-const page = () => {
+const page = async () => {
+  const session = await getUserSession();
+  const user = session?.user;
+
   return (
     <div>
-      ADD QUESTION
+      <AddQuestionForm user = {user}/>
     </div>
   )
 }

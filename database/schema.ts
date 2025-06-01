@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean,  } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text('id').primaryKey(),
@@ -46,6 +46,27 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date())
 });
 
+export const question = pgTable('questions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => user.id).notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  difficulty: text('difficulty').notNull(),
+  link: text('link'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const attempts = pgTable('attemtps', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  questionId: uuid('question_id').references(() => question.id).notNull(),
+  solutionCode: text('solution_code').notNull(),
+  language: text('language').notNull(),
+  neededHelp: boolean('needed_help').notNull(),
+  durationMinutes: integer('duration_minutes').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const schema = {
-    user, account, session, verification
+    user, account, session, verification, question, attempts
 }

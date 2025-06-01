@@ -32,10 +32,11 @@ declare interface UserProps{
 declare interface Attempt {
   id: string;
   solutionCode: string;
+  language: string;
   neededHelp: boolean;
   durationMinutes: number;
   notes: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
 declare interface Question {
@@ -44,6 +45,17 @@ declare interface Question {
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   link?: string;
-  attempts: Attempt[];
-  createdAt: string;
+  attempts?: Attempt[];
+  createdAt: Date;
+}
+
+declare interface DatabaseQuestion {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  link?: string;
+  attempts?: Attempt[];
+  createdAt: Date;
 }

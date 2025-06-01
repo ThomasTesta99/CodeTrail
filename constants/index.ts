@@ -33,6 +33,7 @@ export const fakeQuestions = [
     }
   }
 }`,
+        language: 'javascript',
         neededHelp: false,
         durationMinutes: 20,
         notes: 'Brute force approach. O(n^2)',
@@ -48,6 +49,7 @@ export const fakeQuestions = [
     map.set(nums[i], i);
   }
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: false,
         durationMinutes: 10,
         notes: 'Optimized with hashmap to O(n)',
@@ -76,6 +78,8 @@ export const fakeQuestions = [
   }
   return prev;
 }`,
+        
+        language: 'javascript',  // <-- New!
         neededHelp: true,
         durationMinutes: 30,
         notes: 'Struggled with pointer reversal.',
@@ -90,6 +94,7 @@ export const fakeQuestions = [
   head.next = null;
   return p;
 }`,
+        language: 'javascript',
         neededHelp: false,
         durationMinutes: 25,
         notes: 'Recursive approach implemented.',
@@ -116,6 +121,7 @@ export const fakeQuestions = [
   }
   return stack.length === 0;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: false,
         durationMinutes: 15,
         notes: 'Stack-based approach works well.',
@@ -146,6 +152,7 @@ export const fakeQuestions = [
   }
   return max;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: false,
         durationMinutes: 40,
         notes: 'Sliding window technique for O(n) solution.',
@@ -176,6 +183,7 @@ export const fakeQuestions = [
   }
   return res;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: true,
         durationMinutes: 60,
         notes: 'Sorting and merging with edge cases.',
@@ -201,6 +209,7 @@ export const fakeQuestions = [
   }
   return max;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: false,
         durationMinutes: 35,
         notes: 'Two-pointer approach for optimal O(n) time.',
@@ -226,6 +235,7 @@ export const fakeQuestions = [
   }
   return maxSum;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: false,
         durationMinutes: 25,
         notes: 'Kadane\'s Algorithm for O(n) time.',
@@ -258,6 +268,7 @@ export const fakeQuestions = [
   }
   return -1;
 }`,
+        language: 'javascript',  // <-- New!
         neededHelp: true,
         durationMinutes: 50,
         notes: 'Binary search with rotation pivot handling.',

@@ -2,8 +2,9 @@ import QuestionDetails from '@/components/QuestionDetails';
 import { fakeQuestions } from '@/constants'
 import React from 'react'
 
-const page = ({params} : {params: {id: string}}) => {
-    const question = fakeQuestions.find((question) => question.id === params.id);
+const page = async ({params} : {params: {id: string}}) => {
+    const p = await params;
+    const question = fakeQuestions.find((question) => question.id === p.id);
 
     if(!question){
         return <div className="p-6 text-red">Question not found.</div>

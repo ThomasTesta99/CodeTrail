@@ -64,12 +64,6 @@ const QuestionDetails = ({ question }: { question: Question }) => {
           <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
         )}
       </section>
-
-      <section className="add-attempt-section">
-        <button className="add-attempt-button">
-          Add New Attempt
-        </button>
-      </section>
     </div>
   );
 };

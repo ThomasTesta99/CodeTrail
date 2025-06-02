@@ -26,7 +26,14 @@ const page = async ({params} : {params: {id: string}}) => {
     
   return (
     <div className='p-6 max-w-4xl'>
+
         <QuestionDetails question={question}/>
+
+        <section className="add-attempt-section">
+          <button className="add-attempt-button">
+            Add New Attempt
+          </button>
+      </section>
     </div>
 
   )

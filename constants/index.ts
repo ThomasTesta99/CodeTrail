@@ -12,7 +12,7 @@ export const sidebarLinks = [
     {
         imgUrl: '/assets/icons/plusIcon.svg',
         route: '/add-question',
-        label: 'Add Questions'
+        label: 'Add Question'
     },
 ]
 

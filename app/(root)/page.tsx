@@ -1,6 +1,6 @@
 import QuestionCard from '@/components/QuestionCard'
 import { getUserSession } from '@/lib/user-actions/authActions'
-import { getAllUserQuestions } from '@/lib/user-actions/questions'
+import { getMostRecentUserQuestions } from '@/lib/user-actions/questions'
 import Link from 'next/link'
 import React from 'react'
 
@@ -19,7 +19,7 @@ const page = async () => {
       </div>
     );
   }
-  const result = await getAllUserQuestions({userId : user.id});
+  const result = await getMostRecentUserQuestions({userId : user.id, limit: 6});
   if(!result.success){
     return (
       <div className="dashboard-container">
@@ -31,17 +31,18 @@ const page = async () => {
     );
   }
 
-  const userQuestions = result.questions.map((q) => ({
-      ...q,
-      difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
-      link: q.link ?? undefined,
-      createdAt: q.createdAt ?? new Date(),
-      attempts: q.attempts.map(a => ({
-        ...a,
-        notes: a.notes ?? '', 
-        createdAt: a.createdAt ?? new Date(), 
+  const userQuestions = result.questions.map(q => ({
+    ...q,
+    difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
+    link: q.link ?? undefined,
+    createdAt: q.createdAt ?? new Date(),
+    attempts: q.attempts.map(a => ({
+      ...a,
+      notes: a.notes ?? '',
+      createdAt: a.createdAt ?? new Date(),
     })),
   }));
+
 
   return (
     <div className="dashboard-container">

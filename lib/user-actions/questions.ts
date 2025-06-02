@@ -2,7 +2,7 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import { eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -63,6 +63,37 @@ export const getAllUserQuestions = async ({userId}: {userId: string}) => {
     }
 }
 
+export const getMostRecentUserQuestions = async ({userId, limit}: {userId: string, limit: number}) => {
+  try {
+    const questionResult = await db.select()
+      .from(question)
+      .where(eq(question.userId, userId))
+      .orderBy(desc(question.createdAt)) // or desc(updatedAt) if you add it
+      .limit(limit);
+
+    const questionIds = questionResult.map(q => q.id);
+    const allAttempts = await db.select().from(attempts).where(inArray(attempts.questionId, questionIds));
+    const attemptsByQuestionId = allAttempts.reduce((acc, attempt) => {
+      if(!acc[attempt.questionId]){
+          acc[attempt.questionId] = [];
+      }
+      acc[attempt.questionId].push(attempt);
+      return acc;
+    }, {} as Record<string, typeof allAttempts>);
+
+    const combined = questionResult.map(q => ({
+      ...q,
+      attempts: attemptsByQuestionId[q.id] || []
+    }));
+
+    return { success: true, message: 'Got recent questions', questions: combined };
+  } catch (error) {
+    console.error(error, 'Error getting recent questions');
+    return { success: false, message: 'Failed to get recent questions', questions: [] };
+  }
+};
+
+
 export const getQuestionById = async ({questionId} : {questionId:string}) => {
     try {
         const q = await db.select().from(question).where(eq(question.id, questionId)).limit(1);
@@ -95,6 +126,23 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             success: false,
             message: error instanceof Error ? error.message : String(error),
             question: null
+        }
+    }
+}
+
+export const deleteQuestion = async ({questionId}: {questionId: string}) => {
+    try {
+        await db.delete(attempts).where(eq(attempts.questionId, questionId));
+        await db.delete(question).where(eq(question.id, questionId));
+        return {
+            success: true,
+            message: "Question has been deleted"
+        }
+    } catch (error) {
+        console.log(error)
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : String(error) 
         }
     }
 }

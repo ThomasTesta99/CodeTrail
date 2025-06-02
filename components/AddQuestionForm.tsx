@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/lib/user-actions/questions'
+import toast from 'react-hot-toast'
 
 const questionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -42,8 +43,10 @@ const AddQuestionForm = ({ user }: UserProps) => {
     const result = await addQuestion({ q: newQuestion })
 
     if (result.success) {
+      toast.success(result.message);
       router.push('/');
     } else {
+      toast.error(result.message)
       throw new Error(result.error)
     }
   }

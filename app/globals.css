@@ -233,14 +233,17 @@
     @apply px-6 py-2 rounded-lg bg-gradient-to-r from-[#2C325D] to-[#3B3F6A] text-white font-semibold disabled:opacity-50 hover:scale-105 transition;
   }
 
-  .add-attempt-section {
-    @apply flex justify-center;
+  .button-section {
+    @apply flex justify-center gap-6;
   }
 
   .add-attempt-button {
-    @apply px-8 py-3 rounded-full bg-gradient-to-r from-[#2C325D] to-[#3B3F6A] text-white font-semibold hover:scale-105 transition;
+    @apply px-8 py-3 rounded-full bg-gradient-to-r from-[#2C325D] to-[#3B3F6A] text-white font-semibold hover:scale-105 transition cursor-pointer;
   }
 
+  .delete-question-button {
+    @apply px-8 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold hover:scale-105 transition cursor-pointer;
+  }
 
 
   .input-field {
@@ -256,7 +259,7 @@
   }
 
   .submit-button {
-    @apply w-full py-3 bg-white text-[#1E1E2F] rounded-lg font-bold text-lg hover:bg-gray-200 transition;
+    @apply w-full py-3 bg-white text-[#1E1E2F] rounded-lg font-bold text-lg hover:bg-gray-200 transition cursor-pointer;
   }
 
   .page-container {
@@ -265,5 +268,49 @@
 
   .error-text {
     @apply text-red-400 text-sm;
+  }
+
+  .all-questions-container {
+    @apply min-h-screen bg-white py-15 px-4 md:px-8;
+  }
+
+  .all-questions-wrapper {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .all-questions-header {
+    @apply mb-6 text-center py-10;
+  }
+
+  .all-questions-title {
+    @apply text-4xl font-bold text-gray-800;
+  }
+
+  .all-questions-desc {
+    @apply text-lg text-gray-600;
+  }
+
+  .all-questions-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
+  }
+
+  .all-questions-pagination {
+    @apply flex justify-center mt-8 gap-4;
+  }
+
+  .all-questions-pagination-link {
+    @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700;
+  }
+
+  .guest-container {
+    @apply min-h-screen flex flex-col items-center justify-center bg-gray-50;
+  }
+
+  .guest-title {
+    @apply text-3xl font-bold;
+  }
+
+  .guest-desc {
+    @apply text-lg;
   }
 }

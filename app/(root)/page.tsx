@@ -1,6 +1,6 @@
 import QuestionCard from '@/components/QuestionCard'
-import { fakeQuestions } from '@/constants'
 import { getUserSession } from '@/lib/user-actions/authActions'
+import { getAllUserQuestions } from '@/lib/user-actions/questions'
 import Link from 'next/link'
 import React from 'react'
 
@@ -8,6 +8,40 @@ const page = async () => {
   const session = await getUserSession();
   const user = session?.user; 
   const firstName = user ? user.name.split(' ')[0] : 'Guest';
+
+  if (!user?.id) {
+    return (
+      <div className="dashboard-container">
+        <main className="dashboard-main">
+          <h1>Welcome, Guest!</h1>
+          <p>Please sign in to see your questions.</p>
+        </main>
+      </div>
+    );
+  }
+  const result = await getAllUserQuestions({userId : user.id});
+  if(!result.success){
+    return (
+      <div className="dashboard-container">
+        <main className="dashboard-main">
+          <h1>Welcome, {firstName}!</h1>
+          <p>Could not load your questions. {result.message || 'Please try again later.'}</p>
+        </main>
+      </div>
+    );
+  }
+
+  const userQuestions = result.questions.map((q) => ({
+      ...q,
+      difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
+      link: q.link ?? undefined,
+      createdAt: q.createdAt ?? new Date(),
+      attempts: q.attempts.map(a => ({
+        ...a,
+        notes: a.notes ?? '', 
+        createdAt: a.createdAt ?? new Date(), 
+    })),
+  }));
 
   return (
     <div className="dashboard-container">
@@ -28,7 +62,7 @@ const page = async () => {
             Your Most Recent Questions
           </h2>
           <div className="dashboard-grid">
-            {fakeQuestions.slice(0, 6).map((question) => (
+            {userQuestions.slice(0, 6).map((question) => (
               <QuestionCard key={question.id} question={question} />
             ))}
           </div>

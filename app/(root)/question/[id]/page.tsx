@@ -1,14 +1,29 @@
 import QuestionDetails from '@/components/QuestionDetails';
-import { fakeQuestions } from '@/constants'
+import { getQuestionById } from '@/lib/user-actions/questions';
 import React from 'react'
 
 const page = async ({params} : {params: {id: string}}) => {
     const p = await params;
-    const question = fakeQuestions.find((question) => question.id === p.id);
+    const questionId = p.id;
 
-    if(!question){
-        return <div className="p-6 text-red">Question not found.</div>
+    const result = await getQuestionById({questionId});
+
+    if (!result.success || !result.question) {
+        return <div className="p-6 text-red-600">Question not found.</div>
     }
+
+    const question = {
+      ...result.question,
+        difficulty: result.question.difficulty as 'Easy' | 'Medium' | 'Hard',
+        link: result.question.link ?? undefined,
+        createdAt: result.question.createdAt ?? new Date(),
+        attempts: result.question.attempts?.map(a => ({
+            ...a,
+            notes: a.notes ?? '',
+            createdAt: a.createdAt ?? new Date(),
+        })) ?? [],
+    }
+    
   return (
     <div className='p-6 max-w-4xl'>
         <QuestionDetails question={question}/>

@@ -1,10 +1,15 @@
 import Link from 'next/link';
 import React from 'react'
 
-const QuestionCard = ({question} : {question : Question}) => {
-  const totalAtempts = question.attempts.length;
-  const lastAttempt = question.attempts.reduce((latest, attempt) => 
-    new Date(attempt.createdAt) > new Date(latest.createdAt) ? attempt : latest, question.attempts[0]);
+const QuestionCard = ({ question }: { question: Question }) => {
+  const attempts = question.attempts || [];
+  const totalAtempts = attempts.length;
+  const lastAttempt = totalAtempts > 0 
+    ? attempts.reduce((latest, attempt) =>
+        new Date(attempt.createdAt) > new Date(latest.createdAt) ? attempt : latest,
+        attempts[0]
+      )
+    : null;
 
   return (
     <div className="question-card">
@@ -25,7 +30,9 @@ const QuestionCard = ({question} : {question : Question}) => {
 
           <div className="question-card-footer">
             <span>{totalAtempts} Attempt{totalAtempts !== 1 ? 's' : ''}</span>
-            <span>Last: {new Date(lastAttempt.createdAt).toLocaleDateString()}</span>
+            <span>
+              Last: {lastAttempt ? new Date(lastAttempt.createdAt).toLocaleDateString() : 'N/A'}
+            </span>
           </div>
         </div>
       </Link>
@@ -41,7 +48,8 @@ const QuestionCard = ({question} : {question : Question}) => {
         </a>
       )}
     </div>
-  )
-}
+  );
+};
+
 
 export default QuestionCard

@@ -5,7 +5,7 @@ import React from 'react'
 import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
 const page = async ({ params }: { params: { id: string } }) => {
-  const questionId = params.id;
+  const questionId = await params.id;
 
   const result = await getQuestionById({ questionId });
 

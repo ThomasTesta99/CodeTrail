@@ -59,8 +59,10 @@ const AddAttempt = ({ questionId, onClose }: { questionId: string, onClose: () =
           <textarea placeholder="Solution Code" {...register('solutionCode')} className="input-field" />
           {errors.solutionCode && <p className="error-text">{errors.solutionCode.message}</p>}
 
-          <select {...register('language')} className="input-field">
-            <option value="">Select Language</option>
+          <select {...register('language')} className="input-field" defaultValue="">
+            <option value="" disabled hidden>
+              Select a language
+            </option>
             {LANGUAGE_OPTIONS.map(({ label, value }) => (
               <option key={value} value={value}>
                 {label}

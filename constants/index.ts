@@ -280,3 +280,13 @@ export const fakeQuestions = [
     createdAt: '2025-05-27T16:00:00Z',
   }
 ];
+
+export const LANGUAGE_OPTIONS = [
+  { label: "JavaScript", value: "javascript" },
+  { label: "TypeScript", value: "typescript" },
+  { label: "Python", value: "python" },
+  { label: "Java", value: "java" },
+  { label: "C++", value: "cpp" },
+  { label: "C#", value: "csharp" },
+  { label: "Go", value: "go" },
+];

@@ -1,4 +1,5 @@
 'use client';
+import { LANGUAGE_OPTIONS } from '@/constants';
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -11,7 +12,8 @@ const QuestionDetails = ({ question }: { question: Question }) => {
 
   const handlePrev = () => setCurrentAttemptIndex((prev) => (prev > 0 ? prev - 1 : prev));
   const handleNext = () => setCurrentAttemptIndex((prev) => (prev < totalAttempts - 1 ? prev + 1 : prev));
-
+  const langLabel =
+  LANGUAGE_OPTIONS.find(opt => opt.value === currentAttempt.language)?.label || currentAttempt.language;
   return (
     <div className="question-container">
       <section className="question-header">
@@ -43,13 +45,19 @@ const QuestionDetails = ({ question }: { question: Question }) => {
               style={materialDark}
               showLineNumbers
               wrapLines
-              customStyle={{ borderRadius: '0.75rem', padding: '1rem', fontSize: '0.85rem', maxHeight: '400px', overflowY: 'auto' }}
+              customStyle={{
+                borderRadius: '0.75rem',
+                padding: '1rem',
+                fontSize: '0.85rem',
+                maxHeight: '400px',
+                overflowY: 'auto',
+              }}
             >
               {currentAttempt.solutionCode}
             </SyntaxHighlighter>
 
             <div className="attempt-details">
-              <p><span className="font-semibold">Language:</span> {currentAttempt.language || 'JavaScript'}</p>
+              <p><span className="font-semibold">Language:</span> {langLabel || 'JavaScript'}</p>
               <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
               <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
               <p><span className="font-semibold">Notes:</span> {currentAttempt.notes}</p>

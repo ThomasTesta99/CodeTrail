@@ -1,4 +1,5 @@
 'use client '
+import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
@@ -58,7 +59,14 @@ const AddAttempt = ({ questionId, onClose }: { questionId: string, onClose: () =
           <textarea placeholder="Solution Code" {...register('solutionCode')} className="input-field" />
           {errors.solutionCode && <p className="error-text">{errors.solutionCode.message}</p>}
 
-          <input placeholder="Language (e.g., TypeScript)" {...register('language')} className="input-field" />
+          <select {...register('language')} className="input-field">
+            <option value="">Select Language</option>
+            {LANGUAGE_OPTIONS.map(({ label, value }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
           {errors.language && <p className="error-text">{errors.language.message}</p>}
 
           <input type="number" placeholder="Duration (minutes)" {...register('durationMinutes', { valueAsNumber: true })} className="input-field" />

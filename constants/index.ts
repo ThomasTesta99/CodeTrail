@@ -1,3 +1,5 @@
+export const QUESTIONS_PER_PAGE = 12;
+
 export const sidebarLinks = [
     {
         imgUrl: '/assets/icons/dashboardIcon.svg',

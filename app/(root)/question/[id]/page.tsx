@@ -2,9 +2,10 @@ import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
 import { DeleteQuestionButton } from '@/components/DeleteQuestionButton';
 import React from 'react'
+import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
 const page = async ({ params }: { params: { id: string } }) => {
-  const questionId = await params.id;
+  const questionId = params.id;
 
   const result = await getQuestionById({ questionId });
 
@@ -29,10 +30,8 @@ const page = async ({ params }: { params: { id: string } }) => {
       <QuestionDetails question={question} />
 
       <section className="button-section">
-        <button className="add-attempt-button">
-          Add New Attempt
-        </button>
-        <DeleteQuestionButton questionId={question.id} />  {/* Use the Client Component */}
+        <AddAttemptTrigger questionId={questionId}/>
+        <DeleteQuestionButton questionId={questionId} /> 
       </section>
     </div>
   );

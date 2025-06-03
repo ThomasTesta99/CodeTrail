@@ -35,7 +35,7 @@ declare interface Attempt {
   language: string;
   neededHelp: boolean;
   durationMinutes: number;
-  notes: string;
+  notes?: string;
   createdAt: Date;
 }
 

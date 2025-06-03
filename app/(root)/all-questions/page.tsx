@@ -1,10 +1,12 @@
 import QuestionCard from '@/components/QuestionCard';
+import { QUESTIONS_PER_PAGE } from '@/constants';
 import { getUserSession } from '@/lib/user-actions/authActions';
 import { getAllUserQuestions } from '@/lib/user-actions/questions';
-import Link from 'next/link';
 import React from 'react';
 
-const page = async () => {
+
+
+const page = async ({searchParams}: {searchParams:{page?:string}}) => {
   const session = await getUserSession();
   const user = session?.user;
 
@@ -17,7 +19,10 @@ const page = async () => {
     );
   }
 
-  const result = await getAllUserQuestions({ userId: user.id });
+  const pageNumber = parseInt(searchParams.page || '1', 10);
+  const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
+
+  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset });
   const userQuestions = result.questions.map(q => ({
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
@@ -42,17 +47,23 @@ const page = async () => {
 
         <section>
           <div className="all-questions-grid">
-            {userQuestions.map((question) => (
+            {userQuestions.slice(0, QUESTIONS_PER_PAGE).map((question) => (
               <QuestionCard key={question.id} question={question} />
             ))}
           </div>
         </section>
 
-        {/* Optional Pagination */}
         <div className="all-questions-pagination">
-          <Link href={`?page=1`} className="all-questions-pagination-link">1</Link>
-          <Link href={`?page=2`} className="all-questions-pagination-link">2</Link>
-          {/* Add dynamic pagination if needed */}
+          {pageNumber > 1 && (
+            <a href={`?page=${pageNumber - 1}`} className="all-questions-pagination-link">
+              Previous
+            </a>
+          )}
+          {userQuestions.length > QUESTIONS_PER_PAGE && (
+            <a href={`?page=${pageNumber + 1}`} className="all-questions-pagination-link">
+              Next
+            </a>
+          )}
         </div>
       </div>
     </div>

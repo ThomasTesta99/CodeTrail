@@ -35,6 +35,19 @@ const page = async ({searchParams}: {searchParams:{page?:string}}) => {
     })),
   }));
 
+  if(userQuestions.length === 0){
+    return (
+      <div className="all-questions-container">
+        <div className="all-questions-wrapper text-center py-12">
+          <h2 className="text-2xl font-semibold mb-2">No Questions Found</h2>
+          <p className="text-gray-600">
+            It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="all-questions-container">
       <div className="all-questions-wrapper">

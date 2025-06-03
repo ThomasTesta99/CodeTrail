@@ -43,6 +43,26 @@ const page = async () => {
     })),
   }));
 
+  if(userQuestions.length === 0){
+    return (
+      <div className="dashboard-container">
+        <main className="dashboard-main">
+          <header className="dashboard-header">
+          <h1 className="dashboard-header-title">
+            Welcome, {firstName}!
+          </h1>
+          <p className="dashboard-header-desc">
+            Empower your coding journey. Log your LeetCode challenges, track attempts, and reflect on your problem-solving skills. Discover what works best and achieve mastery!
+          </p>
+        </header>
+        <p className="dashboard-header-desc text-center">
+          Ready to level up? Add your first LeetCode question and take the first step toward mastering problem-solving.
+        </p>
+        </main>
+      </div>
+    );
+  }
+
 
   return (
     <div className="dashboard-container">

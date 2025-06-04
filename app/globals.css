@@ -42,7 +42,7 @@
   }
 
   .auth-link {
-    @apply text-pink-100 hover:underline;
+    @apply text-white hover:underline;
   }
 
   .auth-divider {

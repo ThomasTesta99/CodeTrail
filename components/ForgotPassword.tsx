@@ -1,8 +1,9 @@
 'use client';
 
+import { authClient } from '@/lib/auth-client';
+import { canChangePassword, getUserByEmail } from '@/lib/user-actions/authActions';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-// import { sendResetEmail } from '@/lib/user-actions/authActions';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -12,15 +13,32 @@ const ForgotPassword = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // const result = await sendResetEmail(email);
+    try {
+      const result = await getUserByEmail({ email });
 
-    // if (result.success) {
-    //   toast.success(result.message || 'Reset link sent!');
-    // } else {
-    //   toast.error(result.message || 'Failed to send reset link');
-    // }
+      if (!result.user) {
+        toast.error('No user found with that email')
+        throw new Error("No user found with that email");
+      }
 
-    setIsSubmitting(false);
+      const canChangePasswordResult = await canChangePassword(email);
+
+      if(canChangePasswordResult.canChange){
+        await authClient.forgetPassword({
+          email: email, 
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        toast.success("Reset link sent. Please check your email.")
+      }else{
+        toast.error(canChangePasswordResult.message);
+      }
+
+    } catch (error) {
+      toast.error('Failed to send reset link.');
+      console.log(error);
+    }finally{
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -28,7 +46,7 @@ const ForgotPassword = () => {
       <div className="auth-container">
         <h1 className="auth-header">Reset Password</h1>
         <p className="auth-title text-base font-normal text-gray-300">
-          Enter your email and we'll send you a link to reset your password.
+          Enter your email and we will send you a link to reset your password.
         </p>
         <form onSubmit={handleSubmit} className="auth-form">
           <input

@@ -2,6 +2,10 @@
 import { headers } from "next/headers";
 import { auth } from "../auth";
 import { authClient } from "../auth-client";
+import { db } from "@/database/drizzle";
+import { account, user } from "@/database/schema";
+import { eq } from "drizzle-orm";
+
 
 export const logoutUser = async () => {
     try {
@@ -46,3 +50,66 @@ export const getUserSession = async () => {
     const session = await auth.api.getSession({headers: await headers()});
     return session;
 }
+
+export const getUserByEmail = async ({email}: {email: string}) => {
+    try {
+        const result = await db.select().from(user).where(eq(user.email, email));
+
+        const foundUser = result[0]; 
+
+        if (!foundUser) {
+            return { success: false, message: 'User not found' };
+        }
+
+        return {
+            success: true,
+            user: foundUser,
+        };
+    } catch (error) {
+        console.error('Error in getUserByEmail:', error);
+        return {
+        success: false,
+        message: 'Server error while fetching user',
+        };
+    }
+};
+
+export const canChangePassword = async (email: string) => {
+    try {
+        const users = await db.select().from(user).where(eq(user.email, email)).limit(1);
+
+        if(users.length === 0){
+            return {
+                canChange: false,
+                message: 'User not found'
+            }
+        }
+
+        const foundUser = users[0];
+
+        const accounts = await db.select().from(account).where(eq(account.userId, foundUser.id)).limit(1);
+
+        if(accounts.length > 0){
+            const acc = accounts[0];
+            const provider = acc.providerId;
+
+            if(provider !== 'credential'){
+                return {
+                    canChange: false,
+                    message: `You signed up with ${provider} and cannot reset your password`,
+                }
+            }
+        }
+
+        return {
+            canChange: true,
+            message: "Can change password"
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            canChange: false,
+            message: "An error occured" + error,
+        }
+    }
+} 

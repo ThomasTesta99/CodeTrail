@@ -3,6 +3,7 @@ import {betterAuth} from 'better-auth'
 import {drizzleAdapter} from "better-auth/adapters/drizzle"
 import {schema} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
+import { sendEmail } from './email'
 
 
 
@@ -20,6 +21,12 @@ export const auth = betterAuth({
     },
     emailAndPassword:{
         enabled: true,
+        sendResetPassword: async ({user, url}, request) => {
+            await sendEmail({
+                to: user.email, 
+                resetLink: url
+            })
+        }
     },
     plugins: [nextCookies()],
     baseURL: process.env.NEXT_PUBLIC_BASE_URL!,

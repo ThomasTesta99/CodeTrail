@@ -136,14 +136,14 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         if(!q.length){
             return{
                 success: false,
-                message: "Qeustion not found",
+                message: "Question not found",
                 question: null
             }
         }
 
         const atts = await db.select().from(attempts).where(eq(attempts.questionId, questionId));
 
-        const fulLQuestion = {
+        const fullQuestion = {
             ...q[0],
             attempts: atts.map(a=> ({
                 ...a,
@@ -153,7 +153,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         return {
             success: true,
             message: "Found question",
-            question: fulLQuestion,
+            question: fullQuestion,
         }
 
     } catch (error) {

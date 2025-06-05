@@ -1,9 +1,10 @@
 import { db } from '@/database/drizzle'
 import {betterAuth} from 'better-auth'
 import {drizzleAdapter} from "better-auth/adapters/drizzle"
-import {schema} from "@/database/schema"
+import {schema, user} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
 import { sendEmail } from './email'
+import { eq } from 'drizzle-orm'
 
 
 
@@ -15,9 +16,14 @@ export const auth = betterAuth({
     }),
     socialProviders:{
         google:{
+            prompt: "select_account",
             clientId: process.env.GOOGLE_CLIENT_ID!, 
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        }
+        },
+        // github: { 
+        //     clientId: process.env.GITHUB_CLIENT_ID!, 
+        //     clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
+        // }, 
     },
     emailAndPassword:{
         enabled: true,

@@ -49,7 +49,7 @@
     @apply my-4 border-b border-gray-400;
   }
 
-  .auth-google-btn {
+  .auth-social-btn {
     @apply w-full flex items-center justify-center gap-2 bg-white text-black rounded-2xl py-3 font-semibold hover:bg-gray-200 transition cursor-pointer;
   }
 

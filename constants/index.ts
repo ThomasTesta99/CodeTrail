@@ -282,11 +282,24 @@ export const fakeQuestions = [
 ];
 
 export const LANGUAGE_OPTIONS = [
+  { label: "C++", value: "cpp" },
+  { label: "Java", value: "java" },
+  { label: "Python", value: "python" },
+  { label: "Python3", value: "python3" }, // Sometimes Python and Python3 are treated separately
+  { label: "C", value: "c" },
+  { label: "C#", value: "csharp" },
   { label: "JavaScript", value: "javascript" },
   { label: "TypeScript", value: "typescript" },
-  { label: "Python", value: "python" },
-  { label: "Java", value: "java" },
-  { label: "C++", value: "cpp" },
-  { label: "C#", value: "csharp" },
   { label: "Go", value: "go" },
+  { label: "Ruby", value: "ruby" },
+  { label: "Swift", value: "swift" },
+  { label: "Kotlin", value: "kotlin" },
+  { label: "Rust", value: "rust" },
+  { label: "Scala", value: "scala" },
+  { label: "PHP", value: "php" },
+  { label: "SQL", value: "sql" },
+  { label: "Bash", value: "bash" },
+  { label: "Racket", value: "racket" },
+  { label: "Erlang", value: "erlang" },
+  { label: "Elixir", value: "elixir" },
 ];

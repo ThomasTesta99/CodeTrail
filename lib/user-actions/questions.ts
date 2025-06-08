@@ -3,6 +3,7 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  eq, inArray } from "drizzle-orm";
+import { getUserSession, validUser } from "./authActions";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -32,6 +33,14 @@ export const getAllUserQuestions = async ({
     offset?: number;
 }) => {
     try {
+        if(!validUser(userId)){
+            return {
+                success: false,
+                message: "Cannot access user questions",
+                questions: []
+            }
+        }
+
         const questionResult = await db.select()
             .from(question)
             .where(eq(question.userId, userId))
@@ -75,6 +84,14 @@ export const getAllUserQuestions = async ({
 
 export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: string, limit: number }) => {
   try {
+    if(!validUser(userId)){
+            return {
+                success: false,
+                message: "Cannot access user questions",
+                questions: []
+            }
+        }
+
     const questionResult = await db.select()
       .from(question)
       .where(eq(question.userId, userId));
@@ -128,8 +145,6 @@ export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: st
   }
 };
 
-
-
 export const getQuestionById = async ({questionId} : {questionId:string}) => {
     try {
         const q = await db.select().from(question).where(eq(question.id, questionId)).limit(1);
@@ -168,13 +183,15 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
 
 export const deleteQuestion = async ({questionId}: {questionId: string}) => {
     try {
+       const session = await getUserSession();
+        if (!session?.user?.id) {
+            return { success: false, message: 'Unauthorized' };
+        }
+
         await db.delete(attempts).where(eq(attempts.questionId, questionId));
         await db.delete(question).where(eq(question.id, questionId));
-        return {
-            success: true,
-            message: "Question has been deleted"
-        }
-    } catch (error) {
+        return { success: true, message: 'Question deleted' };
+            } catch (error) {
         console.log(error)
         return {
             success: false,

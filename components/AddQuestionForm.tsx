@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/lib/user-actions/questions'
 import toast from 'react-hot-toast'
+import { validUser } from '@/lib/user-actions/authActions'
 
 const questionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -31,6 +32,12 @@ const AddQuestionForm = ({ user }: UserProps) => {
     if (!user?.id) {
       throw new Error('No User id');
     }
+
+    if(!validUser(user.id)){
+      toast.error('Cannot add question')
+      throw new Error('Cannot add question')
+    }
+
     const newQuestion = {
       id: crypto.randomUUID(),
       ...data,

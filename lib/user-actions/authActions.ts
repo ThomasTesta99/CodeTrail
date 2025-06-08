@@ -24,7 +24,6 @@ export const signUpUser = async({name, email, password}: CreateUserInfo) => {
             password
         })
         
-        console.log(result)
         return result;
     } catch (error) {
         console.log(error);
@@ -112,4 +111,35 @@ export const canChangePassword = async (email: string) => {
             message: "An error occured" + error,
         }
     }
-} 
+}
+
+export const validUser = async (userId: string) => {
+    const session = await getUserSession();
+
+    if(!session){
+        return {
+            valid: false,
+            message: 'No valid session.'
+        }
+    }
+    const user = session?.user
+
+    if(!user){
+        return {
+            valid: false,
+            message: "Unautherized"
+        }
+    }
+
+    if(user.id == userId){
+        return {
+            valid: true,
+            message: "Autherized"
+        }
+    }else{
+        return {
+            valid: false,
+            message: "Unautherized"
+        }
+    }
+}

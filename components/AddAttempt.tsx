@@ -1,4 +1,4 @@
-'use client'
+'use client '
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
 import { zodResolver } from '@hookform/resolvers/zod';

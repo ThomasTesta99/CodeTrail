@@ -5,7 +5,6 @@ import React, { ReactNode } from 'react'
 
 const layout = async ({children}: {children: ReactNode}) => {
   const session = await getUserSession();
-  console.log(session)
   const user = session?.user;
   return (
     <main className="flex flex-row h-screen w-full">

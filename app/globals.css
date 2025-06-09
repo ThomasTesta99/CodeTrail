@@ -178,7 +178,7 @@
   
 
   .question-container {
-    @apply flex flex-col items-center gap-12 max-w-5xl mx-auto p-8;
+    @apply flex flex-col items-center gap-12 max-w-screen-xl mx-auto p-8  w-full;
   }
 
   .question-header {

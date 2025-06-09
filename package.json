@@ -24,6 +24,7 @@
     "emailjs-com": "^3.2.0",
     "leetcodetracker": "file:",
     "next": "15.3.2",
+    "openai": "^5.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.4",

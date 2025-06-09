@@ -26,7 +26,7 @@ const page = async ({ params }: { params: { id: string } }) => {
   };
 
   return (
-    <div className='p-6 max-w-4xl'>
+    <div className='px-4 sm:px-6 max-w-screen-xl mx-auto w-full'>
       <QuestionDetails question={question} />
 
       <section className="button-section">

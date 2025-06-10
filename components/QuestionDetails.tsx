@@ -3,6 +3,9 @@ import { LANGUAGE_OPTIONS } from '@/constants';
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 
 const QuestionDetails = ({ question }: { question: Question }) => {
   const attempts = question.attempts || [];
@@ -10,12 +13,15 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const [currentAttemptIndex, setCurrentAttemptIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+  const [displayedFeedback,setDisplayedFeedback] = useState('')
 
   const handlePrev = () => setCurrentAttemptIndex((prev) => (prev > 0 ? prev - 1 : prev));
   const handleNext = () => setCurrentAttemptIndex((prev) => (prev < totalAttempts - 1 ? prev + 1 : prev));
 
   const getAIResponse = async () => {
     setIsLoadingFeedback(true);
+    setDisplayedFeedback('');
+    setFeedback('');
     try {
       const res = await fetch('/api/ai-feedback', {
         method: 'POST',
@@ -34,6 +40,16 @@ const QuestionDetails = ({ question }: { question: Question }) => {
 
       const data = await res.json();
       setFeedback(data.feedback);
+      setDisplayedFeedback(data.feedback.charAt(0));
+
+      let i = 0;
+      const text = data.feedback;
+      setFeedback(text);
+      const interval = setInterval(() => {
+        setDisplayedFeedback((prev) => prev + text.charAt(i));
+        i++;
+        if (i >= text.length) clearInterval(interval);
+      }, 10);
     } catch (error) {
       console.log(error);
       setFeedback('Failed to get feedback.');
@@ -43,7 +59,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   }
 
   return (
-    <div className="question-container">
+    <div className="question-container px-4 sm:px-6 w-full">
       <section className="question-header">
         <h1 className="question-title">{question.title}</h1>
         <p className="question-description">{question.description}</p>
@@ -60,7 +76,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
       </section>
 
       <div className='flex flex-col lg:flex-row gap-8 mt-6 w-full'>
-        <section className="w-full lg:flex-[2] attempt-section">
+        <section className="w-full lg:w-2/3 min-w-0 flex-1 attempt-section">
         <h2 className="attempt-title">
           {totalAttempts > 0
             ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
@@ -108,24 +124,56 @@ const QuestionDetails = ({ question }: { question: Question }) => {
           <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
         )}
         </section>
-        <section className="w-full lg:max-w-sm">
-          <div className="flex flex-col bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner h-full max-h-[400px]">
-            <h3 className="text-lg font-semibold mb-2 text-white">AI Feedback</h3>
+        <section className="w-full lg:flex-1 min-w-0">
+          <div className="flex flex-col h-full bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner">
+            <h3 className="text-lg font-semibold mb-2 text-white">Feedback</h3>
 
             <button
               onClick={getAIResponse}
-              className="btn btn-secondary mb-3 w-fit self-start"
+              className="btn btn-secondary mb-3 w-fit self-start cursor-pointer"
             >
-              {isLoadingFeedback ? 'Loading...' : 'Get AI Feedback'}
+              {isLoadingFeedback ? 'Loading...' : 'Get Feedback'}
             </button>
 
             <div className="overflow-y-auto pr-2 flex-1 bg-gray-900 rounded-md p-3 border border-gray-700 space-y-2">
               {feedback ? (
-                feedback.split('\n').map((line, idx) => (
-                  <p key={idx} className="text-gray-100 leading-relaxed">
-                    {line.trim()}
-                  </p>
-                ))
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code(props) {
+                      const { inline, className, children, ...rest } = props as {
+                        inline?: boolean;
+                        className?: string;
+                        children: React.ReactNode;
+                      };
+
+                      const match = /language-(\w+)/.exec(className || '');
+
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          language={match[1]}
+                          style={materialDark}
+                          PreTag="div"
+                          customStyle={{
+                            borderRadius: '0.5rem',
+                            fontSize: '0.8rem',
+                            maxWidth: '100%',
+                            overflowX: 'auto',
+                          }}
+                          {...rest}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className="bg-gray-700 px-1 py-0.5 rounded">
+                          {children}
+                        </code>
+                      );
+                    },
+                  }}
+                >
+                  {displayedFeedback}
+                </ReactMarkdown>
               ) : (
                 <p className="text-gray-400 italic">No feedback yet.</p>
               )}

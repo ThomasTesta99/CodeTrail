@@ -1,5 +1,5 @@
 'use server'
-import { getUserSession } from '@/lib/user-actions/authActions';
+import { checkRate, getUserSession } from '@/lib/user-actions/authActions';
 import { NextRequest, NextResponse } from 'next/server';
 import {OpenAI} from 'openai'
 
@@ -28,6 +28,11 @@ export async function POST(req: NextRequest){
         }
         const user = session.user;
         const firstName = user.name.split(' ')[0];
+
+        const rateCheck = await checkRate(user.email, 'ai-feedback');
+        if(!rateCheck.valid){
+            return NextResponse.json({rateLimit: rateCheck, error : 'Rate Limit exceeded'});
+        }
 
         let prompt = `You are an expert coding assistant. ${firstName || 'A user'} attempted the following leetcode question: 
             Title: ${questionTitle}

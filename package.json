@@ -1,5 +1,5 @@
 {
-  "name": "leetcodetracker",
+  "name": "codetrail",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,7 +24,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "emailjs-com": "^3.2.0",
-    "leetcodetracker": "file:",
+    "codetrail": "file:",
     "next": "15.3.2",
     "openai": "^5.1.1",
     "react": "^19.0.0",

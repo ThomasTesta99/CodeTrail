@@ -6,6 +6,7 @@ import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import toast from 'react-hot-toast';
+import { Question } from '@/types/types';
 
 
 const QuestionDetails = ({ question }: { question: Question }) => {

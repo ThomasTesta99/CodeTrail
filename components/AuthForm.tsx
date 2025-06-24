@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { signInUser, signUpUser } from '@/lib/user-actions/authActions';
+import { CreateUserInfo, SignInUserInfo } from '@/types/types';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -131,7 +132,7 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
             </button>
             {/* <button
               onClick={() => handleGitHubSignIn()}
-              className="auth-social-btn" // reuse same styling
+              className="auth-social-btn" 
             >
               <Image src="/assets/icons/github.svg" alt="GitHub" width={20} height={20} />
               Sign In with GitHub

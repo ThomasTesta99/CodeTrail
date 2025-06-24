@@ -1,3 +1,4 @@
+import { Question } from '@/types/types';
 import Link from 'next/link';
 import React from 'react'
 

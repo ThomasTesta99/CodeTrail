@@ -1,5 +1,6 @@
 'use client'
 import { logoutUser } from '@/lib/user-actions/authActions'
+import { UserProps } from '@/types/types'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -42,20 +43,3 @@ const Footer = ({user}: UserProps) => {
 }
 
 export default Footer
-
-
-/*
-useEffect(() => {
-        async function getUser(){
-            const session = await getUserSession();
-            if(!session){
-                throw new Error("Unauthenticated");
-            }
-            const user : User = session.user;
-            console.log('USER FOOTER: ', user);
-            setUser(user);
-        }
-
-        getUser();
-    }, [user])
-*/

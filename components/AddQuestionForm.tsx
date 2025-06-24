@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/lib/user-actions/questions'
 import toast from 'react-hot-toast'
 import { validUser } from '@/lib/user-actions/authActions'
+import { UserProps } from '@/types/types'
 
 const questionSchema = z.object({
   title: z.string().min(1, 'Title is required'),

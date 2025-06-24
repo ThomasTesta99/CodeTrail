@@ -59,3 +59,5 @@ declare interface DatabaseQuestion {
   attempts?: Attempt[];
   createdAt: Date;
 }
+
+export type Action = 'ai-feedback' | 'password-reset';

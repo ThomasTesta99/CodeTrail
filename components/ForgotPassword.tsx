@@ -1,7 +1,7 @@
 'use client';
 
 import { authClient } from '@/lib/auth-client';
-import { canChangePassword, getUserByEmail } from '@/lib/user-actions/authActions';
+import { canChangePassword, checkRate, getUserByEmail } from '@/lib/user-actions/authActions';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,13 @@ const ForgotPassword = () => {
       }
 
       const canChangePasswordResult = await canChangePassword(email);
+
+      const rateLimit = await checkRate(email, 'password-reset');
+
+      if(!rateLimit.valid){
+        toast.error(rateLimit.message);
+        throw new Error(rateLimit.message)
+      }
 
       if(canChangePasswordResult.canChange){
         await authClient.forgetPassword({

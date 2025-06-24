@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import toast from 'react-hot-toast';
 
 
 const QuestionDetails = ({ question }: { question: Question }) => {
@@ -39,6 +40,11 @@ const QuestionDetails = ({ question }: { question: Question }) => {
       });
 
       const data = await res.json();
+
+      if(data?.rateLimit && !data.rateLimit.valid){
+        toast.error(data.rateLimit.message);
+        return;
+      }
       setFeedback(data.feedback);
       setDisplayedFeedback(data.feedback.charAt(0));
 

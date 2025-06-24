@@ -1,10 +1,9 @@
 import { db } from '@/database/drizzle'
 import {betterAuth} from 'better-auth'
 import {drizzleAdapter} from "better-auth/adapters/drizzle"
-import {schema, user} from "@/database/schema"
+import {schema} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
 import { sendEmail } from './email'
-import { eq } from 'drizzle-orm'
 
 
 

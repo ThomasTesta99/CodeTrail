@@ -5,6 +5,8 @@ import { authClient } from "../auth-client";
 import { db } from "@/database/drizzle";
 import { account, user } from "@/database/schema";
 import { eq } from "drizzle-orm";
+import { validateWithArcjet } from "../arcjet";
+import { Action } from "@/types/types";
 
 
 export const logoutUser = async () => {
@@ -141,4 +143,9 @@ export const validUser = async (userId: string) => {
             message: "Unautherized"
         }
     }
+}
+
+export const checkRate = async(fingerprint:string, scope: Action) => {
+    const rateCheck = await validateWithArcjet(fingerprint, scope);
+    return rateCheck;
 }

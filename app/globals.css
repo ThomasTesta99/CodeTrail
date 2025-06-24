@@ -252,8 +252,9 @@
   }
 
   .select-field {
-    @apply w-full p-3 rounded-lg border border-white bg-[#1E1E2F] text-white focus:outline-none focus:ring-2 focus:ring-white transition;
+    @apply w-full p-3 pr-10 rounded-lg border border-white bg-[#1E1E2F] text-white focus:outline-none focus:ring-2 focus:ring-white transition;
   }
+
 
   .form-container {
     @apply w-full max-w-2xl bg-[#1E1E2F] text-white rounded-3xl shadow-xl p-10 space-y-6 backdrop-blur-md;

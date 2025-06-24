@@ -86,7 +86,7 @@ const AddQuestionForm = ({ user }: UserProps) => {
 
         <div className="space-y-2">
           <select {...register('difficulty')} className="select-field">
-            <option value="">Select Difficulty</option>
+            <option value="" disabled>Select Difficulty</option>
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>

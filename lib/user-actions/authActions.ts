@@ -6,7 +6,7 @@ import { db } from "@/database/drizzle";
 import { account, user } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { validateWithArcjet } from "../arcjet";
-import { Action } from "@/types/types";
+import { Action, CreateUserInfo, SignInUserInfo} from "@/types/types";
 
 
 export const logoutUser = async () => {

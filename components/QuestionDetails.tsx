@@ -126,14 +126,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         </section>
         <section className="w-full lg:flex-1 min-w-0">
           <div className="flex flex-col h-full bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner">
-            <h3 className="text-lg font-semibold mb-2 text-white">Feedback</h3>
-
-            <button
-              onClick={getAIResponse}
-              className="btn btn-secondary mb-3 w-fit self-start cursor-pointer"
-            >
-              {isLoadingFeedback ? 'Loading...' : 'Get Feedback'}
-            </button>
+            <h3 className="text-lg font-semibold mb-2 text-white text-center">Feedback</h3>
 
             <div className="overflow-y-auto pr-2 flex-1 bg-gray-900 rounded-md p-3 border border-gray-700 space-y-2">
               {feedback ? (
@@ -178,6 +171,14 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                 <p className="text-gray-400 italic">No feedback yet.</p>
               )}
             </div>
+
+            <button
+              onClick={getAIResponse}
+              disabled={isLoadingFeedback}
+              className="mt-4 cursor-pointer px-4 py-2 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-md"
+            >
+              {isLoadingFeedback ? 'Loading...' : 'Get Feedback'}
+            </button>
           </div>
         </section>
 

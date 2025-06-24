@@ -38,7 +38,6 @@ export const signInUser = async({email, password}: SignInUserInfo) => {
                 password: password,
             }
         })
-        console.log("User result: ", result);
         return result;
     } catch (error) {
         console.log(error);

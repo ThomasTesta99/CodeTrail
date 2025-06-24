@@ -1,4 +1,5 @@
 'use server'
+import { getUserSession } from '@/lib/user-actions/authActions';
 import { NextRequest, NextResponse } from 'next/server';
 import {OpenAI} from 'openai'
 
@@ -21,7 +22,14 @@ export async function POST(req: NextRequest){
             return NextResponse.json({error: 'Missing required fields'}, {status: 400});
         }
 
-        let prompt = `You are an expert coding assistant. A user attempted the following leetcode question: 
+        const session = await getUserSession();
+        if(!session?.user){
+            return NextResponse.json({error: 'Missing user session'}, {status: 400});
+        }
+        const user = session.user;
+        const firstName = user.name.split(' ')[0];
+
+        let prompt = `You are an expert coding assistant. ${firstName || 'A user'} attempted the following leetcode question: 
             Title: ${questionTitle}
             Description: ${questionDescription || 'N/A'}
             
@@ -30,14 +38,16 @@ export async function POST(req: NextRequest){
             
             Notes from user: ${notes || 'None'}
             Time spent: ${durationMinutes || 'unknown'} minutes
-            Marked as needing help: ${neededHelp ? 'Yes' : 'No'}`;
-
+            Marked as needing help: ${neededHelp ? 'Yes' : 'No'}
+            Take into account the notes from ${firstName || 'the user'}
+            `;
+            
         if(allAttempts){
-            prompt += `\nThe user also had multiple attempts:
+            prompt += `\n${firstName || 'The user'} also had multiple attempts:
             ${JSON.stringify(allAttempts, null, 2)}\n`
         }
 
-        prompt += '\nPlease provide constructive feedback on this attempt. Focus on where the user may be going wrong, how they could improve, and what they could try differently. Be supportive and specific.';
+        prompt += `\nPlease provide constructive feedback on this attempt. Focus on where ${firstName || 'the user'} may be going wrong, how they could improve, and what they could try differently. Be supportive and specific.`;
     
         const completion = await openAi.chat.completions.create({
             model: 'gpt-4o',

@@ -52,11 +52,11 @@ const page = async () => {
             Welcome, {firstName}!
           </h1>
           <p className="dashboard-header-desc">
-            Empower your coding journey. Log your LeetCode challenges, track attempts, and reflect on your problem-solving skills. Discover what works best and achieve mastery!
+            Empower your coding journey. Log your technical challenges, track attempts, and reflect on your problem-solving skills. Discover what works best and achieve mastery!
           </p>
         </header>
         <p className="dashboard-header-desc text-center">
-          Ready to level up? Add your first LeetCode question and take the first step toward mastering problem-solving.
+          Ready to level up? Add your first technical question and take the first step toward mastering problem-solving.
         </p>
         </main>
       </div>

@@ -11,7 +11,7 @@ const AboutPage  = () => {
       <div className="auth-container space-y-6">
         <h1 className="auth-header">About This App</h1>
         <p className="text-sm text-gray-300 leading-relaxed text-center">
-          This application is designed to help you log and manage your LeetCode challenges.
+          This application is designed to help you log and manage your LeetCode or technical challenges.
           You can track your progress, record multiple attempts, and reflect on your
           solutions to build a stronger problem-solving foundation.
         </p>

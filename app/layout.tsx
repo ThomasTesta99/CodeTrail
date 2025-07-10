@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CodeTrail",
-  description: "Track your leetcode progress today",
+  description: "Track your technical progress today",
 };
 
 export default function RootLayout({

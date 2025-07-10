@@ -34,7 +34,7 @@ export async function POST(req: NextRequest){
             return NextResponse.json({rateLimit: rateCheck, error : 'Rate Limit exceeded'});
         }
 
-        let prompt = `You are an expert coding assistant. ${firstName || 'A user'} attempted the following leetcode question: 
+        let prompt = `You are an expert coding assistant. ${firstName || 'A user'} attempted the following leetcode/technical question: 
             Title: ${questionTitle}
             Description: ${questionDescription || 'N/A'}
             

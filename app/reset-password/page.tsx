@@ -1,11 +1,12 @@
-'use client'
 import ResetPassword from '@/components/ResetPassword'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 const page = () => {
   return (
     <div>
-      <ResetPassword />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ResetPassword />
+      </Suspense>
     </div>
   )
 }

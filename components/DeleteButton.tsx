@@ -2,33 +2,52 @@
 
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { deleteQuestion } from '@/lib/user-actions/questions';
+import {  deleteAttempt, deleteQuestion } from '@/lib/user-actions/questions';
 import { DeleteType } from '@/types/types';
 
 export const DeleteButton = ({ 
-  questionId, 
+  deleteItemId, 
   buttonLabel, 
-  deleteType 
+  deleteType,
+  className = "delete-question-button",
+  onDeleteSuccess,
 }: { 
-  questionId: string,
+  deleteItemId: string,
   buttonLabel : string, 
-  deleteType: DeleteType}) => {
+  deleteType: DeleteType,
+  className: string,
+  onDeleteSuccess?: () => void
+}) => {
   const router = useRouter();
 
   const handleDelete = async () => {
+    let result;
     if(deleteType === 'delete-question'){
-      const result = await deleteQuestion({ questionId });
-    if (result.success) {
-      toast.success(result.message);
-      setTimeout(() => router.push('/'), 1500);
-    } else {
-      toast.error(result.message);
+      result = await deleteQuestion({ deleteItemId });
+    }else if(deleteType === 'delete-attempt'){
+      result = await deleteAttempt({deleteItemId});
+      console.log(result);
     }
+
+    if(result){
+      if (result.success) {
+        toast.success(result.message);
+        setTimeout(() => {
+          if (deleteType === 'delete-question') {
+            router.push('/');
+          } else {
+             onDeleteSuccess?.();
+             router.refresh()
+          }
+        }, 1500);
+      } else {
+        toast.error(result.message);
+      }
     }
   };
 
   return (
-    <button className="delete-button" onClick={handleDelete}>
+    <button className={className} onClick={handleDelete}>
       {buttonLabel}
     </button>
   );

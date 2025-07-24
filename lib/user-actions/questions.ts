@@ -182,22 +182,22 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
     }
 }
 
-export const deleteQuestion = async ({questionId}: {questionId: string}) => {
+export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => {
     try {
        const session = await getUserSession();
         if (!session?.user?.id) {
             return { success: false, message: 'Unauthorized' };
         }
 
-        await db.delete(attempts).where(eq(attempts.questionId, questionId));
-        await db.delete(question).where(eq(question.id, questionId));
+        await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
+        await db.delete(question).where(eq(question.id, deleteItemId));
         return { success: true, message: 'Question deleted' };
-            } catch (error) {
-        console.log(error)
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error) 
-        }
+        } catch (error) {
+            console.log(error)
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : String(error) 
+            }
     }
 }
 
@@ -222,6 +222,26 @@ export const addAttempt = async ({questionId, attempt}: {questionId: string, att
         return {
             success: false,
             message: error instanceof Error ? error.message : String(error)
+        }
+    }
+}
+
+export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
+    try {
+        const session = await getUserSession();
+        if (!session?.user?.id) {
+            return { success: false, message: 'Unauthorized' };
+        }
+
+        await db.delete(attempts).where(eq(attempts.id, deleteItemId));
+        return {
+            success: true,
+            message: "Attempt successfully deleted",
+        }
+    } catch (error) {
+        return{
+            success: false,
+            message: error instanceof Error ? error.message : String(error),
         }
     }
 }

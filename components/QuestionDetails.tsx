@@ -6,12 +6,13 @@ import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import toast from 'react-hot-toast';
-import { Question } from '@/types/types';
+import { Attempt, Question } from '@/types/types';
 import { DeleteButton } from './DeleteButton';
+import AddAttemptTrigger from './AddAttemptTrigger';
 
 
 const QuestionDetails = ({ question }: { question: Question }) => {
-  const attempts = question.attempts || [];
+  const [attempts, setAttempts] = useState(question.attempts || []);
   const totalAttempts = attempts.length;
   const [currentAttemptIndex, setCurrentAttemptIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
@@ -66,6 +67,11 @@ const QuestionDetails = ({ question }: { question: Question }) => {
     }
   }
 
+  const handleAddAttempt = (newAttempt: Attempt) => {
+    setAttempts((prev) => [...prev, newAttempt]);
+    setCurrentAttemptIndex(attempts.length); // jump to new attempt
+  };
+
   return (
     <div className="question-container px-4 sm:px-6 w-full">
       <section className="question-header">
@@ -92,7 +98,21 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                 ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
                 : 'No attempts yet'}
             </h2>
-            <DeleteButton questionId='123' buttonLabel='Delete Attempt' deleteType='delete-attempt'/>
+            {attempts.length > 0 ? 
+              <DeleteButton 
+                deleteItemId={attempts[currentAttemptIndex].id} 
+                buttonLabel='Delete Attempt' 
+                deleteType='delete-attempt' 
+                className='delete-attempt-button'
+                onDeleteSuccess={() => {
+                  const updated = [...attempts];
+                  updated.splice(currentAttemptIndex, 1);
+                  setAttempts(updated);
+                  setCurrentAttemptIndex((prev) => Math.max(prev - 1, 0));
+                }}
+              />
+              : <></>
+            }
           </div>
 
           {totalAttempts > 0 ? (() => {
@@ -135,6 +155,9 @@ const QuestionDetails = ({ question }: { question: Question }) => {
           })() : (
             <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
           )}
+          <div className='button-section'>
+            <AddAttemptTrigger questionId={question.id} onAdd={handleAddAttempt}/>
+          </div>
         </section>
         <section className="w-full lg:flex-1 min-w-0">
           <div className="flex flex-col h-full bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner">

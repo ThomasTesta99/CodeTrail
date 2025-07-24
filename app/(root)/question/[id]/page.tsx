@@ -2,7 +2,7 @@ import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
 import { DeleteButton } from '@/components/DeleteButton';
 import React from 'react'
-import AddAttemptTrigger from '@/components/AddAttemptTrigger';
+//import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
 const page = async ({ params }: { params: { id: string } }) => {
   const questionId = await params.id;
@@ -27,11 +27,11 @@ const page = async ({ params }: { params: { id: string } }) => {
 
   return (
     <div className='px-4 sm:px-6 max-w-screen-xl mx-auto w-full mb-4'>
+
       <QuestionDetails question={question} />
 
       <section className="button-section">
-        <AddAttemptTrigger questionId={questionId}/>
-        <DeleteButton questionId={questionId} buttonLabel='Delete Question' deleteType='delete-question'/> 
+        <DeleteButton deleteItemId={questionId} buttonLabel='Delete Question' deleteType='delete-question' className='delete-question-button'/> 
       </section>
     </div>
   );

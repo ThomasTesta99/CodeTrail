@@ -1,6 +1,6 @@
 import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
-import { DeleteQuestionButton } from '@/components/DeleteQuestionButton';
+import { DeleteButton } from '@/components/DeleteButton';
 import React from 'react'
 import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
@@ -31,7 +31,7 @@ const page = async ({ params }: { params: { id: string } }) => {
 
       <section className="button-section">
         <AddAttemptTrigger questionId={questionId}/>
-        <DeleteQuestionButton questionId={questionId} /> 
+        <DeleteButton questionId={questionId} buttonLabel='Delete Question' deleteType='delete-question'/> 
       </section>
     </div>
   );

@@ -4,6 +4,7 @@ import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  eq, inArray } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
+import { Attempt, DatabaseQuestion } from "@/types/types";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {

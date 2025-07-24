@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import toast from 'react-hot-toast';
 import { Question } from '@/types/types';
+import { DeleteButton } from './DeleteButton';
 
 
 const QuestionDetails = ({ question }: { question: Question }) => {
@@ -84,52 +85,56 @@ const QuestionDetails = ({ question }: { question: Question }) => {
 
       <div className='flex flex-col lg:flex-row gap-8 mt-6 w-full'>
         <section className="w-full lg:w-2/3 min-w-0 flex-1 attempt-section">
-        <h2 className="attempt-title">
-          {totalAttempts > 0
-            ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
-            : 'No attempts yet'}
-        </h2>
 
-        {totalAttempts > 0 ? (() => {
-          const currentAttempt = attempts[currentAttemptIndex];
-          const languageLabel =
-            LANGUAGE_OPTIONS.find(opt => opt.value === currentAttempt.language)?.label ||
-            currentAttempt.language;
+          <div className = "flex flex-row justify-between">
+            <h2 className="attempt-title">
+              {totalAttempts > 0
+                ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
+                : 'No attempts yet'}
+            </h2>
+            <DeleteButton questionId='123' buttonLabel='Delete Attempt' deleteType='delete-attempt'/>
+          </div>
 
-          return (
-            <>
-              <SyntaxHighlighter
-                language={currentAttempt.language || 'javascript'}
-                style={materialDark}
-                showLineNumbers
-                wrapLines
-                customStyle={{
-                  borderRadius: '0.75rem',
-                  padding: '1rem',
-                  fontSize: '0.85rem',
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                }}
-              >
-                {currentAttempt.solutionCode}
-              </SyntaxHighlighter>
+          {totalAttempts > 0 ? (() => {
+            const currentAttempt = attempts[currentAttemptIndex];
+            const languageLabel =
+              LANGUAGE_OPTIONS.find(opt => opt.value === currentAttempt.language)?.label ||
+              currentAttempt.language;
 
-              <div className="attempt-details">
-                <p><span className="font-semibold">Language:</span> {languageLabel}</p>
-                <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
-                <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
-                <p><span className="font-semibold">Notes:</span> {currentAttempt.notes || 'N/A'}</p>
-              </div>
+            return (
+              <>
+                <SyntaxHighlighter
+                  language={currentAttempt.language || 'javascript'}
+                  style={materialDark}
+                  showLineNumbers
+                  wrapLines
+                  customStyle={{
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    fontSize: '0.85rem',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {currentAttempt.solutionCode}
+                </SyntaxHighlighter>
 
-              <div className="nav-buttons">
-                <button onClick={handlePrev} disabled={currentAttemptIndex === 0} className="nav-button">Previous</button>
-                <button onClick={handleNext} disabled={currentAttemptIndex === totalAttempts - 1} className="nav-button">Next</button>
-              </div>
-            </>
-          );
-        })() : (
-          <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
-        )}
+                <div className="attempt-details">
+                  <p><span className="font-semibold">Language:</span> {languageLabel}</p>
+                  <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
+                  <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
+                  <p><span className="font-semibold">Notes:</span> {currentAttempt.notes || 'N/A'}</p>
+                </div>
+
+                <div className="nav-buttons">
+                  <button onClick={handlePrev} disabled={currentAttemptIndex === 0} className="nav-button">Previous</button>
+                  <button onClick={handleNext} disabled={currentAttemptIndex === totalAttempts - 1} className="nav-button">Next</button>
+                </div>
+              </>
+            );
+          })() : (
+            <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
+          )}
         </section>
         <section className="w-full lg:flex-1 min-w-0">
           <div className="flex flex-col h-full bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner">

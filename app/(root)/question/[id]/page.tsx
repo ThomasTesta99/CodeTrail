@@ -2,6 +2,7 @@ import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
 import { DeleteButton } from '@/components/DeleteButton';
 import React from 'react'
+import EditQuestionTrigger from '@/components/EditQuestionTrigger';
 //import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
 const page = async ({ params }: { params: { id: string } }) => {
@@ -31,6 +32,7 @@ const page = async ({ params }: { params: { id: string } }) => {
       <QuestionDetails question={question} />
 
       <section className="button-section">
+        <EditQuestionTrigger question={question}/>
         <DeleteButton deleteItemId={questionId} buttonLabel='Delete Question' deleteType='delete-question' className='delete-question-button'/> 
       </section>
     </div>

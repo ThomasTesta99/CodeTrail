@@ -322,7 +322,8 @@
 
 
   .modal-content {
-    @apply bg-white rounded-2xl p-8 max-w-lg w-full shadow-xl relative;
+    @apply bg-white rounded-2xl p-8 max-w-lg w-full shadow-xl relative ;
+    max-height: 90vh;
   }
 
   .modal-close {

@@ -1,10 +1,14 @@
+'use client'
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { Question } from '@/types/types';
+import { updateQuestion } from '@/lib/user-actions/questions';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 const schema = z.object({
     title: z.string().min(1),
@@ -21,7 +25,7 @@ const schema = z.object({
     }))
 })
 
-type EditFormData = z.infer<typeof schema>;
+export type EditFormData = z.infer<typeof schema>;
 
 const EditQuestion = ({question, onClose}: {question: Question; onClose : () => void}) => {
     const {register, handleSubmit, control, formState: {errors, isSubmitting}} = useForm<EditFormData>({
@@ -33,7 +37,7 @@ const EditQuestion = ({question, onClose}: {question: Question; onClose : () => 
             attempts: question.attempts,
         }
     })
-
+    const router = useRouter();
     const {fields} = useFieldArray({
         control, 
         name: "attempts",
@@ -41,51 +45,113 @@ const EditQuestion = ({question, onClose}: {question: Question; onClose : () => 
 
     const onSubmit =  async (data: EditFormData) => {
         console.log(data);
+        const newQuestion = data;
+        const oldQuestion = question
+        const result = await updateQuestion({oldQuestion, newQuestion});
+        if(result.success){
+          toast.success(result.message);
+        }else{
+          toast.error(result.message);
+        }
         onClose();
+        router.push(`/question/${question.id}`);
     }
 
   return (
-    <div className='modal-backdrop'>
-      <div className='modal-content'>
+    <div className="modal-backdrop">
+      <div className="modal-content max-w-3xl overflow-y-auto">
         <button className="modal-close" onClick={onClose}>
-          <Image src='/assets/icons/close.svg' alt='close' width={16} height={16} />
+          <Image src="/assets/icons/close.svg" alt="close" width={16} height={16} />
         </button>
-        <h2 className='modal-title'>Edit Question</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <input {...register('title')} placeholder="Title" className="input" />
-          <textarea {...register('description')} placeholder="Description" className="textarea" />
-          <select {...register('difficulty')} className="select">
+
+        <h2 className="modal-title">Edit Question</h2>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="modal-form">
+          <input
+            {...register("title")}
+            placeholder="Title"
+            className="input-field"
+          />
+
+          <textarea
+            {...register("description")}
+            placeholder="Description"
+            className="input-field"
+          />
+
+          <select {...register("difficulty")} className="select-field">
             <option value="">Select Difficulty</option>
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
           </select>
 
-          <h3 className="text-lg font-semibold mt-4">Attempts</h3>
+          <div className="space-y-2">
+            <input
+              type="url"
+              placeholder="LeetCode Link (Optional)"
+              {...register("link")}
+              className="input-field"
+            />
+          </div>
+
+          <h3 className="text-lg font-semibold mt-4 text-[#2C325D]">Attempts</h3>
           {fields.map((field, index) => (
-            <div key={field.id} className="border p-3 rounded-md space-y-2">
-              <textarea {...register(`attempts.${index}.solutionCode`)} className="textarea" />
-              <select {...register(`attempts.${index}.language`)} className="select">
-                {LANGUAGE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <div
+              key={field.id}
+              className="border border-gray-300 p-4 rounded-lg space-y-3 bg-gray-50"
+            >
+              <textarea
+                {...register(`attempts.${index}.solutionCode`)}
+                className="input-field"
+                placeholder="Solution Code"
+              />
+              <select
+                {...register(`attempts.${index}.language`)}
+                className="select-field"
+              >
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
-              <input type="number" {...register(`attempts.${index}.durationMinutes`)} className="input" placeholder="Duration (min)" />
-              <label>
-                <input type="checkbox" {...register(`attempts.${index}.neededHelp`)} />
+              <input
+                type="number"
+                {...register(`attempts.${index}.durationMinutes`)}
+                className="input-field"
+                placeholder="Duration (min)"
+              />
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  {...register(`attempts.${index}.neededHelp`)}
+                />
                 Needed Help
               </label>
-              <textarea {...register(`attempts.${index}.notes`)} className="textarea" placeholder="Notes" />
-              <input type="hidden" {...register(`attempts.${index}.id`)} />
+              <textarea
+                {...register(`attempts.${index}.notes`)}
+                className="input-field"
+                placeholder="Notes"
+              />
+              <input
+                type="hidden"
+                {...register(`attempts.${index}.id`)}
+              />
             </div>
           ))}
 
-          <button type="submit" disabled={isSubmitting} className="btn">
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="submit-button"
+          >
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </button>
         </form>
       </div>
     </div>
+
   )
 }
 

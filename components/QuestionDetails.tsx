@@ -1,6 +1,6 @@
 'use client';
 import { LANGUAGE_OPTIONS } from '@/constants';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { Attempt, Question } from '@/types/types';
 import { DeleteButton } from './DeleteButton';
 import AddAttemptTrigger from './AddAttemptTrigger';
-
 
 const QuestionDetails = ({ question }: { question: Question }) => {
   const [attempts, setAttempts] = useState(question.attempts || []);
@@ -67,9 +66,14 @@ const QuestionDetails = ({ question }: { question: Question }) => {
     }
   }
 
+  useEffect(() => {
+    const newAttempts = question.attempts ?? [];
+    setAttempts(newAttempts);
+  }, [question.attempts])
+
   const handleAddAttempt = (newAttempt: Attempt) => {
     setAttempts((prev) => [...prev, newAttempt]);
-    setCurrentAttemptIndex(attempts.length); // jump to new attempt
+    setCurrentAttemptIndex(attempts.length);
   };
 
   return (

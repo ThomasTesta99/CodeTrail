@@ -3,7 +3,6 @@ import { getQuestionById } from '@/lib/user-actions/questions';
 import { DeleteButton } from '@/components/DeleteButton';
 import React from 'react'
 import EditQuestionTrigger from '@/components/EditQuestionTrigger';
-//import AddAttemptTrigger from '@/components/AddAttemptTrigger';
 
 const page = async ({ params }: { params: { id: string } }) => {
   const questionId = await params.id;

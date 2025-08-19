@@ -1,8 +1,15 @@
 'use client'
 import React, { useState } from 'react'
 import AddAttempt from './AddAttempt';
+import { Attempt } from '@/types/types';
 
-const AddAttemptTrigger = ({questionId}: {questionId: string}) => {
+const AddAttemptTrigger = ({
+  questionId,
+  onAdd,
+}: {
+  questionId: string,
+  onAdd: (attempt: Attempt) => void
+}) => {
     const [showModal, setShowModal] = useState(false);
   return (
     <>
@@ -10,7 +17,7 @@ const AddAttemptTrigger = ({questionId}: {questionId: string}) => {
           Add New Attempt
       </button>
       {showModal && (
-        <AddAttempt questionId={questionId} onClose={() => setShowModal(false)}/>
+        <AddAttempt questionId={questionId} onClose={() => setShowModal(false)}  onAdd={onAdd}/>
       )}
     </>
   )

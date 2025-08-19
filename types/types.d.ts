@@ -61,3 +61,5 @@ declare interface DatabaseQuestion {
 }
 
 export type Action = 'ai-feedback' | 'password-reset';
+
+export type DeleteType =  'delete-attempt' | 'delete-question';

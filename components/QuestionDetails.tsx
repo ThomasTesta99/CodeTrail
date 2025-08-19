@@ -1,16 +1,17 @@
 'use client';
 import { LANGUAGE_OPTIONS } from '@/constants';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import toast from 'react-hot-toast';
-import { Question } from '@/types/types';
-
+import { Attempt, Question } from '@/types/types';
+import { DeleteButton } from './DeleteButton';
+import AddAttemptTrigger from './AddAttemptTrigger';
 
 const QuestionDetails = ({ question }: { question: Question }) => {
-  const attempts = question.attempts || [];
+  const [attempts, setAttempts] = useState(question.attempts || []);
   const totalAttempts = attempts.length;
   const [currentAttemptIndex, setCurrentAttemptIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
@@ -65,6 +66,16 @@ const QuestionDetails = ({ question }: { question: Question }) => {
     }
   }
 
+  useEffect(() => {
+    const newAttempts = question.attempts ?? [];
+    setAttempts(newAttempts);
+  }, [question.attempts])
+
+  const handleAddAttempt = (newAttempt: Attempt) => {
+    setAttempts((prev) => [...prev, newAttempt]);
+    setCurrentAttemptIndex(attempts.length);
+  };
+
   return (
     <div className="question-container px-4 sm:px-6 w-full">
       <section className="question-header">
@@ -84,52 +95,73 @@ const QuestionDetails = ({ question }: { question: Question }) => {
 
       <div className='flex flex-col lg:flex-row gap-8 mt-6 w-full'>
         <section className="w-full lg:w-2/3 min-w-0 flex-1 attempt-section">
-        <h2 className="attempt-title">
-          {totalAttempts > 0
-            ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
-            : 'No attempts yet'}
-        </h2>
 
-        {totalAttempts > 0 ? (() => {
-          const currentAttempt = attempts[currentAttemptIndex];
-          const languageLabel =
-            LANGUAGE_OPTIONS.find(opt => opt.value === currentAttempt.language)?.label ||
-            currentAttempt.language;
-
-          return (
-            <>
-              <SyntaxHighlighter
-                language={currentAttempt.language || 'javascript'}
-                style={materialDark}
-                showLineNumbers
-                wrapLines
-                customStyle={{
-                  borderRadius: '0.75rem',
-                  padding: '1rem',
-                  fontSize: '0.85rem',
-                  maxHeight: '400px',
-                  overflowY: 'auto',
+          <div className = "flex flex-row justify-between">
+            <h2 className="attempt-title">
+              {totalAttempts > 0
+                ? `Attempt ${currentAttemptIndex + 1} of ${totalAttempts}`
+                : 'No attempts yet'}
+            </h2>
+            {attempts.length > 0 ? 
+              <DeleteButton 
+                deleteItemId={attempts[currentAttemptIndex].id} 
+                buttonLabel='Delete Attempt' 
+                deleteType='delete-attempt' 
+                className='delete-attempt-button'
+                onDeleteSuccess={() => {
+                  const updated = [...attempts];
+                  updated.splice(currentAttemptIndex, 1);
+                  setAttempts(updated);
+                  setCurrentAttemptIndex((prev) => Math.max(prev - 1, 0));
                 }}
-              >
-                {currentAttempt.solutionCode}
-              </SyntaxHighlighter>
+              />
+              : <></>
+            }
+          </div>
 
-              <div className="attempt-details">
-                <p><span className="font-semibold">Language:</span> {languageLabel}</p>
-                <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
-                <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
-                <p><span className="font-semibold">Notes:</span> {currentAttempt.notes || 'N/A'}</p>
-              </div>
+          {totalAttempts > 0 ? (() => {
+            const currentAttempt = attempts[currentAttemptIndex];
+            const languageLabel =
+              LANGUAGE_OPTIONS.find(opt => opt.value === currentAttempt.language)?.label ||
+              currentAttempt.language;
 
-              <div className="nav-buttons">
-                <button onClick={handlePrev} disabled={currentAttemptIndex === 0} className="nav-button">Previous</button>
-                <button onClick={handleNext} disabled={currentAttemptIndex === totalAttempts - 1} className="nav-button">Next</button>
-              </div>
-            </>
-          );
-        })() : (
-          <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
-        )}
+            return (
+              <>
+                <SyntaxHighlighter
+                  language={currentAttempt.language || 'javascript'}
+                  style={materialDark}
+                  showLineNumbers
+                  wrapLines
+                  customStyle={{
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    fontSize: '0.85rem',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {currentAttempt.solutionCode}
+                </SyntaxHighlighter>
+
+                <div className="attempt-details">
+                  <p><span className="font-semibold">Language:</span> {languageLabel}</p>
+                  <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
+                  <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
+                  <p><span className="font-semibold">Notes:</span> {currentAttempt.notes || 'N/A'}</p>
+                </div>
+
+                <div className="nav-buttons">
+                  <button onClick={handlePrev} disabled={currentAttemptIndex === 0} className="nav-button">Previous</button>
+                  <button onClick={handleNext} disabled={currentAttemptIndex === totalAttempts - 1} className="nav-button">Next</button>
+                </div>
+              </>
+            );
+          })() : (
+            <p className="text-gray-600 text-center">No attempts recorded for this question yet.</p>
+          )}
+          <div className='button-section'>
+            <AddAttemptTrigger questionId={question.id} onAdd={handleAddAttempt}/>
+          </div>
         </section>
         <section className="w-full lg:flex-1 min-w-0">
           <div className="flex flex-col h-full bg-gray-800 p-4 rounded-xl text-sm text-white shadow-inner">

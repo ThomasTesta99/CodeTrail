@@ -2,8 +2,10 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  eq, inArray } from "drizzle-orm";
+import {  and, eq, inArray } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
+import { Attempt, DatabaseQuestion, Question} from "@/types/types";
+import { EditFormData } from "@/components/EditQuestion";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -181,22 +183,22 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
     }
 }
 
-export const deleteQuestion = async ({questionId}: {questionId: string}) => {
+export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => {
     try {
        const session = await getUserSession();
         if (!session?.user?.id) {
             return { success: false, message: 'Unauthorized' };
         }
 
-        await db.delete(attempts).where(eq(attempts.questionId, questionId));
-        await db.delete(question).where(eq(question.id, questionId));
+        await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
+        await db.delete(question).where(eq(question.id, deleteItemId));
         return { success: true, message: 'Question deleted' };
-            } catch (error) {
-        console.log(error)
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error) 
-        }
+        } catch (error) {
+            console.log(error)
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : String(error) 
+            }
     }
 }
 
@@ -222,5 +224,86 @@ export const addAttempt = async ({questionId, attempt}: {questionId: string, att
             success: false,
             message: error instanceof Error ? error.message : String(error)
         }
+    }
+}
+
+export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
+    try {
+        const session = await getUserSession();
+        if (!session?.user?.id) {
+            return { success: false, message: 'Unauthorized' };
+        }
+
+        await db.delete(attempts).where(eq(attempts.id, deleteItemId));
+        return {
+            success: true,
+            message: "Attempt successfully deleted",
+        }
+    } catch (error) {
+        return{
+            success: false,
+            message: error instanceof Error ? error.message : String(error),
+        }
+    }
+}
+
+export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: Question, newQuestion: EditFormData}) => {
+    try {
+        const session = await getUserSession();
+        if(!session?.user?.id){
+            return {
+                success: false,
+                message: "Unautherized",
+            }
+        }
+
+        const [existing] = await db.select().from(question).where(eq(question.id, oldQuestion.id)).limit(1);
+
+        if(!existing){
+            return {
+                success: false,
+                message: "Question not found",
+            }
+        }
+
+        if(existing.userId !== session.user.id){
+            return {
+                success: false,
+                message: "Unautherized"
+            }
+        }
+
+        await db
+            .update(question)
+            .set({
+                title: newQuestion.title,
+                description: newQuestion.description,
+                difficulty: newQuestion.difficulty,
+                link: newQuestion.link ?? null,
+            })
+            .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)));
+
+        if(oldQuestion.attempts?.length === newQuestion.attempts?.length && newQuestion.attempts?.length){
+            for(const a of newQuestion.attempts){
+                await db
+                    .update(attempts)
+                    .set({
+                        solutionCode: a.solutionCode,
+                        language: a.language,
+                        neededHelp: a.neededHelp,
+                        durationMinutes: a.durationMinutes,
+                        notes: a.notes,
+                    })
+                    .where(and(eq(attempts.id, a.id), eq(attempts.questionId, oldQuestion.id)));
+            }
+        }
+
+        return {
+            success: true,
+            message: "Question sucessfully updated"
+        };
+    } catch (error) {
+        console.log(error);
+        return { success: false, message: error instanceof Error ? error.message : String(error) };
     }
 }

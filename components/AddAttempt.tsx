@@ -1,6 +1,7 @@
 'use client '
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
+import { Attempt } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -19,7 +20,15 @@ const attemptSchema = z.object({
 
 type AttemptFormData = z.infer<typeof attemptSchema>;
 
-const AddAttempt = ({ questionId, onClose }: { questionId: string, onClose: () => void }) => {
+const AddAttempt = (
+  { questionId, 
+    onClose, 
+    onAdd,
+  }: { 
+    questionId: string, 
+    onClose: () => void,
+    onAdd: (attempt: Attempt) => void
+  }) => {
   const router = useRouter();
   const {register, handleSubmit, formState: {errors, isSubmitting}} = useForm<AttemptFormData>({
     resolver: zodResolver(attemptSchema),
@@ -38,6 +47,7 @@ const AddAttempt = ({ questionId, onClose }: { questionId: string, onClose: () =
     if(result.success){
       toast.success(result.message);
       onClose();
+      onAdd(newAttempt);
       router.refresh();
     }else{
       toast.error(result.message || 'Failed to add attempt');

@@ -74,7 +74,7 @@ const page = async () => {
             Welcome, {firstName}!
           </h1>
           <p className="dashboard-header-desc">
-            Empower your coding journey. Log your LeetCode challenges, track attempts, and reflect on your problem-solving skills. Discover what works best and achieve mastery!
+            Empower your coding journey. Log your technical challenges, track attempts, and reflect on your problem-solving skills. Discover what works best and achieve mastery!
           </p>
         </header>
 

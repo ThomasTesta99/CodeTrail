@@ -54,7 +54,7 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
         : await signInUser(userInfo as SignInUserInfo);
 
       if (result && 'token' in result && result.token) {
-        router.refresh(); // optional
+        router.refresh();
         router.push('/');
       }
     } catch (err) {

@@ -4,8 +4,9 @@ import { DeleteButton } from '@/components/DeleteButton';
 import React from 'react'
 import EditQuestionTrigger from '@/components/EditQuestionTrigger';
 
-const page = async ({ params }: { params: { id: string } }) => {
-  const questionId = await params.id;
+const page = async ({ params }: { params: Promise<{id : string}>}) => {
+  const p = await params;
+  const questionId = p.id;
 
   const result = await getQuestionById({ questionId });
 

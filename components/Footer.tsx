@@ -14,7 +14,7 @@ const Footer = ({user}: UserProps) => {
     }
     
     return (
-        <footer className="footer">
+        <footer className="footer mt-auto">
             <div className={`footer-name ${user?.image ? 'bg-transparent' : 'bg-gray-600'}`}>
                 {user?.image ? (
                     <Image src={user.image} alt="User image" width={100} height={100} className="rounded-full" />

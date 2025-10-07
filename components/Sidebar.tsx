@@ -11,8 +11,8 @@ import { UserProps } from '@/types/types'
 const Sidebar = ({user}: UserProps) => {
     const pathName = usePathname();
     return (
-        <section className="sidebar">
-            <nav className="flex flex-col gap-4">
+        <section className="sidebar flex h-full min-h-0 flex-col ">
+            <nav className="flex-1 flex flex-col gap-4 overflow-y-auto">
                 <Link href='/' className='mb-12 cursor-pointer flex items-center gap-2'>
                     <h1 className="sidebar-logo">&lt;CodeTrail /&gt;</h1>
                 </Link>

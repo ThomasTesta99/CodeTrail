@@ -99,12 +99,12 @@
   }
 
   .dashboard-main {
-    @apply flex-grow p-6 space-y-16;
+    @apply flex-grow p-4 space-y-16;
   }
 
   /* Header Section */
   .dashboard-header {
-    @apply text-center max-w-3xl mx-auto space-y-6 pt-16;
+    @apply text-center max-w-3xl mx-auto space-y-6 lg:pt-16;
   }
 
   .dashboard-header-title {

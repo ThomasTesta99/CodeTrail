@@ -92,6 +92,14 @@
     @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
   }
 
+   .footer-name-with-image {
+    @apply w-14 h-14; /* or size-14; bigger avatar */
+  }
+
+  .footer-image-large {
+    @apply w-7 h-7; /* or size-8 if you want it even bigger */
+  }
+
 
   /* Layout Container */
   .dashboard-container {

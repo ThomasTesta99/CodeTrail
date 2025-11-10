@@ -93,11 +93,11 @@
   }
 
    .footer-name-with-image {
-    @apply w-14 h-14; /* or size-14; bigger avatar */
+    @apply flex items-center justify-center rounded-full bg-transparent max-xl:hidden relative overflow-hidden; 
   }
 
   .footer-image-large {
-    @apply w-7 h-7; /* or size-8 if you want it even bigger */
+    @apply relative max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
   }
 
 

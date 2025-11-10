@@ -18,9 +18,9 @@ const Footer = ({ user }: UserProps) => {
   return (
     <footer className="footer mt-auto">
       <div
-        className={`footer-name ${
-          hasImage ? 'footer-name-with-image bg-transparent relative overflow-hidden' : ''
-        }`}
+        className= {
+          hasImage ? 'footer-name-with-image' : 'footer-name'
+        }
       >
         {hasImage ? (
           <Image
@@ -47,7 +47,7 @@ const Footer = ({ user }: UserProps) => {
 
       <button
         onClick={signOut}
-        className={`footer-image ${hasImage ? 'footer-image-large' : ''}`}
+        className={hasImage ? 'footer-image-large' : 'footer-image'}
       >
         <Image
           src="/assets/icons/logout.svg"

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { signInUser, signUpUser } from '@/lib/user-actions/authActions';
 import { CreateUserInfo, SignInUserInfo } from '@/types/types';
+import toast from 'react-hot-toast';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -53,7 +54,10 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
         ? await signUpUser(userInfo as CreateUserInfo)
         : await signInUser(userInfo as SignInUserInfo);
 
-      if (result && 'token' in result && result.token) {
+      if (result.success) {
+
+        toast.success(type === 'sign-up' ? "Signed Up Successfully" : "Signed In Successfully");
+
         router.refresh();
         router.push('/');
       }

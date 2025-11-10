@@ -1,7 +1,6 @@
 'use server'
 import { headers } from "next/headers";
 import { auth } from "../auth";
-import { authClient } from "../auth-client";
 import { db } from "@/database/drizzle";
 import { account, user } from "@/database/schema";
 import { eq } from "drizzle-orm";
@@ -10,39 +9,53 @@ import { Action, CreateUserInfo, SignInUserInfo} from "@/types/types";
 
 
 export const logoutUser = async () => {
-    try {
-        await authClient.signOut();
-        auth.api.signOut({headers: await headers()});
-    } catch (error) {
-        console.log(error);
-    }
+    auth.api.signOut({headers: await headers()});
 }
 
 export const signUpUser = async({name, email, password}: CreateUserInfo) => {
     try {
-        const result =  await authClient.signUp.email({
-            email, 
-            name, 
-            password
+        const newUser = await auth.api.signUpEmail({
+            body: {
+                name, 
+                email, 
+                password,
+            },
+            headers: await headers(),
         })
-        
-        return result;
+
+        return {
+            success: true, 
+            message: "Signed Up sucessfully. ", 
+            newUser,
+        }
     } catch (error) {
-        console.log(error);
+        return {
+            success: false,
+            message: "There was an error signing up: " + error as string,
+        }
     }
 }
 
 export const signInUser = async({email, password}: SignInUserInfo) => {
     try {
-        const result = await auth.api.signInEmail({
+        const user = await auth.api.signInEmail({
             body: {
-                email: email, 
-                password: password,
-            }
+                email, 
+                password
+            },
+            headers: await headers(),
         })
-        return result;
+
+        return {
+            success: true, 
+            message: "User successfuly logged in.",
+            user,
+        }
     } catch (error) {
-        console.log(error);
+        return {
+            success: false,
+            message: "There was an error signing in: " + error as string,
+        }
     }
 }
 

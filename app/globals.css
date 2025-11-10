@@ -59,7 +59,7 @@
 
   /* SIDEBAR */
   .sidebar{
-    @apply sticky left-0 top-0 flex h-screen w-[250px] sm:w-[220px] md:w-[250px] lg:w-[220px] xl:w-[260px] flex-col justify-between border-r border-gray-200 bg-[#1E1E2F] text-white p-5
+    @apply sticky left-0 top-0 flex h-screen w-[300px] max-xl:w-[215px] flex-col justify-between border-r border-gray-200 bg-[#1E1E2F] text-white p-5
   }
 
   .sidebar-logo{
@@ -92,14 +92,6 @@
     @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
   }
 
-   .footer-name-with-image {
-    @apply flex items-center justify-center rounded-full max-xl:hidden; 
-  }
-
-  .footer-image-large {
-    @apply relative max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
-  }
-
 
   /* Layout Container */
   .dashboard-container {
@@ -107,7 +99,7 @@
   }
 
   .dashboard-main {
-    @apply flex-grow p-4 space-y-16;
+    @apply flex-grow px-10 space-y-16;
   }
 
   /* Header Section */

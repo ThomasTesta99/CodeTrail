@@ -13,7 +13,7 @@ const layout = async ({children}: {children: ReactNode}) => {
         <Topbar user={user} />
       </div>
 
-      <div className="hidden md:flex md:flex-col md:w-64 md:shrink-0 md:self-stretch">
+      <div className="hidden md:flex md:flex-col">
         <Sidebar user={user} />
       </div>
 

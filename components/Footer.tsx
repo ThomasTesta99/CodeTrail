@@ -12,12 +12,10 @@ const Footer = ({user}: UserProps) => {
         logoutUser();
         router.push('/sign-in')
     }
-
-    const hasImage = !!user?.image
     
     return (
         <footer className="footer mt-auto">
-            <div className= {hasImage ? "footer-name-with-image bg-transparent" : "footer-name"}>
+            <div className={`footer-name ${user?.image ? 'bg-transparent' : 'bg-gray-600'}`}>
                 {user?.image ? (
                     <Image src={user.image} alt="User image" width={100} height={100} className="rounded-full" />
                 ) : (
@@ -36,7 +34,7 @@ const Footer = ({user}: UserProps) => {
                 </p>
             </div>
 
-            <button onClick={signOut} className={user?.image ? "footer-image-large" : "footer-image"}>
+            <button onClick={signOut} className="footer-image">
                 <Image src="/assets/icons/logout.svg" fill alt="logout" className="brightness-0 invert" />
             </button>
         </footer>

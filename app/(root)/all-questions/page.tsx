@@ -6,9 +6,10 @@ import React from 'react';
 
 
 
-const page = async ({searchParams}: {searchParams:{page?:string}}) => {
+const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
   const session = await getUserSession();
   const user = session?.user;
+  const params = await searchParams;
 
   if (!user) {
     return (
@@ -19,7 +20,7 @@ const page = async ({searchParams}: {searchParams:{page?:string}}) => {
     );
   }
 
-  const pageNumber = parseInt(searchParams.page || '1', 10);
+  const pageNumber = parseInt(params.page || '1', 10);
   const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
 
   const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset });

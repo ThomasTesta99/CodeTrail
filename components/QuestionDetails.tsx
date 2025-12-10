@@ -79,12 +79,17 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   return (
     <div className="question-container px-4 sm:px-6 w-full">
       <section className="question-header">
-        <h1 className="question-title">{question.title}</h1>
+        <div className="flex flex-row justify-between items-center">
+          <h1 className="question-title">{question.title}</h1>
+        </div>
         <p className="question-description">{question.description}</p>
         <div className="question-tags">
           <span className={`difficulty-badge ${question.difficulty.toLowerCase()}`}>
             {question.difficulty}
           </span>
+          {question.label !== "Unlabeled" && (
+            <p className="label-badge">{question.label}</p>
+          )}
           {question.link && (
             <a href={question.link} className="leetcode-link">
               View on LeetCode →

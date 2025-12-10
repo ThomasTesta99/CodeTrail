@@ -14,5 +14,6 @@ export async function middleware(request: NextRequest, response: NextResponse){
 }
 
 export const config = {
+    runtime: "nodejs",
     matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up|forgot-password|reset-password|assets).*)"]
 }

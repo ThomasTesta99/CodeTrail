@@ -146,7 +146,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                 <div className="attempt-details">
                   <p><span className="font-semibold">Language:</span> {languageLabel}</p>
                   <p><span className="font-semibold">Help Needed:</span> {currentAttempt.neededHelp ? 'Yes' : 'No'}</p>
-                  <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} minutes</p>
+                  <p><span className="font-semibold">Duration:</span> {currentAttempt.durationMinutes} {currentAttempt.durationMinutes === 1 ? "minute" : "minutes"}</p>
                   <p><span className="font-semibold">Notes:</span> {currentAttempt.notes || 'N/A'}</p>
                 </div>
 

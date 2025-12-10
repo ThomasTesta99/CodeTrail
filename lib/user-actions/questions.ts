@@ -279,6 +279,7 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                 title: newQuestion.title,
                 description: newQuestion.description,
                 difficulty: newQuestion.difficulty,
+                label: newQuestion.label,
                 link: newQuestion.link ?? null,
             })
             .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)));

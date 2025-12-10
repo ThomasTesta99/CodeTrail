@@ -14,6 +14,7 @@ const questionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
+  label: z.string(),
   link: z.string()
     .optional()
     .refine((val) => !val || z.string().url().safeParse(val).success, {
@@ -102,6 +103,15 @@ const AddQuestionForm = ({ user }: UserProps) => {
             className="input-field"
           />
           {errors.link && <p className="error-text">{errors.link.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <input 
+            type="text" 
+            className="input-field" 
+            placeholder='Unlabeled'
+            {...register('label')}
+          />
         </div>
 
         <button type="submit" disabled={isSubmitting} className="submit-button">

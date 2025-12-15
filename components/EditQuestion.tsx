@@ -43,7 +43,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
       description: question.description ?? '',
       difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') ?? 'Easy',
       link: question.link ?? '',
-      label: question.label ?? '',
+      label: question.label ?? 'Unlabeled',
       attempts: (question.attempts ?? []).map(a => ({
         id: a.id,
         solutionCode: a.solutionCode ?? '',
@@ -63,6 +63,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
   const onSubmit = async (data: EditFormData) => {
     const newQuestion = data;
     const oldQuestion = question;
+    if(newQuestion.label === "") newQuestion.label = "Unlabeled"
     const result = await updateQuestion({ oldQuestion, newQuestion });
 
     if (result.success) {

@@ -1,10 +1,9 @@
 import QuestionCard from '@/components/QuestionCard';
+import QuestionFilterBar from '@/components/QuestionFilterBar';
 import { QUESTIONS_PER_PAGE } from '@/constants';
 import { getUserSession } from '@/lib/user-actions/authActions';
 import { getAllUserQuestions } from '@/lib/user-actions/questions';
 import React from 'react';
-
-
 
 const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
   const session = await getUserSession();
@@ -58,6 +57,8 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
             Browse your submitted questions. Track progress and dive into problem-solving!
           </p>
         </header>
+
+        <QuestionFilterBar />
 
         <section>
           <div className="all-questions-grid">

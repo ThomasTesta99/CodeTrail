@@ -150,18 +150,18 @@
     @apply block cursor-pointer;
   }
 
-  .question-card-header {
-    @apply flex justify-between items-start mb-4;
-  }
+ .question-card-header {
+  @apply flex flex-wrap justify-between items-start gap-2 mb-4;
+}
 
-  .question-card-title {
-    @apply text-lg font-bold leading-tight;
-  }
+
+.question-card-title {
+  @apply text-lg font-bold leading-tight flex-1 min-w-0;
+}
 
   .question-card-badge {
-    @apply px-3 py-1 rounded-full text-xs font-bold;
-  }
-
+  @apply px-3 py-1 rounded-full text-xs font-bold shrink-0;
+}
   .question-card-desc {
     @apply text-sm text-gray-300 line-clamp-3 mb-4;
   }
@@ -192,6 +192,11 @@
 
   .question-description {
     @apply text-base leading-relaxed;
+  }
+
+  .label-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+      border;
   }
 
   .question-tags {

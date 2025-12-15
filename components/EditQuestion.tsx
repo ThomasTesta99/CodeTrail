@@ -15,6 +15,7 @@ const schema = z.object({
   description: z.string().min(1, 'Description is required'),
   difficulty: z.enum(['Easy', 'Medium', 'Hard'], { required_error: 'Difficulty is required' }),
   link: z.union([z.literal(''), z.string().url('Must be a valid URL')]).optional(),
+  label: z.string(),
   attempts: z.array(z.object({
     id: z.string(),
     solutionCode: z.string().min(1, 'Solution code is required'),
@@ -42,6 +43,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
       description: question.description ?? '',
       difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') ?? 'Easy',
       link: question.link ?? '',
+      label: question.label ?? '',
       attempts: (question.attempts ?? []).map(a => ({
         id: a.id,
         solutionCode: a.solutionCode ?? '',
@@ -116,6 +118,13 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
             />
             <FieldError message={typeof errors.link?.message === 'string' ? errors.link?.message : undefined} />
           </div>
+
+          <input 
+            {...register('label')}
+            placeholder='Unlabled'
+            className='input-field'
+            aria-invalid={!!errors.label}
+          />
 
           <h3 className="text-lg font-semibold mt-4 text-[#2C325D]">Attempts</h3>
 

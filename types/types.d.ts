@@ -45,6 +45,7 @@ declare interface Question {
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   link?: string;
+  label: string | null;
   attempts?: Attempt[];
   createdAt: Date;
 }

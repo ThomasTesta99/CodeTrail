@@ -53,6 +53,7 @@ export const question = pgTable('questions', {
   description: text('description').notNull(),
   difficulty: text('difficulty').notNull(),
   link: text('link'),
+  label: text('label').default("Unlabeled"),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

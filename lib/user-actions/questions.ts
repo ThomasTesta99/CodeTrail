@@ -2,10 +2,11 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, eq, inArray, isNotNull } from "drizzle-orm";
+import {  and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
+import { SortKey } from "@/app/(root)/all-questions/page";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -29,10 +30,14 @@ export const getAllUserQuestions = async ({
     userId,
     limit = 6,
     offset = 0,
+    label, 
+    sort = "newest", 
 }: {
     userId: string;
     limit?: number;
     offset?: number;
+    label: string, 
+    sort: SortKey,
 }) => {
     try {
         if(!validUser(userId)){
@@ -43,9 +48,23 @@ export const getAllUserQuestions = async ({
             }
         }
 
+        let whereClause = eq(question.userId, userId);
+
+        if(label && label.length > 0){
+            whereClause = and(whereClause, eq(question.label, label))!;
+        }
+
+        const orderByClause = 
+            sort === "oldest" 
+                ? asc(question.createdAt)
+                : sort === "label" 
+                    ? [(asc(question.label), desc(question.createdAt))]
+                    : desc(question.createdAt);
+
         const questionResult = await db.select()
             .from(question)
-            .where(eq(question.userId, userId))
+            .where(whereClause)
+            .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
             .limit(limit)
             .offset(offset);
         

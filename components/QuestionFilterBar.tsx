@@ -1,31 +1,86 @@
+// components/QuestionFilterBar.tsx
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-export default function QuestionFilterBar({labels} : {labels: string[]}) {
-    return (
-        <div className="w-full mb-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border bg-white p-4 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-700">Topic</p>
-                    <select className="rounded-xl border px-3 py-2 text-sm outline-none">
-                        <option value="">All</option>
-                        {labels.map((label)=> (
-                            <option key = {label} value={label}>{label}</option>
-                        ))}
-                        <option value="unlabeled">Unlabeled</option>
-                    </select>
-                </div>
-                <div className="flex flex-wrap gap-2 items-center sm:justify-end">
-                    <p className="text-sm font-semibold text-gray-700">Sort</p>
-                    <select className="rounded-xl border px-3 py-2 text-sm outline-none">
-                        <option value="oldest">Oldest</option>
-                        <option value="newest">Newest</option>
-                        <option value="group-topic">Topic</option>
-                    </select>
-                    <button className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-gray-50 cursor-pointer">Clear</button>
-                </div>
-            </div>
+type SortKey = "oldest" | "newest" | "group-topic";
+
+export default function QuestionFilterBar({ labels }: { labels: string[] }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  labels.sort()
+
+  const currentLabel = searchParams.get("label") || "";
+  const currentSort = (searchParams.get("sort") as SortKey) || "newest";
+
+  function pushParams(next: Record<string, string>) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    for (const [k, v] of Object.entries(next)) {
+      if (v === "") params.delete(k);
+      else params.set(k, v);
+    }
+
+    params.set("page", "1");
+
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
+
+  function clearAll() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("label");
+    params.delete("sort");
+    params.set("page", "1");
+
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
+
+  return (
+    <div className="w-full mb-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-gray-700">Topic</p>
+
+          <select
+            className="rounded-xl border px-3 py-2 text-sm outline-none"
+            value={currentLabel}
+            onChange={(e) => pushParams({ label: e.target.value })}
+          >
+            <option value="">All</option>
+            {labels.map((label) => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+            <option value="Unlabeled">Unlabeled</option>
+          </select>
         </div>
-    );
+
+        <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+          <p className="text-sm font-semibold text-gray-700">Sort</p>
+
+          <select
+            className="rounded-xl border px-3 py-2 text-sm outline-none"
+            value={currentSort}
+            onChange={(e) => pushParams({ sort: e.target.value })}
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={clearAll}
+            className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

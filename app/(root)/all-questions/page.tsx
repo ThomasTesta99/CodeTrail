@@ -5,7 +5,29 @@ import { getUserSession } from '@/lib/user-actions/authActions';
 import { getAllUserQuestions, getQuestionLabels } from '@/lib/user-actions/questions';
 import React from 'react';
 
-const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
+type SearchParams = {
+  page?: string,
+  label: string,
+  sort: SortKey
+}
+
+export type SortKey = "oldest" | "newest" | "label";
+
+function buildHref(current: Record<string, string | undefined>, next: Record<string, string | undefined>) {
+  const params = new URLSearchParams();
+
+  const merged = { ...current, ...next };
+
+  for (const [k, v] of Object.entries(merged)) {
+    if (v === undefined || v === "") continue;
+    params.set(k, v);
+  }
+
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const session = await getUserSession();
   const user = session?.user;
   const params = await searchParams;
@@ -21,8 +43,10 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
 
   const pageNumber = parseInt(params.page || '1', 10);
   const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
+  const label = params.label || ""
+  const sort: SortKey = params.sort || "newest"
 
-  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset });
+  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset , label, sort});
   const userQuestions = result.questions.map(q => ({
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
@@ -47,8 +71,15 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
             It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges.
           </p>
         </div>
+        <QuestionFilterBar labels = {labels}/>
       </div>
     );
+  }
+
+  const currentParams = {
+    page: String(pageNumber),
+    label: label || undefined, 
+    sort: sort || undefined,
   }
 
   return (
@@ -73,12 +104,18 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
 
         <div className="all-questions-pagination">
           {pageNumber > 1 && (
-            <a href={`?page=${pageNumber - 1}`} className="all-questions-pagination-link">
+            <a 
+                href={buildHref(currentParams, { page: String(pageNumber - 1) })} 
+                className="all-questions-pagination-link"
+              >
               Previous
             </a>
           )}
           {userQuestions.length > QUESTIONS_PER_PAGE && (
-            <a href={`?page=${pageNumber + 1}`} className="all-questions-pagination-link">
+            <a 
+                href={buildHref(currentParams, { page: String(pageNumber + 1) })} 
+                className="all-questions-pagination-link"
+              >
               Next
             </a>
           )}

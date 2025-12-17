@@ -2,7 +2,7 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import {  and, asc, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
@@ -54,12 +54,24 @@ export const getAllUserQuestions = async ({
             whereClause = and(whereClause, eq(question.label, label))!;
         }
 
+        const difficultyRank = sql<number>`
+            CASE
+                WHEN ${question.difficulty} = 'Easy' THEN 1
+                WHEN ${question.difficulty} = 'Medium' THEN 2
+                WHEN ${question.difficulty} = 'Hard' THEN 3
+                ELSE 999
+            END
+            `;
+
         const orderByClause = 
             sort === "oldest" 
                 ? asc(question.createdAt)
-                : sort === "label" 
-                    ? [(asc(question.label), desc(question.createdAt))]
-                    : desc(question.createdAt);
+                : sort === "difficultyAsc" 
+                    ? [asc(difficultyRank), desc(question.createdAt)]
+                    : sort === "difficultyDesc" ?
+                        [desc(difficultyRank), desc(question.createdAt)]
+                        : [desc(question.createdAt)];
+
 
         const questionResult = await db.select()
             .from(question)

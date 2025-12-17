@@ -11,7 +11,7 @@ type SearchParams = {
   sort: SortKey
 }
 
-export type SortKey = "oldest" | "newest" | "label";
+export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
 
 function buildHref(current: Record<string, string | undefined>, next: Record<string, string | undefined>) {
   const params = new URLSearchParams();

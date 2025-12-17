@@ -1,10 +1,10 @@
-// components/QuestionFilterBar.tsx
 "use client";
 
+import { SortKey } from "@/app/(root)/all-questions/page";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-type SortKey = "oldest" | "newest" | "group-topic";
+
 
 export default function QuestionFilterBar({ labels }: { labels: string[] }) {
   const router = useRouter();
@@ -70,6 +70,8 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
+            <option value="difficultyAsc">Difficulty (Easy → Hard)</option>
+            <option value="difficultyDesc">Difficulty (Hard → Easy)</option>
           </select>
 
           <button

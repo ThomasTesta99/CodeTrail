@@ -2,7 +2,7 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, eq, inArray } from "drizzle-orm";
+import {  and, eq, inArray, isNotNull } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
@@ -309,3 +309,25 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
     }
 }
 
+export const getQuestionLabels = async ({userId} : {userId : string}) => {
+    try {
+        const labelRows = await db.selectDistinct(
+            {label: question.label})
+            .from(question)
+            .where(and(eq(question.userId, userId), isNotNull(question.label)));
+
+        const labels = labelRows.map(r => r.label).filter((l): l is string => typeof l === "string" && labelRows.length > 0 && l !== "Unlabeled");
+
+        return {
+            success: true, 
+            message: "Successfully got labels.", 
+            labels: labels,
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: "There was an error getting the labels: " + error,
+            labels: ['Unlabeled'],
+        }
+    }
+}

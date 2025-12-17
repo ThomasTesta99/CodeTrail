@@ -2,7 +2,7 @@ import QuestionCard from '@/components/QuestionCard';
 import QuestionFilterBar from '@/components/QuestionFilterBar';
 import { QUESTIONS_PER_PAGE } from '@/constants';
 import { getUserSession } from '@/lib/user-actions/authActions';
-import { getAllUserQuestions } from '@/lib/user-actions/questions';
+import { getAllUserQuestions, getQuestionLabels } from '@/lib/user-actions/questions';
 import React from 'react';
 
 const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
@@ -35,6 +35,9 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
     })),
   }));
 
+  const labelResult = await getQuestionLabels({userId: user.id});
+  const labels = labelResult.labels;
+
   if(userQuestions.length === 0){
     return (
       <div className="all-questions-container">
@@ -58,7 +61,7 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
           </p>
         </header>
 
-        <QuestionFilterBar />
+        <QuestionFilterBar labels = {labels}/>
 
         <section>
           <div className="all-questions-grid">

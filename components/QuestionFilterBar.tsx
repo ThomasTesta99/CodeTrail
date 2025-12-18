@@ -4,8 +4,6 @@ import { SortKey } from "@/app/(root)/all-questions/page";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-
-
 export default function QuestionFilterBar({ labels }: { labels: string[] }) {
   const router = useRouter();
   const pathname = usePathname();

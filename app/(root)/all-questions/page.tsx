@@ -1,12 +1,34 @@
 import QuestionCard from '@/components/QuestionCard';
+import QuestionFilterBar from '@/components/QuestionFilterBar';
 import { QUESTIONS_PER_PAGE } from '@/constants';
 import { getUserSession } from '@/lib/user-actions/authActions';
-import { getAllUserQuestions } from '@/lib/user-actions/questions';
+import { getAllUserQuestions, getQuestionLabels } from '@/lib/user-actions/questions';
 import React from 'react';
 
+type SearchParams = {
+  page?: string,
+  label: string,
+  sort: SortKey
+  q?: string, 
+}
 
+export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
 
-const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
+function buildHref(current: Record<string, string | undefined>, next: Record<string, string | undefined>) {
+  const params = new URLSearchParams();
+
+  const merged = { ...current, ...next };
+
+  for (const [k, v] of Object.entries(merged)) {
+    if (v === undefined || v === "") continue;
+    params.set(k, v);
+  }
+
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const session = await getUserSession();
   const user = session?.user;
   const params = await searchParams;
@@ -22,8 +44,11 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
 
   const pageNumber = parseInt(params.page || '1', 10);
   const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
+  const label = params.label || ""
+  const sort: SortKey = params.sort || "newest"
+  const q = params.q || "";
 
-  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset });
+  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
   const userQuestions = result.questions.map(q => ({
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
@@ -36,17 +61,32 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
     })),
   }));
 
+  const labelResult = await getQuestionLabels({userId: user.id});
+  const labels = labelResult.labels;
+
   if(userQuestions.length === 0){
     return (
       <div className="all-questions-container">
+        {q.length > 0 && (
+          <div className="mt-20">
+            <QuestionFilterBar labels = {labels}/>
+          </div>
+        )}
         <div className="all-questions-wrapper text-center py-12">
           <h2 className="text-2xl font-semibold mb-2">No Questions Found</h2>
           <p className="text-gray-600">
-            It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges.
+            {q.length === 0 ? "It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges." : ""}
           </p>
         </div>
       </div>
     );
+  }
+
+  const currentParams = {
+    page: String(pageNumber),
+    label: label || undefined, 
+    sort: sort || undefined,
+    q: q || undefined,
   }
 
   return (
@@ -59,6 +99,8 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
           </p>
         </header>
 
+        <QuestionFilterBar labels = {labels}/>
+
         <section>
           <div className="all-questions-grid">
             {userQuestions.slice(0, QUESTIONS_PER_PAGE).map((question) => (
@@ -69,12 +111,18 @@ const page = async ({searchParams}: {searchParams:Promise<{page?:string}>}) => {
 
         <div className="all-questions-pagination">
           {pageNumber > 1 && (
-            <a href={`?page=${pageNumber - 1}`} className="all-questions-pagination-link">
+            <a 
+                href={buildHref(currentParams, { page: String(pageNumber - 1) })} 
+                className="all-questions-pagination-link"
+              >
               Previous
             </a>
           )}
           {userQuestions.length > QUESTIONS_PER_PAGE && (
-            <a href={`?page=${pageNumber + 1}`} className="all-questions-pagination-link">
+            <a 
+                href={buildHref(currentParams, { page: String(pageNumber + 1) })} 
+                className="all-questions-pagination-link"
+              >
               Next
             </a>
           )}

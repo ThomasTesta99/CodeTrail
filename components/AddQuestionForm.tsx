@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,8 @@ import { addQuestion } from '@/lib/user-actions/questions'
 import toast from 'react-hot-toast'
 import { validUser } from '@/lib/user-actions/authActions'
 import { UserProps } from '@/types/types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { SelectGroup } from '@radix-ui/react-select'
 
 const questionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -26,7 +28,7 @@ type QuestionFormData = z.infer<typeof questionSchema>
 
 const AddQuestionForm = ({ user }: UserProps) => {
   const router = useRouter()
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<QuestionFormData>({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<QuestionFormData>({
     resolver: zodResolver(questionSchema),
   })
 
@@ -86,14 +88,29 @@ const AddQuestionForm = ({ user }: UserProps) => {
         </div>
 
         <div className="space-y-2">
-          <select {...register('difficulty')} className="select-field">
-            <option value="" disabled>Select Difficulty</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
-          {errors.difficulty && <p className="error-text">{errors.difficulty.message}</p>}
-        </div>
+            <Controller
+              control={control}
+              name="difficulty"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="select-field w-full">
+                    <SelectValue placeholder="Select Difficulty" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="Easy">Easy</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Hard">Hard</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.difficulty && (
+              <p className="error-text">{errors.difficulty.message}</p>
+            )}
+          </div>
 
         <div className="space-y-2">
           <input

@@ -2,10 +2,11 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, eq, inArray } from "drizzle-orm";
+import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
+import { SortKey } from "@/app/(root)/all-questions/page";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -29,10 +30,16 @@ export const getAllUserQuestions = async ({
     userId,
     limit = 6,
     offset = 0,
+    label, 
+    sort = "newest", 
+    q, 
 }: {
     userId: string;
     limit?: number;
     offset?: number;
+    label: string, 
+    sort: SortKey,
+    q: string,
 }) => {
     try {
         if(!validUser(userId)){
@@ -43,9 +50,42 @@ export const getAllUserQuestions = async ({
             }
         }
 
+        let whereClause = eq(question.userId, userId);
+
+        if(label && label.length > 0){
+            whereClause = and(whereClause, eq(question.label, label))!;
+        }
+
+        if(q && q.trim().length > 0){
+            whereClause = and(
+                whereClause, 
+                ilike(question.title, `%${q.trim()}%`)
+            )!;
+        }
+
+        const difficultyRank = sql<number>`
+            CASE
+                WHEN ${question.difficulty} = 'Easy' THEN 1
+                WHEN ${question.difficulty} = 'Medium' THEN 2
+                WHEN ${question.difficulty} = 'Hard' THEN 3
+                ELSE 999
+            END
+            `;
+
+        const orderByClause = 
+            sort === "oldest" 
+                ? asc(question.createdAt)
+                : sort === "difficultyAsc" 
+                    ? [asc(difficultyRank), desc(question.createdAt)]
+                    : sort === "difficultyDesc" ?
+                        [desc(difficultyRank), desc(question.createdAt)]
+                        : [desc(question.createdAt)];
+
+
         const questionResult = await db.select()
             .from(question)
-            .where(eq(question.userId, userId))
+            .where(whereClause)
+            .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
             .limit(limit)
             .offset(offset);
         
@@ -306,5 +346,28 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
     } catch (error) {
         console.log(error);
         return { success: false, message: error instanceof Error ? error.message : String(error) };
+    }
+}
+
+export const getQuestionLabels = async ({userId} : {userId : string}) => {
+    try {
+        const labelRows = await db.selectDistinct(
+            {label: question.label})
+            .from(question)
+            .where(and(eq(question.userId, userId), isNotNull(question.label)));
+
+        const labels = labelRows.map(r => r.label).filter((l): l is string => typeof l === "string" && labelRows.length > 0 && l !== "Unlabeled");
+
+        return {
+            success: true, 
+            message: "Successfully got labels.", 
+            labels: labels,
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: "There was an error getting the labels: " + error,
+            labels: ['Unlabeled'],
+        }
     }
 }

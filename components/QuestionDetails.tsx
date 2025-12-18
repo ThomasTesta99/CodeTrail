@@ -87,7 +87,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
           <span className={`difficulty-badge ${question.difficulty.toLowerCase()}`}>
             {question.difficulty}
           </span>
-          {question.label !== "Unlabeled" && (
+          {question.label !== "unlabeled" && question.label !== "" && (
             <p className="label-badge">{question.label}</p>
           )}
           {question.link && (

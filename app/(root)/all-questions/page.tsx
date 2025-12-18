@@ -9,6 +9,7 @@ type SearchParams = {
   page?: string,
   label: string,
   sort: SortKey
+  q?: string, 
 }
 
 export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
@@ -45,8 +46,9 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
   const label = params.label || ""
   const sort: SortKey = params.sort || "newest"
+  const q = params.q || "";
 
-  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset , label, sort});
+  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
   const userQuestions = result.questions.map(q => ({
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
@@ -65,13 +67,17 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   if(userQuestions.length === 0){
     return (
       <div className="all-questions-container">
+        {q.length > 0 && (
+          <div className="mt-20">
+            <QuestionFilterBar labels = {labels}/>
+          </div>
+        )}
         <div className="all-questions-wrapper text-center py-12">
           <h2 className="text-2xl font-semibold mb-2">No Questions Found</h2>
           <p className="text-gray-600">
-            It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges.
+            {q.length === 0 ? "It looks like you have not added any questions yet. Start building your question library to keep track of your progress and revisit your toughest challenges." : ""}
           </p>
         </div>
-        <QuestionFilterBar labels = {labels}/>
       </div>
     );
   }
@@ -80,6 +86,7 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
     page: String(pageNumber),
     label: label || undefined, 
     sort: sort || undefined,
+    q: q || undefined,
   }
 
   return (

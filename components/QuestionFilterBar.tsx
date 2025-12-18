@@ -2,7 +2,7 @@
 
 import { SortKey } from "@/app/(root)/all-questions/page";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export default function QuestionFilterBar({ labels }: { labels: string[] }) {
   const router = useRouter();
@@ -10,28 +10,49 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
   const searchParams = useSearchParams();
   labels.sort()
 
+  const currentQuery = searchParams.get("q") || "";
+  const [localQuery, setLocalQuery] = useState(currentQuery);
+
   const currentLabel = searchParams.get("label") || "";
   const currentSort = (searchParams.get("sort") as SortKey) || "newest";
 
-  function pushParams(next: Record<string, string>) {
-    const params = new URLSearchParams(searchParams.toString());
+  const pushParams = useCallback(
+    (next: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    for (const [k, v] of Object.entries(next)) {
-      if (v === "") params.delete(k);
-      else params.set(k, v);
-    }
+      for (const [k, v] of Object.entries(next)) {
+        if (v === "") params.delete(k);
+        else params.set(k, v);
+      }
 
-    params.set("page", "1");
+      params.set("page", "1");
 
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  }
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [router, pathname, searchParams]
+  );
+
+
+  useEffect(() => {
+    setLocalQuery(currentQuery);
+  }, [currentQuery]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      pushParams({q: localQuery});
+    }, 300);
+
+    return () => clearTimeout(t);
+  }, [localQuery]);
 
   function clearAll() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("label");
     params.delete("sort");
+    params.delete("q");
     params.set("page", "1");
+    
 
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -56,6 +77,17 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
             ))}
             <option value="Unlabeled">Unlabeled</option>
           </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-gray-700">Search</p>
+
+          <input
+            className="rounded-xl border px-3 py-2 text-sm outline-none"
+            placeholder="Search questions..."
+            defaultValue={localQuery}
+            onChange={(e) => setLocalQuery(e.target.value)}
+          />
         </div>
 
         <div className="flex flex-wrap gap-2 items-center sm:justify-end">

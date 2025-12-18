@@ -2,7 +2,7 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, asc, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 import { getUserSession, validUser } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
@@ -32,12 +32,14 @@ export const getAllUserQuestions = async ({
     offset = 0,
     label, 
     sort = "newest", 
+    q, 
 }: {
     userId: string;
     limit?: number;
     offset?: number;
     label: string, 
     sort: SortKey,
+    q: string,
 }) => {
     try {
         if(!validUser(userId)){
@@ -52,6 +54,13 @@ export const getAllUserQuestions = async ({
 
         if(label && label.length > 0){
             whereClause = and(whereClause, eq(question.label, label))!;
+        }
+
+        if(q && q.trim().length > 0){
+            whereClause = and(
+                whereClause, 
+                ilike(question.title, `%${q.trim()}%`)
+            )!;
         }
 
         const difficultyRank = sql<number>`

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, uuid, index } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text('id').primaryKey(),
@@ -55,7 +55,18 @@ export const question = pgTable('questions', {
   link: text('link'),
   label: text('label').default("Unlabeled"),
   createdAt: timestamp('created_at').defaultNow(),
-});
+},
+  (table) => [
+    index("questions_user_id_idx").on(table.userId),
+    index("questions_created_at_idx").on(table.createdAt),
+    index("questions_difficulty_idx").on(table.difficulty),
+    index("questions_label_idx").on(table.label),
+
+    index("questions_user_created_at_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+  ]);
 
 export const attempts = pgTable('attemtps', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -66,7 +77,16 @@ export const attempts = pgTable('attemtps', {
   durationMinutes: integer('duration_minutes').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
-});
+},
+  (table) => [
+    index("attempts_question_id_idx").on(table.questionId),
+    index("attempts_created_at_idx").on(table.createdAt),
+
+    index("attempts_question_created_at_idx").on(
+      table.questionId,
+      table.createdAt
+    ),
+  ]);
 
 export const schema = {
     user, account, session, verification, question, attempts

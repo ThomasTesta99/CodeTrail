@@ -43,6 +43,13 @@
       "when": 1765397624147,
       "tag": "0005_huge_doctor_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786650047619,
+      "tag": "0006_outgoing_naoko",
+      "breakpoints": true
     }
   ]
 }

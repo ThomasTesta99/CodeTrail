@@ -25,7 +25,6 @@ export const sendEmail = async ({
     }
   );
 
-  console.log(response);
 
   return {
     success: true,

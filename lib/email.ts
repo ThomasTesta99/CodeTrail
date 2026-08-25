@@ -1,3 +1,5 @@
+import emailjs from '@emailjs/nodejs';
+
 export const sendEmail = async ({
   to,
   resetLink,
@@ -9,30 +11,24 @@ export const sendEmail = async ({
   const templateID = process.env.EMAILJS_TEMPLATE_ID!;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
   const privateKey = process.env.EMAILJS_PRIVATE_KEY!;
-
-  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      origin: 'http://localhost',
+  
+  const response = await emailjs.send(
+    serviceID,
+    templateID,
+    {
+      to_email: to,
+      link: resetLink,
     },
-    body: JSON.stringify({
-      service_id: serviceID,
-      template_id: templateID,
-      user_id: publicKey,
-      accessToken: privateKey,
-      template_params: {
-        to_email: to,
-        link: resetLink,
-      },
-    }),
-  });
+    {
+      publicKey,
+      privateKey,
+    }
+  );
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`EmailJS failed: ${error}`);
-  }
+  console.log(response);
 
-  const successText = await response.text(); 
-  return { success: true, message: successText };
+  return {
+    success: true,
+    message: response.text,
+  };
 };

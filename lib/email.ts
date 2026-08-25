@@ -11,10 +11,7 @@ export const sendEmail = async ({
   const templateID = process.env.EMAILJS_TEMPLATE_ID!;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
   const privateKey = process.env.EMAILJS_PRIVATE_KEY!;
-
-  console.log("SERVICE:", serviceID);
-  console.log("TEMPLATE:", templateID);
-
+  
   const response = await emailjs.send(
     serviceID,
     templateID,

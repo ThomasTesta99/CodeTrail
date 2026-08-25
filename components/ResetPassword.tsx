@@ -40,7 +40,7 @@ const ResetPassword = () => {
       });
 
       toast.success('Password has been reset. Please log in.');
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('/sign-in'), 2000);
     } catch (error) {
       console.error(error);
       toast.error('Failed to reset password');

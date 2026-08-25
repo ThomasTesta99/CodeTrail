@@ -1,7 +1,6 @@
 'use client';
 
-import { authClient } from '@/lib/auth-client';
-import { canChangePassword, checkRate, getUserByEmail } from '@/lib/user-actions/authActions';
+import { canChangePassword, checkRate, getUserByEmail, sendResetPasswordEmail } from '@/lib/user-actions/authActions';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -31,11 +30,14 @@ const ForgotPassword = () => {
       }
 
       if(canChangePasswordResult.canChange){
-        await authClient.forgetPassword({
-          email: email, 
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        toast.success("Reset link sent. Please check your email.")
+        const redirectTo = `${window.location.origin}/reset-password`;
+        const result = await sendResetPasswordEmail({email, redirectTo: redirectTo});
+       
+        if(result.success){
+          toast.success("Reset link sent. Please check your email.")
+        }else{
+          toast.error(result.message);
+        }
       }else{
         toast.error(canChangePasswordResult.message);
       }
@@ -74,7 +76,7 @@ const ForgotPassword = () => {
         </form>
         <p className="auth-footer-text">
           Remembered your password?{' '}
-          <a href="/login" className="auth-link">
+          <a href="/sign-in" className="auth-link">
             Go back to login
           </a>
         </p>

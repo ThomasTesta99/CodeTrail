@@ -162,3 +162,24 @@ export const checkRate = async(fingerprint:string, scope: Action) => {
     const rateCheck = await validateWithArcjet(fingerprint, scope);
     return rateCheck;
 }
+
+export const sendResetPasswordEmail = async ({email, redirectTo} : {email: string, redirectTo: string}) => {
+    try{
+        await auth.api.requestPasswordReset({
+            body: {
+                email: email,
+                redirectTo: redirectTo
+            }
+        });
+        return {
+            success: true,
+            message: "Successfully sent reset password link",
+        };
+    }catch(error){
+        return {
+            success: false,
+            message: "There was an error sending the reset password email: " + error as string,
+        }
+    }
+
+}

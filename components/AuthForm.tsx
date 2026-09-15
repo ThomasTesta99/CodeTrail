@@ -60,9 +60,11 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
 
         router.refresh();
         router.push('/');
+      }else{
+        toast.error(type === 'sign-in' ? "Sign In Failed" : "Sign Up Failed");
       }
     } catch (err) {
-      console.error(err);
+      console.log(err)
     } finally {
       setIsLoading(false);
     }

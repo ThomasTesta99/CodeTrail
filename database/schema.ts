@@ -76,7 +76,7 @@ export const attempts = pgTable('attemtps', {
   neededHelp: boolean('needed_help').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
   notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 },
   (table) => [
     index("attempts_question_id_idx").on(table.questionId),

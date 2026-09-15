@@ -1,6 +1,6 @@
 'use client'
 
-import { checkRate, sendVerificationEmail } from '@/lib/user-actions/authActions'
+import { sendVerificationEmail } from '@/lib/user-actions/authActions'
 import { User } from '@/types/types'
 import Image from 'next/image'
 import React from 'react'
@@ -16,17 +16,7 @@ const Profile = ({ user }: { user: User}) => {
                 return;
             }
 
-            const email = user.email;
-
-            const rateLimit = await checkRate(email, "verify-email");
-
-            if (!rateLimit.valid) {
-                toast.error(rateLimit.message);
-                return;
-            }
-
             const result = await sendVerificationEmail({
-                email,
                 url: `${window.location.origin}/email-verified`
             });
 
@@ -166,7 +156,7 @@ const Profile = ({ user }: { user: User}) => {
                         </p>
                     </div>
 
-                    <ActivityCalendar userId = {user.id}/>
+                    <ActivityCalendar/>
                 </section>
 
             </div>

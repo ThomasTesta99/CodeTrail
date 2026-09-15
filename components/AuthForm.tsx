@@ -64,7 +64,7 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
         toast.error(type === 'sign-in' ? "Sign In Failed" : "Sign Up Failed");
       }
     } catch (err) {
-      console.log(err)
+      console.error(err)
     } finally {
       setIsLoading(false);
     }

@@ -4,14 +4,25 @@ import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import { GetUserActivityResult } from "@/types/types";
 import { and, eq, gte, lt } from "drizzle-orm";
+import { getUserSession } from "./authActions";
 
 export const getUserActivity = async (
-    userId: string,
+
     year: number
 ): Promise<GetUserActivityResult> => {
     try {
-        const startDate = new Date(year, 0, 1);
-        const endDate = new Date(year + 1, 0, 1);
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                activity: [],
+                message: "Not logged in"
+            }
+        }
+
+        const userId = session.user.id;
+        const startDate = new Date(Date.UTC(year, 0, 1));
+        const endDate = new Date(Date.UTC(year + 1, 0, 1));
 
         const userAttempts = await db
             .select({

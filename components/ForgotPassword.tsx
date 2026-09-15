@@ -1,6 +1,6 @@
 'use client';
 
-import { canChangePassword, checkRate, getUserByEmail, sendResetPasswordEmail } from '@/lib/user-actions/authActions';
+import { sendResetPasswordEmail } from '@/lib/user-actions/authActions';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -13,42 +13,23 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      const result = await getUserByEmail({ email });
+        const result = await sendResetPasswordEmail({
+            email,
+        });
 
-      if (!result.user) {
-        toast.error('No user found with that email')
-        throw new Error("No user found with that email");
-      }
-
-      const canChangePasswordResult = await canChangePassword(email);
-
-      const rateLimit = await checkRate(email, 'password-reset');
-
-      if(!rateLimit.valid){
-        toast.error(rateLimit.message);
-        throw new Error(rateLimit.message)
-      }
-
-      if(canChangePasswordResult.canChange){
-        const redirectTo = `${window.location.origin}/reset-password`;
-        const result = await sendResetPasswordEmail({email, redirectTo: redirectTo});
-       
-        if(result.success){
-          toast.success("Reset link sent. Please check your email.")
-        }else{
-          toast.error(result.message);
+        if (result.success) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
         }
-      }else{
-        toast.error(canChangePasswordResult.message);
-      }
 
     } catch (error) {
-      toast.error('Failed to send reset link.');
-      console.log(error);
-    }finally{
-      setIsSubmitting(false);
+        toast.error('Failed to send reset link.');
+        console.error(error);
+    } finally {
+        setIsSubmitting(false);
     }
-  };
+};
 
   return (
     <div className="auth-screen">

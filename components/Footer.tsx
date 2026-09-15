@@ -3,6 +3,7 @@ import { logoutUser } from '@/lib/user-actions/authActions'
 import { UserProps } from '@/types/types'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import React from 'react'
 
 const Footer = ({user}: UserProps) => {
@@ -15,24 +16,27 @@ const Footer = ({user}: UserProps) => {
     
     return (
         <footer className="footer mt-auto">
-            <div className={`footer-name ${user?.image ? 'bg-transparent' : 'bg-gray-600'}`}>
-                {user?.image ? (
-                    <Image src={user.image} alt="User image" width={100} height={100} className="rounded-full" />
-                ) : (
-                    <p className="text-xl font-bold text-white">
-                        {user?.name?.[0] ?? ' '}
-                    </p>
-                )}
-            </div>
+            <Link href='/profile' className='flex items-center gap-2'>
+                <div className={`footer-name ${user?.image ? 'bg-transparent' : 'bg-gray-600'}`}>
+                    {user?.image ? (
+                        <Image src={user.image} alt="User image" width={100} height={100} className="rounded-full" />
+                    ) : (
+                        <p className="text-xl font-bold text-white">
+                            {user?.name?.[0] ?? ' '}
+                        </p>
+                    )}
+                </div>
 
-            <div className="footer-email">
-                <h1 className="text-sm truncate font-semibold text-white">
-                    {user?.name ?? ' '}
-                </h1>
-                <p className="text-sm truncate font-normal text-gray-300">
-                     {user?.email ?? ' '}
-                </p>
-            </div>
+                <div className="footer-email">
+                    <h1 className="text-sm truncate font-semibold text-white">
+                        {user?.name ?? ' '}
+                    </h1>
+                    <p className="text-sm truncate font-normal text-gray-300">
+                        {user?.email ?? ' '}
+                    </p>
+                </div>
+            </Link>
+
 
             <button onClick={signOut} className="footer-image">
                 <Image src="/assets/icons/logout.svg" fill alt="logout" className="brightness-0 invert" />

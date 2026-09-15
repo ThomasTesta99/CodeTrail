@@ -163,23 +163,132 @@ export const checkRate = async(fingerprint:string, scope: Action) => {
     return rateCheck;
 }
 
-export const sendResetPasswordEmail = async ({email, redirectTo} : {email: string, redirectTo: string}) => {
-    try{
+export const sendResetPasswordEmail = async ({
+    email,
+}: {
+    email: string;
+}) => {
+    try {
+        const rateLimit = await checkRate(
+            email,
+            'password-reset'
+        );
+
+        if (!rateLimit.valid) {
+            return {
+                success: false,
+                message: rateLimit.message,
+            };
+        }
+
+        const canChangePasswordResult =
+            await canChangePassword(email);
+
+        /*
+         * Don't reveal whether the account exists or
+         * whether it supports password login.
+         */
+        if (!canChangePasswordResult.canChange) {
+            return {
+                success: true,
+                message:
+                    "If an eligible account exists for this email, a reset link has been sent.",
+            };
+        }
+
+        const redirectTo =
+            `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`;
+
         await auth.api.requestPasswordReset({
             body: {
-                email: email,
-                redirectTo: redirectTo
-            }
+                email,
+                redirectTo,
+            },
         });
+
         return {
             success: true,
-            message: "Successfully sent reset password link",
+            message:
+                "If an eligible account exists for this email, a reset link has been sent.",
         };
-    }catch(error){
+
+    } catch (error) {
+        console.error(
+            "Password reset request failed:",
+            error
+        );
+
         return {
             success: false,
-            message: "There was an error sending the reset password email: " + error as string,
-        }
+            message:
+                "Unable to process the password reset request.",
+        };
     }
+};
 
-}
+export const sendVerificationEmail = async ({
+    url,
+}: {
+    url: string;
+}) => {
+    try {
+        const session = await getUserSession();
+
+        if (!session?.user) {
+            return {
+                success: false,
+                message: "You must be logged in to verify your email.",
+            };
+        }
+
+        if (session.user.emailVerified) {
+            return {
+                success: false,
+                message: "Email is already verified.",
+            };
+        }
+
+        const email = session.user.email;
+
+        const rateLimit = await checkRate(
+            email,
+            "verify-email"
+        );
+
+        if (!rateLimit.valid) {
+            return {
+                success: false,
+                message: rateLimit.message,
+            };
+        }
+
+        const result = await auth.api.sendVerificationEmail({
+            body: {
+                email,
+                callbackURL: url,
+            },
+            headers: await headers(),
+        });
+
+        if (!result.status) {
+            return {
+                success: false,
+                message: "Failure to send verification email",
+            };
+        }
+
+        return {
+            success: true,
+            message: "Verification email sent",
+        };
+
+    } catch (error) {
+        return {
+            success: false,
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "There was an error sending the verification email.",
+        };
+    }
+};

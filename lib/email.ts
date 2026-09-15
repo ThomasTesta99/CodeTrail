@@ -31,3 +31,39 @@ export const sendEmail = async ({
     message: response.text,
   };
 };
+
+interface VerificationProps {
+    to: string;
+    subject: string,
+    templateParams: Record<string, string>
+}
+
+export const sendVerifiation = async ({
+  to, 
+  subject, 
+  templateParams, 
+}: VerificationProps) => {
+  const serviceID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
+  const templateID = process.env.NEXT_PUBLIC_EMAILJS_VERIFY_TEMPLATE_ID!;
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY!;
+
+  const response = await emailjs.send(
+    serviceID,
+    templateID,
+    {
+      to_email: to,
+      subject: subject,
+      ...templateParams, 
+    },
+    {
+      publicKey,
+      privateKey,
+    }
+  );
+
+  return {
+    success: true,
+    message: response.text,
+  };
+}

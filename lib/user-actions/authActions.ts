@@ -183,3 +183,32 @@ export const sendResetPasswordEmail = async ({email, redirectTo} : {email: strin
     }
 
 }
+
+export const sendVerificationEmail = async ({email, url} : {email: string, url: string}) => {
+    try{
+        const result = await auth.api.sendVerificationEmail({
+            body:{
+                email: email, 
+                callbackURL: url, 
+            },
+            headers: await headers(), 
+        });
+
+        if(!result.status){
+            return {
+                success: false, 
+                message: "Failure to send verification email"
+            }
+        }else{
+            return {
+                success: true, 
+                message: "Verification email sent",
+            }
+        }
+    }catch(error){
+        return {
+            success: false,
+            message: "There was an error sending the verification email: " + error as string,
+        }
+    }
+}

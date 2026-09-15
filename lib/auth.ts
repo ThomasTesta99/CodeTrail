@@ -3,7 +3,7 @@ import {betterAuth} from 'better-auth'
 import {drizzleAdapter} from "better-auth/adapters/drizzle"
 import {schema} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
-import { sendEmail } from './email'
+import { sendEmail, sendVerifiation } from './email'
 
 
 
@@ -27,10 +27,23 @@ export const auth = betterAuth({
     emailAndPassword:{
         enabled: true,
         autoSignIn: true, 
-        sendResetPassword: async ({user, url}, request) => {
+        sendResetPassword: async ({user, url}) => {
             await sendEmail({
                 to: user.email, 
                 resetLink: url
+            })
+        },
+    },
+    emailVerification:{
+        sendVerificationEmail: async ({user, url}) => {
+            await sendVerifiation({
+                to: user.email, 
+                subject: "Verify your email",
+                templateParams: {
+                    user_name: user.name ?? "there", 
+                    action_url: url, 
+                    type: "Verify your email",
+                }
             })
         }
     },

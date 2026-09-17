@@ -184,10 +184,6 @@ export const sendResetPasswordEmail = async ({
         const canChangePasswordResult =
             await canChangePassword(email);
 
-        /*
-         * Don't reveal whether the account exists or
-         * whether it supports password login.
-         */
         if (!canChangePasswordResult.canChange) {
             return {
                 success: true,

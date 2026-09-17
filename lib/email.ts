@@ -7,10 +7,10 @@ export const sendEmail = async ({
   to: string;
   resetLink: string;
 }) => {
-  const serviceID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
-  const templateID = process.env.EMAILJS_TEMPLATE_ID!;
-  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
-  const privateKey = process.env.EMAILJS_PRIVATE_KEY!;
+  const serviceID = process.env.EMAILJS_SERVICE_ID!;
+  const templateID = process.env.EMAILJS_RESET_TEMPLATE_ID!;
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC!;
+  const privateKey = process.env.EMAILJS_PRIVATE!;
   
   const response = await emailjs.send(
     serviceID,
@@ -43,10 +43,10 @@ export const sendVerifiation = async ({
   subject, 
   templateParams, 
 }: VerificationProps) => {
-  const serviceID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
-  const templateID = process.env.NEXT_PUBLIC_EMAILJS_VERIFY_TEMPLATE_ID!;
-  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
-  const privateKey = process.env.EMAILJS_PRIVATE_KEY!;
+  const serviceID = process.env.EMAILJS_SERVICE_ID!;
+  const templateID = process.env.EMAILJS_VERIFY_TEMPLATE_ID!;
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC!;
+  const privateKey = process.env.EMAILJS_PRIVATE!;
 
   const response = await emailjs.send(
     serviceID,

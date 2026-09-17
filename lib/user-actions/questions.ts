@@ -7,10 +7,45 @@ import { getUserSession } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
+import { attemptSchema, questionSchema } from "../validations/question";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
-        const [insertedQuestion] = await db.insert(question).values(q).returning();
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+                question: null, 
+            }
+        }
+        const userId = session.user.id;
+        const parsed = questionSchema.safeParse(q)
+
+        if (!parsed.success) {
+            return {
+                success: false,
+                message: "Invalid question data",
+                question: null,
+            }
+        }
+
+        const data = parsed.data
+
+        const [insertedQuestion] = await db
+            .insert(question)
+            .values({
+                id: crypto.randomUUID(),
+                userId: userId,
+                title: data.title,
+                description: data.description,
+                difficulty: data.difficulty,
+                label: data.label.trim() || "Unlabeled",
+                link: data.link || null,
+                createdAt: new Date(),
+            })
+            .returning()
+
         return {
             success: true,
             message: 'Question added successfully',
@@ -311,15 +346,55 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
 
 export const addAttempt = async ({questionId, attempt}: {questionId: string, attempt: Attempt}) => {
     try {
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized",
+                
+            }
+        }
+
+        const parsed = attemptSchema.safeParse(attempt)
+
+        if (!parsed.success) {
+        return {
+            success: false,
+            message: "Invalid attempt data",
+        }
+        }
+
+        const data = parsed.data;
+
+        const [ownedQuestion] = await db
+            .select({
+                id: question.id,
+            })
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, questionId),
+                    eq(question.userId, session.user.id)
+                )
+            )
+            .limit(1);
+
+        if (!ownedQuestion) {
+            return {
+                success: false,
+                message: "Question not found",
+            };
+        }
+
         await db.insert(attempts).values({
-            id: attempt.id,
-            questionId: questionId,
-            solutionCode: attempt.solutionCode,
-            language: attempt.language,
-            neededHelp: attempt.neededHelp,
-            durationMinutes: attempt.durationMinutes,
-            notes: attempt.notes,
-            createdAt: attempt.createdAt,
+            id: crypto.randomUUID(),
+            questionId: ownedQuestion.id,
+            solutionCode: data.solutionCode,
+            language: data.language,
+            neededHelp: data.neededHelp,
+            durationMinutes: data.durationMinutes,
+            notes: data.notes,
+            createdAt: new Date(),
         });
 
         return {
@@ -378,7 +453,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
                 message: "Attempt not found", 
             }
         }
-        
+
         return {
             success: true,
             message: "Attempt successfully deleted",

@@ -52,11 +52,11 @@ declare interface Question {
 
 declare interface DatabaseQuestion {
   id: string;
-  userId: string;
   title: string;
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   link?: string;
+  label?: string;
   attempts?: Attempt[];
   createdAt: Date;
 }

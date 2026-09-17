@@ -2,6 +2,7 @@ import QuestionCard from '@/components/QuestionCard'
 import { getUserSession } from '@/lib/user-actions/authActions'
 import { getMostRecentUserQuestions } from '@/lib/user-actions/questions'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import React from 'react'
 
 const page = async () => {
@@ -10,14 +11,7 @@ const page = async () => {
   const firstName = user ? user.name.split(' ')[0] : 'Guest';
 
   if (!user?.id) {
-    return (
-      <div className="dashboard-container">
-        <main className="dashboard-main">
-          <h1>Welcome, Guest!</h1>
-          <p>Please sign in to see your questions.</p>
-        </main>
-      </div>
-    );
+    redirect('/sign-in');
   }
   const result = await getMostRecentUserQuestions({userId : user.id, limit: 6});
   if(!result.success){

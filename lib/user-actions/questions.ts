@@ -3,7 +3,7 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
-import { getUserSession, validUser } from "./authActions";
+import { getUserSession } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
@@ -27,14 +27,12 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 }
 
 export const getAllUserQuestions = async ({
-    userId,
     limit = 6,
     offset = 0,
     label, 
     sort = "newest", 
     q, 
 }: {
-    userId: string;
     limit?: number;
     offset?: number;
     label: string, 
@@ -42,13 +40,16 @@ export const getAllUserQuestions = async ({
     q: string,
 }) => {
     try {
-        if(!validUser(userId)){
+        const session = await getUserSession();
+        if(!session?.user){
             return {
-                success: false,
-                message: "Cannot access user questions",
-                questions: []
+                success: false, 
+                message: "Unauthorized",
+                questions: [],
             }
         }
+
+        const userId = session.user.id;
 
         let whereClause = eq(question.userId, userId);
 
@@ -124,15 +125,18 @@ export const getAllUserQuestions = async ({
     }
 }
 
-export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: string, limit: number }) => {
+export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) => {
   try {
-    if(!validUser(userId)){
-            return {
-                success: false,
-                message: "Cannot access user questions",
-                questions: []
-            }
+    const session = await getUserSession();
+    if(!session?.user){
+        return {
+            success: false, 
+            message: "Unauthorized",
+            questions: [],
         }
+    }
+
+    const userId = session.user.id;
 
     const questionResult = await db.select()
       .from(question)
@@ -189,8 +193,27 @@ export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: st
 
 export const getQuestionById = async ({questionId} : {questionId:string}) => {
     try {
-        const q = await db.select().from(question).where(eq(question.id, questionId)).limit(1);
-        if(!q.length){
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false,
+                message: "Unauthorized", 
+                question: null,
+            }
+        }
+        const userId = session.user.id;
+        const [q] = await db
+            .select()
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, questionId),
+                     eq(question.userId, userId)
+                )
+            )
+            .limit(1);
+
+        if(!q){
             return{
                 success: false,
                 message: "Question not found",
@@ -198,13 +221,16 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             }
         }
 
-        const atts = await db.select().from(attempts).where(eq(attempts.questionId, questionId));
+        const atts = await db
+            .select()
+            .from(attempts)
+            .where(
+                eq(attempts.questionId, questionId)
+            );
 
         const fullQuestion = {
-            ...q[0],
-            attempts: atts.map(a=> ({
-                ...a,
-            }))
+            ...q, 
+            attempts: atts, 
         }
 
         return {
@@ -349,8 +375,17 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
     }
 }
 
-export const getQuestionLabels = async ({userId} : {userId : string}) => {
+export const getQuestionLabels = async () => {
     try {
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+                labels: [],
+            }
+        }
+        const userId = session.user.id;
         const labelRows = await db.selectDistinct(
             {label: question.label})
             .from(question)

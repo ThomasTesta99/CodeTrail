@@ -208,7 +208,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             .where(
                 and(
                     eq(question.id, questionId),
-                     eq(question.userId, userId)
+                    eq(question.userId, userId)
                 )
             )
             .limit(1);
@@ -251,20 +251,61 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
 
 export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => {
     try {
-       const session = await getUserSession();
-        if (!session?.user?.id) {
-            return { success: false, message: 'Unauthorized' };
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+            }
+        }
+        const userId = session.user.id;
+
+        const [ownedQuestion] = await db
+            .select({id: question.id})
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, deleteItemId),
+                    eq(question.userId, userId),
+                )
+            )
+            .limit(1);
+
+        if(!ownedQuestion){
+            return {
+                success: false, 
+                message: "Question not found.", 
+            }
         }
 
         await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
-        await db.delete(question).where(eq(question.id, deleteItemId));
-        return { success: true, message: 'Question deleted' };
-        } catch (error) {
-            console.log(error)
+        const deletedQuestions = await db
+            .delete(question)
+            .where(
+                and(
+                    eq(question.id, deleteItemId),
+                    eq(question.userId, userId), 
+                )
+            )
+            .returning({id: question.id});
+
+        if(deletedQuestions.length === 0){
             return {
-                success: false,
-                message: error instanceof Error ? error.message : String(error) 
+                success: false, 
+                message: "Question not found.",
             }
+        }
+
+        return {
+            success: true, 
+            message: "Question deleted."
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : String(error) 
+        }
     }
 }
 
@@ -296,11 +337,48 @@ export const addAttempt = async ({questionId, attempt}: {questionId: string, att
 export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
     try {
         const session = await getUserSession();
-        if (!session?.user?.id) {
-            return { success: false, message: 'Unauthorized' };
+        if (!session?.user) {
+            return { 
+                success: false, 
+                message: 'Unauthorized' 
+            };
+        }
+        const userId = session.user.id;
+
+        const [ownedAttempt] = await db
+            .select({id: attempts.id})
+            .from(attempts)
+            .innerJoin(
+                question, 
+                eq(attempts.questionId, question.id), 
+            )
+            .where(
+                and(
+                    eq(attempts.id, deleteItemId), 
+                    eq(question.userId, userId)
+                )
+            )
+            .limit(1);
+
+        if(!ownedAttempt){
+            return {
+                success: false, 
+                message: "Attempt not found", 
+            }
         }
 
-        await db.delete(attempts).where(eq(attempts.id, deleteItemId));
+        const deletedAttempts = await db
+            .delete(attempts)
+            .where(eq(attempts.id, ownedAttempt.id))
+            .returning({ id: attempts.id });
+
+        if(deletedAttempts.length === 0){
+            return {
+                success: false, 
+                message: "Attempt not found", 
+            }
+        }
+        
         return {
             success: true,
             message: "Attempt successfully deleted",

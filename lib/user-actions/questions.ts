@@ -3,14 +3,49 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
-import { getUserSession, validUser } from "./authActions";
+import { getUserSession } from "./authActions";
 import { Attempt, DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
+import { attemptSchema, questionSchema } from "../validations/question";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
-        const [insertedQuestion] = await db.insert(question).values(q).returning();
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+                question: null, 
+            }
+        }
+        const userId = session.user.id;
+        const parsed = questionSchema.safeParse(q)
+
+        if (!parsed.success) {
+            return {
+                success: false,
+                message: "Invalid question data",
+                question: null,
+            }
+        }
+
+        const data = parsed.data
+
+        const [insertedQuestion] = await db
+            .insert(question)
+            .values({
+                id: crypto.randomUUID(),
+                userId: userId,
+                title: data.title,
+                description: data.description,
+                difficulty: data.difficulty,
+                label: data.label.trim() || "Unlabeled",
+                link: data.link || null,
+                createdAt: new Date(),
+            })
+            .returning()
+
         return {
             success: true,
             message: 'Question added successfully',
@@ -27,14 +62,12 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 }
 
 export const getAllUserQuestions = async ({
-    userId,
     limit = 6,
     offset = 0,
     label, 
     sort = "newest", 
     q, 
 }: {
-    userId: string;
     limit?: number;
     offset?: number;
     label: string, 
@@ -42,13 +75,16 @@ export const getAllUserQuestions = async ({
     q: string,
 }) => {
     try {
-        if(!validUser(userId)){
+        const session = await getUserSession();
+        if(!session?.user){
             return {
-                success: false,
-                message: "Cannot access user questions",
-                questions: []
+                success: false, 
+                message: "Unauthorized",
+                questions: [],
             }
         }
+
+        const userId = session.user.id;
 
         let whereClause = eq(question.userId, userId);
 
@@ -124,15 +160,18 @@ export const getAllUserQuestions = async ({
     }
 }
 
-export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: string, limit: number }) => {
+export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) => {
   try {
-    if(!validUser(userId)){
-            return {
-                success: false,
-                message: "Cannot access user questions",
-                questions: []
-            }
+    const session = await getUserSession();
+    if(!session?.user){
+        return {
+            success: false, 
+            message: "Unauthorized",
+            questions: [],
         }
+    }
+
+    const userId = session.user.id;
 
     const questionResult = await db.select()
       .from(question)
@@ -189,8 +228,27 @@ export const getMostRecentUserQuestions = async ({ userId, limit }: { userId: st
 
 export const getQuestionById = async ({questionId} : {questionId:string}) => {
     try {
-        const q = await db.select().from(question).where(eq(question.id, questionId)).limit(1);
-        if(!q.length){
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false,
+                message: "Unauthorized", 
+                question: null,
+            }
+        }
+        const userId = session.user.id;
+        const [q] = await db
+            .select()
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, questionId),
+                    eq(question.userId, userId)
+                )
+            )
+            .limit(1);
+
+        if(!q){
             return{
                 success: false,
                 message: "Question not found",
@@ -198,13 +256,16 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             }
         }
 
-        const atts = await db.select().from(attempts).where(eq(attempts.questionId, questionId));
+        const atts = await db
+            .select()
+            .from(attempts)
+            .where(
+                eq(attempts.questionId, questionId)
+            );
 
         const fullQuestion = {
-            ...q[0],
-            attempts: atts.map(a=> ({
-                ...a,
-            }))
+            ...q, 
+            attempts: atts, 
         }
 
         return {
@@ -225,34 +286,115 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
 
 export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => {
     try {
-       const session = await getUserSession();
-        if (!session?.user?.id) {
-            return { success: false, message: 'Unauthorized' };
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+            }
+        }
+        const userId = session.user.id;
+
+        const [ownedQuestion] = await db
+            .select({id: question.id})
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, deleteItemId),
+                    eq(question.userId, userId),
+                )
+            )
+            .limit(1);
+
+        if(!ownedQuestion){
+            return {
+                success: false, 
+                message: "Question not found.", 
+            }
         }
 
         await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
-        await db.delete(question).where(eq(question.id, deleteItemId));
-        return { success: true, message: 'Question deleted' };
-        } catch (error) {
-            console.log(error)
+        const deletedQuestions = await db
+            .delete(question)
+            .where(
+                and(
+                    eq(question.id, deleteItemId),
+                    eq(question.userId, userId), 
+                )
+            )
+            .returning({id: question.id});
+
+        if(deletedQuestions.length === 0){
             return {
-                success: false,
-                message: error instanceof Error ? error.message : String(error) 
+                success: false, 
+                message: "Question not found.",
             }
+        }
+
+        return {
+            success: true, 
+            message: "Question deleted."
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : String(error) 
+        }
     }
 }
 
 export const addAttempt = async ({questionId, attempt}: {questionId: string, attempt: Attempt}) => {
     try {
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized",
+                
+            }
+        }
+
+        const parsed = attemptSchema.safeParse(attempt)
+
+        if (!parsed.success) {
+        return {
+            success: false,
+            message: "Invalid attempt data",
+        }
+        }
+
+        const data = parsed.data;
+
+        const [ownedQuestion] = await db
+            .select({
+                id: question.id,
+            })
+            .from(question)
+            .where(
+                and(
+                    eq(question.id, questionId),
+                    eq(question.userId, session.user.id)
+                )
+            )
+            .limit(1);
+
+        if (!ownedQuestion) {
+            return {
+                success: false,
+                message: "Question not found",
+            };
+        }
+
         await db.insert(attempts).values({
-            id: attempt.id,
-            questionId: questionId,
-            solutionCode: attempt.solutionCode,
-            language: attempt.language,
-            neededHelp: attempt.neededHelp,
-            durationMinutes: attempt.durationMinutes,
-            notes: attempt.notes,
-            createdAt: attempt.createdAt,
+            id: crypto.randomUUID(),
+            questionId: ownedQuestion.id,
+            solutionCode: data.solutionCode,
+            language: data.language,
+            neededHelp: data.neededHelp,
+            durationMinutes: data.durationMinutes,
+            notes: data.notes,
+            createdAt: new Date(),
         });
 
         return {
@@ -270,11 +412,48 @@ export const addAttempt = async ({questionId, attempt}: {questionId: string, att
 export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
     try {
         const session = await getUserSession();
-        if (!session?.user?.id) {
-            return { success: false, message: 'Unauthorized' };
+        if (!session?.user) {
+            return { 
+                success: false, 
+                message: 'Unauthorized' 
+            };
+        }
+        const userId = session.user.id;
+
+        const [ownedAttempt] = await db
+            .select({id: attempts.id})
+            .from(attempts)
+            .innerJoin(
+                question, 
+                eq(attempts.questionId, question.id), 
+            )
+            .where(
+                and(
+                    eq(attempts.id, deleteItemId), 
+                    eq(question.userId, userId)
+                )
+            )
+            .limit(1);
+
+        if(!ownedAttempt){
+            return {
+                success: false, 
+                message: "Attempt not found", 
+            }
         }
 
-        await db.delete(attempts).where(eq(attempts.id, deleteItemId));
+        const deletedAttempts = await db
+            .delete(attempts)
+            .where(eq(attempts.id, ownedAttempt.id))
+            .returning({ id: attempts.id });
+
+        if(deletedAttempts.length === 0){
+            return {
+                success: false, 
+                message: "Attempt not found", 
+            }
+        }
+
         return {
             success: true,
             message: "Attempt successfully deleted",
@@ -349,8 +528,17 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
     }
 }
 
-export const getQuestionLabels = async ({userId} : {userId : string}) => {
+export const getQuestionLabels = async () => {
     try {
+        const session = await getUserSession();
+        if(!session?.user){
+            return {
+                success: false, 
+                message: "Unauthorized", 
+                labels: [],
+            }
+        }
+        const userId = session.user.id;
         const labelRows = await db.selectDistinct(
             {label: question.label})
             .from(question)

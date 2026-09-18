@@ -1,6 +1,7 @@
 'use client '
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
+import { attemptSchema } from '@/lib/validations/question';
 import { Attempt } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
@@ -9,14 +10,6 @@ import React from 'react'
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { z } from 'zod'
-
-const attemptSchema = z.object({
-  solutionCode: z.string().min(1, "Solution code is required"),
-  language: z.string().min(1, 'Language is required'),
-  neededHelp: z.boolean(),
-  durationMinutes: z.number().min(1, 'Duration is required'),
-  notes: z.string().optional(),
-})
 
 type AttemptFormData = z.infer<typeof attemptSchema>;
 

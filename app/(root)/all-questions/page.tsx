@@ -3,7 +3,7 @@ import QuestionFilterBar from '@/components/QuestionFilterBar';
 import { QUESTIONS_PER_PAGE } from '@/constants';
 import { getUserSession } from '@/lib/user-actions/authActions';
 import { getAllUserQuestions, getQuestionLabels } from '@/lib/user-actions/questions';
-import React from 'react';
+import Link from 'next/link';
 
 type SearchParams = {
   page?: string,
@@ -48,7 +48,7 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const sort: SortKey = params.sort || "newest"
   const q = params.q || "";
 
-  const result = await getAllUserQuestions({ userId: user.id, limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
+  const result = await getAllUserQuestions({ limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
   const userQuestions = result.questions.map(q => ({
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
@@ -61,7 +61,7 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
     })),
   }));
 
-  const labelResult = await getQuestionLabels({userId: user.id});
+  const labelResult = await getQuestionLabels();
   const labels = labelResult.labels;
 
   if(userQuestions.length === 0){
@@ -111,20 +111,25 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
 
         <div className="all-questions-pagination">
           {pageNumber > 1 && (
-            <a 
-                href={buildHref(currentParams, { page: String(pageNumber - 1) })} 
-                className="all-questions-pagination-link"
-              >
+            <Link
+              href={buildHref(currentParams, {
+                page: String(pageNumber - 1),
+              })}
+              className="all-questions-pagination-link"
+            >
               Previous
-            </a>
+            </Link>
           )}
+
           {userQuestions.length > QUESTIONS_PER_PAGE && (
-            <a 
-                href={buildHref(currentParams, { page: String(pageNumber + 1) })} 
-                className="all-questions-pagination-link"
-              >
+            <Link
+              href={buildHref(currentParams, {
+                page: String(pageNumber + 1),
+              })}
+              className="all-questions-pagination-link"
+            >
               Next
-            </a>
+            </Link>
           )}
         </div>
       </div>

@@ -11,18 +11,7 @@ import { validUser } from '@/lib/user-actions/authActions'
 import { UserProps } from '@/types/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { SelectGroup } from '@radix-ui/react-select'
-
-const questionSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().min(1, 'Description is required'),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  label: z.string(),
-  link: z.string()
-    .optional()
-    .refine((val) => !val || z.string().url().safeParse(val).success, {
-      message: 'Must be a valid URL',
-    }),
-})
+import { questionSchema } from '@/lib/validations/question'
 
 type QuestionFormData = z.infer<typeof questionSchema>
 
@@ -45,7 +34,6 @@ const AddQuestionForm = ({ user }: UserProps) => {
     const newQuestion = {
       id: crypto.randomUUID(),
       ...data,
-      userId: user.id,
       createdAt: new Date(),
       attempts: [],
     }

@@ -13,7 +13,7 @@ const page = async () => {
   if (!user?.id) {
     redirect('/sign-in');
   }
-  const result = await getMostRecentUserQuestions({userId : user.id, limit: 6});
+  const result = await getMostRecentUserQuestions({ limit: 6});
   if(!result.success){
     return (
       <div className="dashboard-container">

@@ -31,11 +31,12 @@ declare interface UserProps{
 
 declare interface Attempt {
   id: string;
+  questionId: string;
   solutionCode: string;
   language: string;
   neededHelp: boolean;
   durationMinutes: number;
-  notes?: string;
+  notes?: string | null;
   createdAt: Date;
 }
 

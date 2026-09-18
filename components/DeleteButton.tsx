@@ -36,8 +36,7 @@ export const DeleteButton = ({
           if (deleteType === 'delete-question') {
             router.push('/');
           } else {
-             onDeleteSuccess?.();
-             router.refresh()
+            onDeleteSuccess?.();
           }
         }, 1500);
       } else {

@@ -4,10 +4,11 @@ import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 import { getUserSession } from "./authActions";
-import { Attempt, DatabaseQuestion, Question} from "@/types/types";
+import { DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
 import { attemptSchema, questionSchema } from "../validations/question";
+import { z } from "zod";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -40,7 +41,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
                 title: data.title,
                 description: data.description,
                 difficulty: data.difficulty,
-                label: data.label.trim() || "Unlabeled",
+                label: data.label?.trim() || "Unlabeled",
                 link: data.link || null,
                 createdAt: new Date(),
             })
@@ -344,70 +345,80 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
     }
 }
 
-export const addAttempt = async ({questionId, attempt}: {questionId: string, attempt: Attempt}) => {
-    try {
-        const session = await getUserSession();
-        if(!session?.user){
-            return {
-                success: false, 
-                message: "Unauthorized",
-                
-            }
-        }
+export const addAttempt = async ({
+  questionId,
+  attempt,
+}: {
+  questionId: string;
+  attempt: z.infer<typeof attemptSchema>;
+}) => {
+  try {
+    const session = await getUserSession();
 
-        const parsed = attemptSchema.safeParse(attempt)
-
-        if (!parsed.success) {
-        return {
-            success: false,
-            message: "Invalid attempt data",
-        }
-        }
-
-        const data = parsed.data;
-
-        const [ownedQuestion] = await db
-            .select({
-                id: question.id,
-            })
-            .from(question)
-            .where(
-                and(
-                    eq(question.id, questionId),
-                    eq(question.userId, session.user.id)
-                )
-            )
-            .limit(1);
-
-        if (!ownedQuestion) {
-            return {
-                success: false,
-                message: "Question not found",
-            };
-        }
-
-        await db.insert(attempts).values({
-            id: crypto.randomUUID(),
-            questionId: ownedQuestion.id,
-            solutionCode: data.solutionCode,
-            language: data.language,
-            neededHelp: data.neededHelp,
-            durationMinutes: data.durationMinutes,
-            notes: data.notes,
-            createdAt: new Date(),
-        });
-
-        return {
-            success: true, 
-            message: "Attempt added successfully"
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error)
-        }
+    if (!session?.user) {
+      return {
+        success: false,
+        message: "Unauthorized",
+      };
     }
-}
+
+    const parsed = attemptSchema.safeParse(attempt);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: "Invalid attempt data",
+      };
+    }
+
+    const data = parsed.data;
+
+    const [ownedQuestion] = await db
+      .select({
+        id: question.id,
+      })
+      .from(question)
+      .where(
+        and(
+          eq(question.id, questionId),
+          eq(question.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!ownedQuestion) {
+      return {
+        success: false,
+        message: "Question not found",
+      };
+    }
+
+    const [newAttempt] = await db
+      .insert(attempts)
+      .values({
+        id: crypto.randomUUID(),
+        questionId: ownedQuestion.id,
+        solutionCode: data.solutionCode,
+        language: data.language,
+        neededHelp: data.neededHelp,
+        durationMinutes: data.durationMinutes,
+        notes: data.notes,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return {
+      success: true,
+      message: "Attempt added successfully",
+      attempt: newAttempt,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
 
 export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
     try {

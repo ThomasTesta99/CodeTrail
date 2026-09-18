@@ -1,12 +1,10 @@
-'use client '
+'use client'
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
 import { attemptSchema } from '@/lib/validations/question';
 import { Attempt } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import React from 'react'
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { z } from 'zod'
@@ -22,30 +20,24 @@ const AddAttempt = (
     onClose: () => void,
     onAdd: (attempt: Attempt) => void
   }) => {
-  const router = useRouter();
   const {register, handleSubmit, formState: {errors, isSubmitting}} = useForm<AttemptFormData>({
     resolver: zodResolver(attemptSchema),
   });
 
   const onSubmit = async (data: AttemptFormData) => {
-    const newAttempt = {
-      id: crypto.randomUUID(),
-      questionId, 
-      createdAt: new Date(),
-      ...data,
-    };
+    const result = await addAttempt({
+      questionId,
+      attempt: data,
+    });
 
-    const result = await addAttempt({questionId: questionId, attempt: newAttempt});
-
-    if(result.success){
+    if (result.success && result.attempt) {
       toast.success(result.message);
+      onAdd(result.attempt);
       onClose();
-      onAdd(newAttempt);
-      router.refresh();
-    }else{
+    } else {
       toast.error(result.message || 'Failed to add attempt');
     }
-  }
+  };
   return (
     <div className='modal-backdrop'>
       <div className="modal-content">

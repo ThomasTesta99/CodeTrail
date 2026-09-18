@@ -1,6 +1,6 @@
 'use client';
 import { LANGUAGE_OPTIONS } from '@/constants';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
@@ -66,11 +66,6 @@ const QuestionDetails = ({ question }: { question: Question }) => {
     }
   }
 
-  useEffect(() => {
-    const newAttempts = question.attempts ?? [];
-    setAttempts(newAttempts);
-  }, [question.attempts])
-
   const handleAddAttempt = (newAttempt: Attempt) => {
     setAttempts((prev) => [...prev, newAttempt]);
     setCurrentAttemptIndex(attempts.length);
@@ -114,9 +109,12 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                 deleteType='delete-attempt' 
                 className='delete-attempt-button'
                 onDeleteSuccess={() => {
-                  const updated = [...attempts];
-                  updated.splice(currentAttemptIndex, 1);
-                  setAttempts(updated);
+                  const deletedAttemptId = attempts[currentAttemptIndex].id;
+
+                  setAttempts((prev) =>
+                    prev.filter((attempt) => attempt.id !== deletedAttemptId)
+                  );
+
                   setCurrentAttemptIndex((prev) => Math.max(prev - 1, 0));
                 }}
               />

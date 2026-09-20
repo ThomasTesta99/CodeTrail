@@ -64,7 +64,6 @@ export function validateText(
 export function validateAIRequestBody(
   body: unknown
 ): body is { attemptId: string } {
-  console.log(body)
   return (
     body !== null &&
     typeof body === 'object' &&

@@ -1,8 +1,13 @@
 "use client";
 
 import { SortKey } from "@/app/(root)/all-questions/page";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useRef, useState } from "react";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+
 import {
   Select,
   SelectContent,
@@ -13,7 +18,11 @@ import {
   SelectValue,
 } from "./ui/select";
 
-export default function QuestionFilterBar({ labels }: { labels: string[] }) {
+export default function QuestionFilterBar({
+  labels,
+}: {
+  labels: string[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -21,17 +30,48 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
   const sortedLabels = [...labels].sort();
 
   const currentQuery = searchParams.get("q") || "";
+
   const [localQuery, setLocalQuery] = useState(currentQuery);
 
-  let currentLabel = searchParams.get("label") || "";
-  currentLabel = currentLabel === "" ? "all" : currentLabel;
+  const currentLabel = searchParams.get("label") || "all";
 
-  const currentSort = (searchParams.get("sort") as SortKey) || "newest";
+  const currentSort =
+    (searchParams.get("sort") as SortKey) || "newest";
 
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchParamsRef = useRef(searchParams.toString());
+
+
+  const searchTimeout = useRef<
+    ReturnType<typeof setTimeout> | null
+  >(null);
+
+
+  useEffect(() => {
+    searchParamsRef.current = searchParams.toString();
+  }, [searchParams]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, []);
+
+  const cancelPendingSearch = () => {
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+      searchTimeout.current = null;
+    }
+  };
 
   const pushParams = (next: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
+    // Read the most recent parameters instead of
+    // using a potentially outdated render snapshot.
+    const params = new URLSearchParams(
+      searchParamsRef.current
+    );
 
     for (const [key, value] of Object.entries(next)) {
       if (key === "label" && value === "all") {
@@ -49,36 +89,57 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
     params.set("page", "1");
 
     const qs = params.toString();
+
+    searchParamsRef.current = qs;
+
     router.push(qs ? `${pathname}?${qs}` : pathname);
   };
 
   const handleSearchChange = (value: string) => {
     setLocalQuery(value);
 
-    if (searchTimeout.current) {
-      clearTimeout(searchTimeout.current);
-    }
+    cancelPendingSearch();
 
     searchTimeout.current = setTimeout(() => {
+      searchTimeout.current = null;
+
       pushParams({ q: value });
     }, 300);
   };
 
+  const handleLabelChange = (value: string) => {
+    pushParams({
+      label: value,
+      q: localQuery,
+    });
+  };
+
+  const handleSortChange = (value: string) => {
+    pushParams({
+      sort: value,
+      q: localQuery,
+    });
+  };
+
   const clearAll = () => {
+    cancelPendingSearch();
+
     setLocalQuery("");
 
-    if (searchTimeout.current) {
-      clearTimeout(searchTimeout.current);
-    }
-
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      searchParamsRef.current
+    );
 
     params.delete("label");
     params.delete("sort");
     params.delete("q");
+
     params.set("page", "1");
 
     const qs = params.toString();
+
+    searchParamsRef.current = qs;
+
     router.push(qs ? `${pathname}?${qs}` : pathname);
   };
 
@@ -86,12 +147,15 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
     <div className="w-full mb-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border-2 border-[#2C325D] bg-white p-4 shadow-sm">
 
+        {/* Topic filter */}
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-gray-700">Topic</p>
+          <p className="text-sm font-semibold text-gray-700">
+            Topic
+          </p>
 
           <Select
             value={currentLabel}
-            onValueChange={(value) => pushParams({ label: value })}
+            onValueChange={handleLabelChange}
           >
             <SelectTrigger className="w-[180px] rounded-xl border px-3 py-2 text-sm cursor-pointer">
               <SelectValue placeholder="Select a Topic" />
@@ -101,7 +165,10 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
               <SelectGroup>
                 <SelectLabel>Topics</SelectLabel>
 
-                <SelectItem value="all" className="cursor-pointer">
+                <SelectItem
+                  value="all"
+                  className="cursor-pointer"
+                >
                   All
                 </SelectItem>
 
@@ -119,23 +186,31 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
           </Select>
         </div>
 
+        {/* Search */}
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-gray-700">Search</p>
+          <p className="text-sm font-semibold text-gray-700">
+            Search
+          </p>
 
           <input
             className="rounded-xl border px-3 py-2 text-sm outline-none"
             placeholder="Search questions..."
             value={localQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) =>
+              handleSearchChange(e.target.value)
+            }
           />
         </div>
 
+        {/* Sort and Clear */}
         <div className="flex flex-wrap gap-2 items-center sm:justify-end">
-          <p className="text-sm font-semibold text-gray-700">Sort</p>
+          <p className="text-sm font-semibold text-gray-700">
+            Sort
+          </p>
 
           <Select
             value={currentSort}
-            onValueChange={(value) => pushParams({ sort: value })}
+            onValueChange={handleSortChange}
           >
             <SelectTrigger className="w-[180px] rounded-xl border px-3 py-2 text-sm outline-none cursor-pointer">
               <SelectValue placeholder="Sort your questions" />
@@ -143,19 +218,31 @@ export default function QuestionFilterBar({ labels }: { labels: string[] }) {
 
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="newest" className="cursor-pointer">
+                <SelectItem
+                  value="newest"
+                  className="cursor-pointer"
+                >
                   Newest
                 </SelectItem>
 
-                <SelectItem value="oldest" className="cursor-pointer">
+                <SelectItem
+                  value="oldest"
+                  className="cursor-pointer"
+                >
                   Oldest
                 </SelectItem>
 
-                <SelectItem value="difficultyAsc" className="cursor-pointer">
+                <SelectItem
+                  value="difficultyAsc"
+                  className="cursor-pointer"
+                >
                   Difficulty (Easy → Hard)
                 </SelectItem>
 
-                <SelectItem value="difficultyDesc" className="cursor-pointer">
+                <SelectItem
+                  value="difficultyDesc"
+                  className="cursor-pointer"
+                >
                   Difficulty (Hard → Easy)
                 </SelectItem>
               </SelectGroup>

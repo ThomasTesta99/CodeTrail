@@ -43,9 +43,22 @@ const isInvalidCredentialsError = (
 
 export const logoutUser = async () => {
   try {
-    await auth.api.signOut({
+    const result = await auth.api.signOut({
       headers: await headers(),
     });
+
+    if (!result.success) {
+      console.error(
+        "[logoutUser] Sign-out did not succeed."
+      );
+
+      return getPublicError("INTERNAL_ERROR");
+    }
+
+    return {
+      success: true as const,
+      message: "Signed out successfully.",
+    };
   } catch (error) {
     return handleActionError(error, "logoutUser");
   }

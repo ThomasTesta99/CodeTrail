@@ -334,6 +334,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
     }
 }
 
+
 export const addAttempt = async ({
   questionId,
   attempt,
@@ -347,6 +348,7 @@ export const addAttempt = async ({
     if (!session?.user) {
       return {
         ...getPublicError("UNAUTHORIZED"),
+        attempt: null,
       };
     }
 
@@ -355,6 +357,7 @@ export const addAttempt = async ({
     if (!parsed.success) {
       return {
         ...getPublicError("VALIDATION_ERROR"),
+        attempt: null,
       };
     }
 
@@ -376,6 +379,7 @@ export const addAttempt = async ({
     if (!ownedQuestion) {
       return {
         ...getPublicError("NOT_FOUND"),
+        attempt: null,
       };
     }
 
@@ -394,12 +398,15 @@ export const addAttempt = async ({
       .returning();
 
     return {
-      success: true,
+      success: true as const,
       message: "Attempt added successfully",
       attempt: newAttempt,
     };
   } catch (error) {
-    return handleActionError(error, "addAttempt");
+    return {
+      ...handleActionError(error, "addAttempt"),
+      attempt: null,
+    };
   }
 };
 

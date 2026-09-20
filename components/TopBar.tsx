@@ -25,7 +25,9 @@ const Topbar = ({ user }: UserProps) => {
     <div className="md:hidden w-full bg-[#1E1E2F] text-white">
  
       <div className="p-4 flex justify-between items-center">
-        <h1 className="text-lg font-bold">&lt;CodeTrail /&gt;</h1>
+        <Link href="/">
+          <h1 className="text-lg font-bold">&lt;CodeTrail /&gt;</h1>
+        </Link>
 
         <div className="flex items-center gap-2">
           <button onClick={toggleMenu} className="focus:outline-none cursor-pointer brightness-0 invert">
@@ -37,19 +39,26 @@ const Topbar = ({ user }: UserProps) => {
             />
           </button>
 
-          {user?.image ? (
-            <Image
-              src={user.image}
-              alt="User"
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white text-sm font-semibold">
-              {user?.name?.[0] ?? 'U'}
-            </div>
-          )}
+          <Link
+              href="/profile"
+              aria-label="View your profile"
+              title="View your profile"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-500"
+          >
+              {user?.image ? (
+                  <Image
+                      src={user.image}
+                      alt="User profile"
+                      width={32}
+                      height={32}
+                      className="size-8 rounded-full object-cover"
+                  />
+              ) : (
+                  <span className="text-sm font-semibold text-white">
+                      {user?.name?.[0] ?? 'U'}
+                  </span>
+              )}
+          </Link>
         </div>
       </div>
 

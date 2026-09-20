@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { auth } from "../auth";
 import { db } from "@/database/drizzle";
-import { account, user } from "@/database/schema";
+import { user } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import {
   validateAuthRate,

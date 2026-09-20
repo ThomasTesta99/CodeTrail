@@ -1,6 +1,6 @@
 'use client'
 
-import { createActivityMap, getMonthsForYear } from '@/lib/activityUtils';
+import { createActivityMap, getMonthsForYear } from '@/lib/utils/activityUtils';
 import { getUserActivity } from '@/lib/user-actions/activity';
 
 import { Activity } from '@/types/types';

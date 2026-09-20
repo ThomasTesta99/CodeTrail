@@ -76,3 +76,17 @@ export type GetUserActivityResult = {
     activity: Activity[];
     message: string;
 };
+
+
+export type AIFeedbackAttempt = {
+  solutionCode: string;
+  language: string;
+  neededHelp: boolean;
+  durationMinutes: number;
+  notes: string | null;
+};
+
+export type AIFeedbackQuestion = {
+  title: string;
+  description: string;
+};

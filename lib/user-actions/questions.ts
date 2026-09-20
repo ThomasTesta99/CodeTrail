@@ -237,6 +237,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
                 question: null,
             }
         }
+
         const userId = session.user.id;
         const [q] = await db
             .select()

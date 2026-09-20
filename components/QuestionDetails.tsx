@@ -17,7 +17,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const [feedback, setFeedback] = useState('');
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const [displayedFeedback,setDisplayedFeedback] = useState('')
-
+  
   const handlePrev = () => setCurrentAttemptIndex((prev) => (prev > 0 ? prev - 1 : prev));
   const handleNext = () => setCurrentAttemptIndex((prev) => (prev < totalAttempts - 1 ? prev + 1 : prev));
 
@@ -30,21 +30,24 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          code: attempts[currentAttemptIndex].solutionCode, 
-          notes: attempts[currentAttemptIndex].notes, 
-          questionTitle: question.title, 
-          questionDescription: question.description, 
-          language: attempts[currentAttemptIndex].language, 
-          neededHelp: attempts[currentAttemptIndex].neededHelp, 
-          durationMinutes: attempts[currentAttemptIndex].durationMinutes, 
-          allAttempts: question.attempts
+          attemptId: attempts[currentAttemptIndex].id
         }),
       });
 
       const data = await res.json();
 
-      if(data?.rateLimit && !data.rateLimit.valid){
-        toast.error(data.rateLimit.message);
+      if (!res.ok) {
+        if (data.rateLimit && !data.rateLimit.valid) {
+          toast.error(data.rateLimit.message || 'Rate limit exceeded');
+        } else {
+          toast.error(data.error || 'Failed to get feedback');
+        }
+
+        return;
+      }
+
+      if (typeof data.feedback !== 'string' || !data.feedback) {
+        toast.error('Failed to get feedback');
         return;
       }
       setFeedback(data.feedback);

@@ -1,3 +1,4 @@
+import { AI_DAILY_MAX, AI_DAILY_WINDOW } from '@/constants';
 import { Action } from '@/types/types';
 import arcjet, { fixedWindow, request } from '@arcjet/next'
 
@@ -8,35 +9,112 @@ const aj = arcjet({
 
 export default aj;
 
-export const validateWithArcjet = async (fingerprint: string, action: Action) => {
-    const rateLimit = aj.withRule(
-        fixedWindow({
-            mode: 'LIVE',
-            window: '3m', 
-            max: 2,
-            characteristics: [action]
-        })
-    )
+const aiDailyLimiter = aj.withRule(
+  fixedWindow({
+    mode: 'LIVE',
+    window: AI_DAILY_WINDOW,
+    max: AI_DAILY_MAX,
+    characteristics: ['aiUserId'],
+  })
+);
 
-    const req = await request()
+
+export const validateWithArcjet = async (
+  fingerprint: string,
+  action: Action
+) => {
+  if (!fingerprint.trim()) {
+    return {
+      valid: false,
+      message: 'Invalid rate limit identifier',
+    };
+  }
+
+  try {
+    const rateLimit = aj.withRule(
+      fixedWindow({
+        mode: 'LIVE',
+        window: '3m',
+        max: 2,
+        characteristics: [action],
+      })
+    );
+
+    const req = await request();
 
     const decision = await rateLimit.protect(req, {
-        [action]: fingerprint
+      [action]: fingerprint,
     } as Record<Action, string>);
 
-    if(decision.isDenied()){
-        return {
-            valid: false, 
-            message: "Rate Limit Exceeded"
-        }
-    }else{
-        return {
-            valid: true,
-            message: ' ',
-        }
+    if (decision.isErrored()) {
+      console.error(
+        'Rate limiter failed:',
+        action
+      );
+
+      return {
+        valid: false,
+        message:
+          'This feature is temporarily unavailable. Please try again later.',
+      };
     }
 
-}
+    if (decision.isDenied()) {
+      return {
+        valid: false,
+        message:
+          'Rate limit exceeded. Please try again later.',
+      };
+    }
+
+    if (action === 'ai-feedback') {
+      const dailyDecision = await aiDailyLimiter.protect(
+        req,
+        {
+          aiUserId: fingerprint,
+        }
+      );
+
+      if (dailyDecision.isErrored()) {
+        console.error(
+          'AI feedback usage limiter failed'
+        );
+
+        return {
+          valid: false,
+          message:
+            'AI feedback is temporarily unavailable. Please try again later.',
+        };
+      }
+
+      if (dailyDecision.isDenied()) {
+        return {
+          valid: false,
+          message:
+            'You have reached your AI feedback usage limit. Please try again later.',
+        };
+      }
+    }
+
+    return {
+      valid: true,
+      message: '',
+    };
+
+  } catch (error) {
+    console.error(
+      'Rate limit check failed:',
+      action,
+      error
+    );
+
+    return {
+      valid: false,
+      message:
+        'This feature is temporarily unavailable. Please try again later.',
+    };
+  }
+};
 
 const signInByEmail = arcjet({
     key: process.env.ARCJET_API_KEY!, 
@@ -99,7 +177,6 @@ export const validateAuthRate = async (
 
     try {
         const req = await request();
-        console.log("Trying IP address: " + req.ip)
 
         const emailLimiter =
             action === "sign-in"

@@ -1,5 +1,5 @@
 
-import { formatActivityDate, getDaysInMonth, getFirstDayOfMonth } from '@/lib/activityUtils';
+import { formatActivityDate, getDaysInMonth, getFirstDayOfMonth } from '@/lib/utils/activityUtils';
 import ActivityDay from './ActivityDay';
 
 const ActivityMonth = ({

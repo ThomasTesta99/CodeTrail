@@ -31,11 +31,12 @@ declare interface UserProps{
 
 declare interface Attempt {
   id: string;
+  questionId: string;
   solutionCode: string;
   language: string;
   neededHelp: boolean;
   durationMinutes: number;
-  notes?: string;
+  notes?: string | null;
   createdAt: Date;
 }
 
@@ -75,3 +76,25 @@ export type GetUserActivityResult = {
     activity: Activity[];
     message: string;
 };
+
+
+export type AIFeedbackAttempt = {
+  solutionCode: string;
+  language: string;
+  neededHelp: boolean;
+  durationMinutes: number;
+  notes: string | null;
+};
+
+export type AIFeedbackQuestion = {
+  title: string;
+  description: string;
+};
+
+export type ActionErrorCode =
+  | "UNAUTHORIZED"
+  | "NOT_FOUND"
+  | "VALIDATION_ERROR"
+  | "DATABASE_ERROR"
+  | "RATE_LIMITED"
+  | "INTERNAL_ERROR";

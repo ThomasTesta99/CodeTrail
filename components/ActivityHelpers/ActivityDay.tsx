@@ -1,4 +1,4 @@
-import { getActivityColor } from "@/lib/activityUtils";
+import { getActivityColor } from "@/lib/utils/activityUtils";
 
 const ActivityDay = ({
     day,

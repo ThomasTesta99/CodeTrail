@@ -4,18 +4,19 @@ import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
 import { getUserSession } from "./authActions";
-import { Attempt, DatabaseQuestion, Question} from "@/types/types";
+import { DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
 import { attemptSchema, questionSchema } from "../validations/question";
+import { z } from "zod";
+import { getPublicError, handleActionError } from "../utils/actionError";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 question: null, 
             }
         }
@@ -24,8 +25,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 
         if (!parsed.success) {
             return {
-                success: false,
-                message: "Invalid question data",
+                ...getPublicError("VALIDATION_ERROR"),
                 question: null,
             }
         }
@@ -40,7 +40,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
                 title: data.title,
                 description: data.description,
                 difficulty: data.difficulty,
-                label: data.label.trim() || "Unlabeled",
+                label: data.label?.trim() || "Unlabeled",
                 link: data.link || null,
                 createdAt: new Date(),
             })
@@ -52,12 +52,10 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
             question: insertedQuestion,
         }
     } catch (error) {
-        console.log(error, 'Error uploading to database');
         return {
-            success: false,
-            message: 'Failed to add question',
-            error: error instanceof Error ? error.message : String(error),
-        }
+            ...handleActionError(error, "addQuestion"),
+            question: null,
+        };
     }
 }
 
@@ -78,8 +76,7 @@ export const getAllUserQuestions = async ({
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized",
+                ...getPublicError("UNAUTHORIZED"),
                 questions: [],
             }
         }
@@ -151,12 +148,10 @@ export const getAllUserQuestions = async ({
         }
 
     } catch (error) {
-       console.log(error, "Error getting questions");
-        return{
-            success: false, 
-            message: "Error getting questions from database",
-            questions: []
-        }
+        return {
+            ...handleActionError(error, "getAllUserQuestions"),
+            questions: [],
+        };
     }
 }
 
@@ -165,8 +160,7 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
     const session = await getUserSession();
     if(!session?.user){
         return {
-            success: false, 
-            message: "Unauthorized",
+            ...getPublicError("UNAUTHORIZED"),
             questions: [],
         }
     }
@@ -221,8 +215,10 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
 
     return { success: true, message: 'Got recent questions', questions: sorted };
   } catch (error) {
-    console.error(error, 'Error getting recent questions');
-    return { success: false, message: 'Failed to get recent questions', questions: [] };
+    return {
+      ...handleActionError(error, "getMostRecentUserQuestions"),
+      questions: [],
+    };
   }
 };
 
@@ -231,11 +227,11 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false,
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 question: null,
             }
         }
+
         const userId = session.user.id;
         const [q] = await db
             .select()
@@ -250,8 +246,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
 
         if(!q){
             return{
-                success: false,
-                message: "Question not found",
+                ...getPublicError("NOT_FOUND"),
                 question: null
             }
         }
@@ -275,12 +270,13 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         }
 
     } catch (error) {
-        console.log(error);
-        return{
-            success: false,
-            message: error instanceof Error ? error.message : String(error),
-            question: null
-        }
+        return {
+            ...handleActionError(
+                error, 
+                "getQuestionById"
+            ),
+            question: null,
+        };
     }
 }
 
@@ -289,8 +285,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
             }
         }
         const userId = session.user.id;
@@ -308,8 +303,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
 
         if(!ownedQuestion){
             return {
-                success: false, 
-                message: "Question not found.", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -336,86 +330,92 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             message: "Question deleted."
         }
     } catch (error) {
-        console.log(error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error) 
-        }
+        return handleActionError(error, "deleteQuestion");
     }
 }
 
-export const addAttempt = async ({questionId, attempt}: {questionId: string, attempt: Attempt}) => {
-    try {
-        const session = await getUserSession();
-        if(!session?.user){
-            return {
-                success: false, 
-                message: "Unauthorized",
-                
-            }
-        }
 
-        const parsed = attemptSchema.safeParse(attempt)
+export const addAttempt = async ({
+  questionId,
+  attempt,
+}: {
+  questionId: string;
+  attempt: z.infer<typeof attemptSchema>;
+}) => {
+  try {
+    const session = await getUserSession();
 
-        if (!parsed.success) {
-        return {
-            success: false,
-            message: "Invalid attempt data",
-        }
-        }
-
-        const data = parsed.data;
-
-        const [ownedQuestion] = await db
-            .select({
-                id: question.id,
-            })
-            .from(question)
-            .where(
-                and(
-                    eq(question.id, questionId),
-                    eq(question.userId, session.user.id)
-                )
-            )
-            .limit(1);
-
-        if (!ownedQuestion) {
-            return {
-                success: false,
-                message: "Question not found",
-            };
-        }
-
-        await db.insert(attempts).values({
-            id: crypto.randomUUID(),
-            questionId: ownedQuestion.id,
-            solutionCode: data.solutionCode,
-            language: data.language,
-            neededHelp: data.neededHelp,
-            durationMinutes: data.durationMinutes,
-            notes: data.notes,
-            createdAt: new Date(),
-        });
-
-        return {
-            success: true, 
-            message: "Attempt added successfully"
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error)
-        }
+    if (!session?.user) {
+      return {
+        ...getPublicError("UNAUTHORIZED"),
+        attempt: null,
+      };
     }
-}
+
+    const parsed = attemptSchema.safeParse(attempt);
+
+    if (!parsed.success) {
+      return {
+        ...getPublicError("VALIDATION_ERROR"),
+        attempt: null,
+      };
+    }
+
+    const data = parsed.data;
+
+    const [ownedQuestion] = await db
+      .select({
+        id: question.id,
+      })
+      .from(question)
+      .where(
+        and(
+          eq(question.id, questionId),
+          eq(question.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!ownedQuestion) {
+      return {
+        ...getPublicError("NOT_FOUND"),
+        attempt: null,
+      };
+    }
+
+    const [newAttempt] = await db
+      .insert(attempts)
+      .values({
+        id: crypto.randomUUID(),
+        questionId: ownedQuestion.id,
+        solutionCode: data.solutionCode,
+        language: data.language,
+        neededHelp: data.neededHelp,
+        durationMinutes: data.durationMinutes,
+        notes: data.notes,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return {
+      success: true as const,
+      message: "Attempt added successfully",
+      attempt: newAttempt,
+    };
+  } catch (error) {
+    return {
+      ...handleActionError(error, "addAttempt"),
+      attempt: null,
+    };
+  }
+};
 
 export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) => {
     try {
         const session = await getUserSession();
         if (!session?.user) {
             return { 
-                success: false, 
-                message: 'Unauthorized' 
+                ...getPublicError("UNAUTHORIZED"),
             };
         }
         const userId = session.user.id;
@@ -437,8 +437,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
 
         if(!ownedAttempt){
             return {
-                success: false, 
-                message: "Attempt not found", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -449,8 +448,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
 
         if(deletedAttempts.length === 0){
             return {
-                success: false, 
-                message: "Attempt not found", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -459,10 +457,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
             message: "Attempt successfully deleted",
         }
     } catch (error) {
-        return{
-            success: false,
-            message: error instanceof Error ? error.message : String(error),
-        }
+        return handleActionError(error, "deleteAttempt");
     }
 }
 
@@ -471,24 +466,17 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
         const session = await getUserSession();
         if(!session?.user?.id){
             return {
-                success: false,
-                message: "Unautherized",
+                ...getPublicError("UNAUTHORIZED"),
             }
         }
 
-        const [existing] = await db.select().from(question).where(eq(question.id, oldQuestion.id)).limit(1);
+        const [existing] = await db.select().from(question)
+            .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)))
+            .limit(1);
 
         if(!existing){
             return {
-                success: false,
-                message: "Question not found",
-            }
-        }
-
-        if(existing.userId !== session.user.id){
-            return {
-                success: false,
-                message: "Unautherized"
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -523,8 +511,7 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             message: "Question sucessfully updated"
         };
     } catch (error) {
-        console.log(error);
-        return { success: false, message: error instanceof Error ? error.message : String(error) };
+        return handleActionError(error, "updateQuestion");
     }
 }
 
@@ -533,8 +520,7 @@ export const getQuestionLabels = async () => {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 labels: [],
             }
         }
@@ -553,9 +539,8 @@ export const getQuestionLabels = async () => {
         }
     } catch (error) {
         return {
-            success: false,
-            message: "There was an error getting the labels: " + error,
-            labels: ['Unlabeled'],
-        }
+            ...handleActionError(error, "getQuestionLabels"),
+            labels: [],
+        };
     }
 }

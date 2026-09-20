@@ -1,6 +1,6 @@
 'use client';
 import { LANGUAGE_OPTIONS } from '@/constants';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
@@ -17,7 +17,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const [feedback, setFeedback] = useState('');
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const [displayedFeedback,setDisplayedFeedback] = useState('')
-
+  
   const handlePrev = () => setCurrentAttemptIndex((prev) => (prev > 0 ? prev - 1 : prev));
   const handleNext = () => setCurrentAttemptIndex((prev) => (prev < totalAttempts - 1 ? prev + 1 : prev));
 
@@ -30,21 +30,24 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          code: attempts[currentAttemptIndex].solutionCode, 
-          notes: attempts[currentAttemptIndex].notes, 
-          questionTitle: question.title, 
-          questionDescription: question.description, 
-          language: attempts[currentAttemptIndex].language, 
-          neededHelp: attempts[currentAttemptIndex].neededHelp, 
-          durationMinutes: attempts[currentAttemptIndex].durationMinutes, 
-          allAttempts: question.attempts
+          attemptId: attempts[currentAttemptIndex].id
         }),
       });
 
       const data = await res.json();
 
-      if(data?.rateLimit && !data.rateLimit.valid){
-        toast.error(data.rateLimit.message);
+      if (!res.ok) {
+        if (data.rateLimit && !data.rateLimit.valid) {
+          toast.error(data.rateLimit.message || 'Rate limit exceeded');
+        } else {
+          toast.error(data.error || 'Failed to get feedback');
+        }
+
+        return;
+      }
+
+      if (typeof data.feedback !== 'string' || !data.feedback) {
+        toast.error('Failed to get feedback');
         return;
       }
       setFeedback(data.feedback);
@@ -65,11 +68,6 @@ const QuestionDetails = ({ question }: { question: Question }) => {
       setIsLoadingFeedback(false);
     }
   }
-
-  useEffect(() => {
-    const newAttempts = question.attempts ?? [];
-    setAttempts(newAttempts);
-  }, [question.attempts])
 
   const handleAddAttempt = (newAttempt: Attempt) => {
     setAttempts((prev) => [...prev, newAttempt]);
@@ -114,9 +112,12 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                 deleteType='delete-attempt' 
                 className='delete-attempt-button'
                 onDeleteSuccess={() => {
-                  const updated = [...attempts];
-                  updated.splice(currentAttemptIndex, 1);
-                  setAttempts(updated);
+                  const deletedAttemptId = attempts[currentAttemptIndex].id;
+
+                  setAttempts((prev) =>
+                    prev.filter((attempt) => attempt.id !== deletedAttemptId)
+                  );
+
                   setCurrentAttemptIndex((prev) => Math.max(prev - 1, 0));
                 }}
               />

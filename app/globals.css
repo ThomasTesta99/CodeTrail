@@ -77,20 +77,21 @@
   }
 
   /* FOOTER */
-  .footer{
-    @apply flex cursor-pointer items-center justify-between gap-4 py-6 w-full
+
+  .footer {
+      @apply flex cursor-pointer items-center justify-between gap-4 py-6 w-full max-xl:flex-col;
   }
 
-  .footer-name{
-    @apply flex size-10 items-center justify-center rounded-full bg-gray-600 max-xl:hidden
+  .footer-name {
+      @apply flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-600;
   }
 
-  .footer-email{
-    @apply flex flex-1 flex-col justify-center max-xl:hidden
+  .footer-email {
+      @apply flex flex-1 min-w-0 flex-col justify-center;
   }
 
-  .footer-image{
-    @apply relative size-5 max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center cursor-pointer
+  .footer-image {
+      @apply relative size-5 shrink-0 cursor-pointer max-xl:my-2;
   }
 
   /* Layout Container */

@@ -4,7 +4,7 @@ import { auth } from "../auth";
 import { db } from "@/database/drizzle";
 import { account, user } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { validateWithArcjet } from "../arcjet";
+import { validateAuthRate, validateWithArcjet } from "../arcjet";
 import { Action, CreateUserInfo, SignInUserInfo} from "@/types/types";
 
 
@@ -14,6 +14,19 @@ export const logoutUser = async () => {
 
 export const signUpUser = async({name, email, password}: CreateUserInfo) => {
     try {
+        const normalizedEmail = email.trim().toLowerCase();
+        const rateLimit = await validateAuthRate(
+            normalizedEmail, 
+            "sign-up",
+        );
+
+        if(!rateLimit.valid){
+            return {
+                success: false, 
+                message: rateLimit.message, 
+            }
+        }
+
         const newUser = await auth.api.signUpEmail({
             body: {
                 name, 
@@ -38,6 +51,21 @@ export const signUpUser = async({name, email, password}: CreateUserInfo) => {
 
 export const signInUser = async({email, password}: SignInUserInfo) => {
     try {
+        const normalizedEmail = email.trim().toLowerCase();
+        const rateLimit = await validateAuthRate(
+            normalizedEmail, 
+            "sign-in",
+        );
+    
+
+        if(!rateLimit.valid){
+            console.log("Rate limit exceeded");
+            return {
+                success: false, 
+                message: rateLimit.message, 
+            }
+        }
+
         const user = await auth.api.signInEmail({
             body: {
                 email, 
@@ -52,9 +80,10 @@ export const signInUser = async({email, password}: SignInUserInfo) => {
             user,
         }
     } catch (error) {
+        console.error(error);
         return {
             success: false,
-            message: "There was an error signing in: " + error as string,
+            message: "Invalid email or password",
         }
     }
 }

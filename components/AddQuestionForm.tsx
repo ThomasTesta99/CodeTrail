@@ -37,8 +37,7 @@ const AddQuestionForm = ({ user }: UserProps) => {
       createdAt: new Date(),
       attempts: [],
     }
-
-    console.log('Submitting Question:', newQuestion);
+    
     const result = await addQuestion({ q: newQuestion })
 
     if (result.success) {
@@ -46,7 +45,6 @@ const AddQuestionForm = ({ user }: UserProps) => {
       router.push('/');
     } else {
       toast.error(result.message)
-      throw new Error(result.error)
     }
   }
 

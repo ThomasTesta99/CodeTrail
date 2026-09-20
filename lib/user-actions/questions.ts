@@ -9,14 +9,14 @@ import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
 import { attemptSchema, questionSchema } from "../validations/question";
 import { z } from "zod";
+import { getPublicError, handleActionError } from "../utils/actionError";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 question: null, 
             }
         }
@@ -25,8 +25,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 
         if (!parsed.success) {
             return {
-                success: false,
-                message: "Invalid question data",
+                ...getPublicError("VALIDATION_ERROR"),
                 question: null,
             }
         }
@@ -53,12 +52,10 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
             question: insertedQuestion,
         }
     } catch (error) {
-        console.log(error, 'Error uploading to database');
         return {
-            success: false,
-            message: 'Failed to add question',
-            error: error instanceof Error ? error.message : String(error),
-        }
+            ...handleActionError(error, "addQuestion"),
+            question: null,
+        };
     }
 }
 
@@ -79,8 +76,7 @@ export const getAllUserQuestions = async ({
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized",
+                ...getPublicError("UNAUTHORIZED"),
                 questions: [],
             }
         }
@@ -152,12 +148,10 @@ export const getAllUserQuestions = async ({
         }
 
     } catch (error) {
-       console.log(error, "Error getting questions");
-        return{
-            success: false, 
-            message: "Error getting questions from database",
-            questions: []
-        }
+        return {
+            ...handleActionError(error, "getAllUserQuestions"),
+            questions: [],
+        };
     }
 }
 
@@ -166,8 +160,7 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
     const session = await getUserSession();
     if(!session?.user){
         return {
-            success: false, 
-            message: "Unauthorized",
+            ...getPublicError("UNAUTHORIZED"),
             questions: [],
         }
     }
@@ -222,8 +215,10 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
 
     return { success: true, message: 'Got recent questions', questions: sorted };
   } catch (error) {
-    console.error(error, 'Error getting recent questions');
-    return { success: false, message: 'Failed to get recent questions', questions: [] };
+    return {
+      ...handleActionError(error, "getMostRecentUserQuestions"),
+      questions: [],
+    };
   }
 };
 
@@ -232,8 +227,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false,
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 question: null,
             }
         }
@@ -252,8 +246,7 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
 
         if(!q){
             return{
-                success: false,
-                message: "Question not found",
+                ...getPublicError("NOT_FOUND"),
                 question: null
             }
         }
@@ -277,12 +270,13 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
         }
 
     } catch (error) {
-        console.log(error);
-        return{
-            success: false,
-            message: error instanceof Error ? error.message : String(error),
-            question: null
-        }
+        return {
+            ...handleActionError(
+                error, 
+                "getQuestionById"
+            ),
+            question: null,
+        };
     }
 }
 
@@ -291,8 +285,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
             }
         }
         const userId = session.user.id;
@@ -310,8 +303,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
 
         if(!ownedQuestion){
             return {
-                success: false, 
-                message: "Question not found.", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -338,11 +330,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             message: "Question deleted."
         }
     } catch (error) {
-        console.log(error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error) 
-        }
+        return handleActionError(error, "deleteQuestion");
     }
 }
 
@@ -358,8 +346,7 @@ export const addAttempt = async ({
 
     if (!session?.user) {
       return {
-        success: false,
-        message: "Unauthorized",
+        ...getPublicError("UNAUTHORIZED"),
       };
     }
 
@@ -367,8 +354,7 @@ export const addAttempt = async ({
 
     if (!parsed.success) {
       return {
-        success: false,
-        message: "Invalid attempt data",
+        ...getPublicError("VALIDATION_ERROR"),
       };
     }
 
@@ -389,8 +375,7 @@ export const addAttempt = async ({
 
     if (!ownedQuestion) {
       return {
-        success: false,
-        message: "Question not found",
+        ...getPublicError("NOT_FOUND"),
       };
     }
 
@@ -414,10 +399,7 @@ export const addAttempt = async ({
       attempt: newAttempt,
     };
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : String(error),
-    };
+    return handleActionError(error, "addAttempt");
   }
 };
 
@@ -426,8 +408,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
         const session = await getUserSession();
         if (!session?.user) {
             return { 
-                success: false, 
-                message: 'Unauthorized' 
+                ...getPublicError("UNAUTHORIZED"),
             };
         }
         const userId = session.user.id;
@@ -449,8 +430,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
 
         if(!ownedAttempt){
             return {
-                success: false, 
-                message: "Attempt not found", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -461,8 +441,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
 
         if(deletedAttempts.length === 0){
             return {
-                success: false, 
-                message: "Attempt not found", 
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -471,10 +450,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
             message: "Attempt successfully deleted",
         }
     } catch (error) {
-        return{
-            success: false,
-            message: error instanceof Error ? error.message : String(error),
-        }
+        return handleActionError(error, "deleteAttempt");
     }
 }
 
@@ -483,24 +459,17 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
         const session = await getUserSession();
         if(!session?.user?.id){
             return {
-                success: false,
-                message: "Unautherized",
+                ...getPublicError("UNAUTHORIZED"),
             }
         }
 
-        const [existing] = await db.select().from(question).where(eq(question.id, oldQuestion.id)).limit(1);
+        const [existing] = await db.select().from(question)
+            .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)))
+            .limit(1);
 
         if(!existing){
             return {
-                success: false,
-                message: "Question not found",
-            }
-        }
-
-        if(existing.userId !== session.user.id){
-            return {
-                success: false,
-                message: "Unautherized"
+                ...getPublicError("NOT_FOUND"),
             }
         }
 
@@ -535,8 +504,7 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             message: "Question sucessfully updated"
         };
     } catch (error) {
-        console.log(error);
-        return { success: false, message: error instanceof Error ? error.message : String(error) };
+        return handleActionError(error, "updateQuestion");
     }
 }
 
@@ -545,8 +513,7 @@ export const getQuestionLabels = async () => {
         const session = await getUserSession();
         if(!session?.user){
             return {
-                success: false, 
-                message: "Unauthorized", 
+                ...getPublicError("UNAUTHORIZED"),
                 labels: [],
             }
         }
@@ -565,9 +532,8 @@ export const getQuestionLabels = async () => {
         }
     } catch (error) {
         return {
-            success: false,
-            message: "There was an error getting the labels: " + error,
-            labels: ['Unlabeled'],
-        }
+            ...handleActionError(error, "getQuestionLabels"),
+            labels: [],
+        };
     }
 }

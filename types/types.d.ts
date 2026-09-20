@@ -90,3 +90,11 @@ export type AIFeedbackQuestion = {
   title: string;
   description: string;
 };
+
+export type ActionErrorCode =
+  | "UNAUTHORIZED"
+  | "NOT_FOUND"
+  | "VALIDATION_ERROR"
+  | "DATABASE_ERROR"
+  | "RATE_LIMITED"
+  | "INTERNAL_ERROR";

@@ -33,13 +33,18 @@ const ResetPassword = () => {
     setIsSubmitting(true);
 
     try {
-      await authClient.resetPassword({
+      const { error } = await authClient.resetPassword({
         newPassword: password,
         token,
       });
 
+      if (error) {
+        toast.error(error.message || 'Failed to reset password');
+        return;
+      }
+
       toast.success('Password has been reset. Please log in.');
-      setTimeout(() => router.push('/sign-in'), 2000);
+      router.push('/sign-in');
     } catch (error) {
       console.error(error);
       toast.error('Failed to reset password');

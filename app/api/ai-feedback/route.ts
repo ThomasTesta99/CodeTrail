@@ -2,7 +2,7 @@ import { MAX_AI_OUTPUT_TOKENS, MAX_ATTEMPTS, MAX_REQUEST_BYTES } from '@/constan
 import { db } from '@/database/drizzle';
 import { attempts, question } from '@/database/schema';
 import { checkRate, getUserSession } from '@/lib/user-actions/authActions';
-import { buildAIFeedbackPrompt, readLimitedBody, validateAIFeedbackInput, validateAIRequestBody } from '@/lib/utils/aiFeedbackUtils';
+import { aiError, buildAIFeedbackPrompt, readLimitedBody, validateAIFeedbackInput, validateAIRequestBody } from '@/lib/utils/aiFeedbackUtils';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import {OpenAI} from 'openai'
@@ -17,19 +17,14 @@ export async function POST(req: NextRequest) {
     const session = await getUserSession();
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return aiError('Unauthorized', 401);
     }
     const user = session.user;
 
     if (!user.emailVerified) {
-      return NextResponse.json(
-        {
-          error: 'Please verify your email before requesting AI feedback.',
-        },
-        { status: 403 }
+      return aiError(
+        'Please verify your email before requesting AI feedback.',
+        403
       );
     }
 
@@ -41,12 +36,16 @@ export async function POST(req: NextRequest) {
     );
 
     if (!rateCheck.valid) {
-      return NextResponse.json(
-        {
-          rateLimit: rateCheck,
-          error: 'Rate Limit Exceeded',
-        },
-        { status: 429 }
+      if ('code' in rateCheck) {
+        return aiError(
+          'AI feedback is temporarily unavailable. Please try again later.',
+          503
+        );
+      }
+
+      return aiError(
+        rateCheck.message || 'Rate limit exceeded.',
+        429
       );
     }
 
@@ -56,19 +55,13 @@ export async function POST(req: NextRequest) {
       contentLength !== null &&
       Number(contentLength) > MAX_REQUEST_BYTES
     ) {
-      return NextResponse.json(
-        { error: 'Request body is too large' },
-        { status: 413 }
-      );
+      return aiError('Request body is too large', 413);
     }
 
     const rawBody = await readLimitedBody(req);
 
     if (rawBody === null) {
-      return NextResponse.json(
-        { error: 'Request body is too large' },
-        { status: 413 }
-      );
+      return aiError('Request body is too large', 413);
     }
 
     let body: unknown;
@@ -76,17 +69,11 @@ export async function POST(req: NextRequest) {
     try {
       body = JSON.parse(rawBody);
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON request body' },
-        { status: 400 }
-      );
+      return aiError('Invalid JSON request body', 400);
     }
 
     if (!validateAIRequestBody(body)) {
-      return NextResponse.json(
-        { error: 'Invalid attempt ID' },
-        { status: 400 }
-      );
+      return aiError('Invalid attempt ID', 400)
     }
 
     const attemptId = body.attemptId;
@@ -110,10 +97,7 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (!result) {
-      return NextResponse.json(
-        { error: 'Attempt not found' },
-        { status: 404 }
-      );
+      return aiError('Attempt not found', 404);
     }
 
     const selectedAttempt = result.attempt;
@@ -128,10 +112,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (validationError) {
-      return NextResponse.json(
-        { error: validationError },
-        { status: 413 }
-      );
+      return aiError(validationError, 413);
     }
 
     const previousAttempts = await db
@@ -163,9 +144,9 @@ export async function POST(req: NextRequest) {
     );
 
     if (!prompt) {
-      return NextResponse.json(
-        { error: 'AI feedback input exceeds the maximum size' },
-        { status: 413 }
+      return aiError(
+        'AI feedback input exceeds the maximum size',
+        413
       );
     }
 
@@ -188,24 +169,20 @@ export async function POST(req: NextRequest) {
     const choice = completion.choices[0];
 
     if (choice?.finish_reason === 'length') {
-      return NextResponse.json(
-        {
-          error: 'AI feedback exceeded the maximum response length. Please try again.',
-        },
-        { status: 502 }
+      return aiError(
+        'AI feedback exceeded the maximum response length. Please try again.',
+        502
       );
     }
 
     const response = completion.choices[0]?.message.content;
 
     if (!response) {
-      return NextResponse.json(
-        { error: 'Failed to generate feedback' },
-        { status: 502 }
-      );
+      return aiError('Failed to generate feedback', 502);
     }
 
     return NextResponse.json({
+      success: true, 
       feedback: response,
     });
   
@@ -216,17 +193,22 @@ export async function POST(req: NextRequest) {
       error instanceof OpenAI.APIError &&
       error.code === 'credit_balance_exhausted'
     ) {
-      return NextResponse.json(
-        {
-          error: 'AI feedback is temporarily unavailable. Please try again later.',
-        },
-        { status: 503 }
+      return aiError(
+        'AI feedback is temporarily unavailable. Please try again later.',
+        503
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to generate feedback' },
-      { status: 500 }
+    if (error instanceof OpenAI.APIError) {
+      return aiError(
+        'AI feedback is temporarily unavailable. Please try again later.',
+        502
+      );
+    }
+
+    return aiError(
+      'Failed to generate feedback',
+      500
     );
   }
 }

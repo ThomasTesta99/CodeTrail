@@ -98,3 +98,13 @@ export type ActionErrorCode =
   | "DATABASE_ERROR"
   | "RATE_LIMITED"
   | "INTERNAL_ERROR";
+
+export type AIFeedbackResponse = 
+| {
+    success: true, 
+    feedback: string, 
+  } | 
+  {
+    success: false, 
+    error: string, 
+  }

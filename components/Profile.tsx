@@ -3,14 +3,17 @@
 import { sendVerificationEmail } from '@/lib/user-actions/authActions'
 import { User } from '@/types/types'
 import Image from 'next/image'
-import React from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import ActivityCalendar from './ActivityCalendar'
 
 const Profile = ({ user }: { user: User}) => {
+    const [isSending, setIsSending] = useState(false);
 
     const handleVerifyEmail = async () => {
+        setIsSending(true);
         try {
+            if(isSending) return;
             if (user.emailVerified) {
                 toast.success("Email already verified.");
                 return;
@@ -28,6 +31,8 @@ const Profile = ({ user }: { user: User}) => {
             toast.success("Verification email sent successfully. Please check your email.");
         } catch {
             toast.error("An error occurred while verifying the email.");
+        }finally{
+            setIsSending(false);
         }
     }
 
@@ -133,9 +138,10 @@ const Profile = ({ user }: { user: User}) => {
                                         <button
                                             type="button"
                                             onClick={handleVerifyEmail}
+                                            disabled={isSending}
                                             className="cursor-pointer rounded-md border border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-100 transition hover:border-gray-500 hover:bg-gray-800"
                                         >
-                                            Verify Email
+                                            {isSending ? "Sending..." : "Verify Email"}
                                         </button>
                                     </div>
                                 )}

@@ -190,11 +190,29 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const handleDeleteAttempt = (deletedAttemptId: string) => {
     clearFeedback();
 
-    setAttempts((prev) =>
-      prev.filter((attempt) => attempt.id !== deletedAttemptId)
+    const deletedIndex = attempts.findIndex(
+      (attempt) => attempt.id === deletedAttemptId
     );
 
-    setCurrentAttemptIndex((prev) => Math.max(prev - 1, 0));
+    if (deletedIndex === -1) return;
+
+    const remainingAttempts = attempts.filter(
+      (attempt) => attempt.id !== deletedAttemptId
+    );
+
+    setAttempts(remainingAttempts);
+
+    setCurrentAttemptIndex((prev) => {
+      if (remainingAttempts.length === 0) {
+        return 0;
+      }
+
+      if (deletedIndex < prev) {
+        return prev - 1;
+      }
+
+      return Math.min(prev, remainingAttempts.length - 1);
+    });
   };
 
   return (
@@ -246,13 +264,14 @@ const QuestionDetails = ({ question }: { question: Question }) => {
 
             {currentAttempt && (
               <DeleteButton
+                key={currentAttempt.id}
                 deleteItemId={currentAttempt.id}
                 buttonLabel="Delete Attempt"
                 deleteType="delete-attempt"
                 className="delete-attempt-button"
-                onDeleteSuccess={() => {
-                  handleDeleteAttempt(currentAttempt.id);
-                }}
+                onDeleteSuccess={
+                  handleDeleteAttempt
+                }
               />
             )}
           </div>

@@ -4,6 +4,7 @@ import {drizzleAdapter} from "better-auth/adapters/drizzle"
 import {schema} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
 import { sendEmail, sendVerifiation } from './email'
+import { MIN_PASSWORD_LENGTH } from '@/constants'
 
 
 
@@ -27,6 +28,7 @@ export const auth = betterAuth({
     emailAndPassword:{
         enabled: true,
         autoSignIn: true,
+        minPasswordLength: MIN_PASSWORD_LENGTH, 
         revokeSessionsOnPasswordReset: true,  
         sendResetPassword: async ({user, url}) => {
             await sendEmail({

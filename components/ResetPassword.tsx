@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { authClient } from '@/lib/auth-client';
+import { passwordSchema } from '@/lib/validations/password';
+import { MIN_PASSWORD_LENGTH } from '@/constants';
 
 const ResetPassword = () => {
   const searchParams = useSearchParams();
@@ -29,6 +31,15 @@ const ResetPassword = () => {
 
     if (!password || !confirmPassword) {
       toast.error('Please enter your new password.');
+      return;
+    }
+
+    const passwordResult = passwordSchema.safeParse(password);
+    if(!passwordResult.success){
+      toast.error(
+        passwordResult.error.issues[0]?.message || 
+        "Invalid password"
+      );
       return;
     }
 
@@ -114,6 +125,9 @@ const ResetPassword = () => {
                 required
                 className="auth-input"
               />
+              <p className="text-sm text-gray-400">
+                Password must be at least {MIN_PASSWORD_LENGTH} characters.
+              </p>
 
               <input
                 type="password"

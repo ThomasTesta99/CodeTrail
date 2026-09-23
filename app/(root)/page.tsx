@@ -8,7 +8,7 @@ import React from 'react'
 const page = async () => {
   const session = await getUserSession();
   const user = session?.user; 
-  const firstName = user ? user.name.split(' ')[0] : 'Guest';
+  const firstName = user?.name?.trim().split(/\s+/)[0] || 'Guest';
 
   if (!user?.id) {
     redirect('/sign-in');

@@ -1,6 +1,6 @@
 import { MAX_ATTEMPTS, MAX_CODE_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_LANGUAGE_LENGTH, MAX_NOTES_LENGTH, MAX_PROMPT_LENGTH, MAX_REQUEST_BYTES, MAX_TITLE_LENGTH, UUID_REGEX } from "@/constants";
-import { AIFeedbackAttempt, AIFeedbackQuestion } from "@/types/types";
-import { NextRequest } from "next/server";
+import { AIFeedbackAttempt, AIFeedbackQuestion, AIFeedbackResponse } from "@/types/types";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function readLimitedBody(
   req: NextRequest
@@ -213,4 +213,11 @@ export function buildAIFeedbackPrompt(
   return prompt.length <= MAX_PROMPT_LENGTH
     ? prompt
     : null;
+}
+
+export const aiError = (message: string, status: number) => {
+  return NextResponse.json<AIFeedbackResponse>({
+    success: false,
+    error: message, 
+  }, {status})
 }

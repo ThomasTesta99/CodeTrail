@@ -11,33 +11,49 @@ import { authClient } from '@/lib/auth-client';
 import { signInUser, signUpUser } from '@/lib/user-actions/authActions';
 import { CreateUserInfo, SignInUserInfo } from '@/types/types';
 import toast from 'react-hot-toast';
+import { passwordSchema } from '@/lib/validations/password';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 const signUpSchema = z.object({
   name: z.string().min(4, 'Name is required'),
   email: z.string().email('Invalid email').min(1, 'Email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: passwordSchema,
 });
 
 type SignInType = z.infer<typeof signInSchema>;
 type SignUpType = z.infer<typeof signUpSchema>;
 type AuthFormType = SignInType | SignUpType;
 
-const handleGoogleSignIn = async () => {
-  return await authClient.signIn.social({provider: 'google'});
-}
 
 // const handleGitHubSignIn = async () => {
-//   return await authClient.signIn.social({provider: 'github'})
-// }
+  //   return await authClient.signIn.social({provider: 'github'})
+  // }
+  
+  const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+    
+    const handleGoogleSignIn = async () => {
+      setIsOAuthLoading(true);
+      try {
+        const {error} = await authClient.signIn.social({provider: 'google'});
 
-const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+        if(error){
+          toast.error("Unable to sign in with Google. Please try again.");
+          return;
+        }
+      } catch (error) {
+        console.error("OAUTH error: ", error);
+        toast.error("Unable to sign in with Google. Please try again.");
+      }finally{
+        setIsOAuthLoading(false);
+      }
+    }
 
   const form = useForm<AuthFormType>({
     resolver: zodResolver(type === 'sign-in' ? signInSchema : signUpSchema),
@@ -48,23 +64,34 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
 
   const onSubmit = async (data: AuthFormType) => {
     setIsLoading(true);
+
     try {
       const userInfo = data as CreateUserInfo | SignInUserInfo;
+
       const result = type === 'sign-up'
         ? await signUpUser(userInfo as CreateUserInfo)
         : await signInUser(userInfo as SignInUserInfo);
 
-      if (result.success) {
-
-        toast.success(type === 'sign-up' ? "Signed Up Successfully" : "Signed In Successfully");
-
-        router.refresh();
-        router.push('/');
-      }else{
-        toast.error(type === 'sign-in' ? "Sign In Failed" : "Sign Up Failed");
+      if (!result.success) {
+        toast.error(result.message);
+        return;
       }
-    } catch (err) {
-      console.error(err)
+
+      toast.success(
+        type === 'sign-up'
+          ? 'Signed Up Successfully'
+          : 'Signed In Successfully'
+      );
+
+      router.push('/');
+      router.refresh();
+
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        'An unexpected error occurred. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -130,11 +157,15 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
           <div className="auth-divider"></div>
           <div className='flex flex-col space-y-3'>
             <button
-              onClick={() => handleGoogleSignIn()}
+              onClick={handleGoogleSignIn}
+              disabled={isOAuthLoading}
               className="auth-social-btn"
+
             >
               <Image src="/assets/icons/google.svg" alt="Google" width={20} height={20} />
-              Sign In with Google
+              {isOAuthLoading 
+                ? "Connecting to Google..."
+                : "Sign In with Google"}
             </button>
             {/* <button
               onClick={() => handleGitHubSignIn()}

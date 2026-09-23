@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { authClient } from '@/lib/auth-client';
+import { passwordSchema } from '@/lib/validations/password';
+import { MIN_PASSWORD_LENGTH } from '@/constants';
 
 const ResetPassword = () => {
   const searchParams = useSearchParams();
@@ -13,6 +16,7 @@ const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tokenError, setTokenError] = useState(false);
 
   const passwordsMatch =
     password === confirmPassword || confirmPassword === '';
@@ -20,8 +24,22 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!token) {
-      toast.error('Missing token');
+    if (!token || tokenError) {
+      toast.error('Invalid password reset link.');
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      toast.error('Please enter your new password.');
+      return;
+    }
+
+    const passwordResult = passwordSchema.safeParse(password);
+    if(!passwordResult.success){
+      toast.error(
+        passwordResult.error.issues[0]?.message || 
+        "Invalid password"
+      );
       return;
     }
 
@@ -39,6 +57,17 @@ const ResetPassword = () => {
       });
 
       if (error) {
+        if (
+          error.code === 'INVALID_TOKEN' ||
+          error.code === 'TOKEN_EXPIRED'
+        ) {
+          setTokenError(true);
+          toast.error(
+            'Your password reset link is invalid or expired.'
+          );
+          return;
+        }
+
         toast.error(error.message || 'Failed to reset password');
         return;
       }
@@ -60,60 +89,85 @@ const ResetPassword = () => {
         ? 'border-green-500'
         : 'border-red-500';
 
+  const isInvalidToken = !token || tokenError;
+
   return (
     <div className="auth-screen">
       <div className="auth-container">
         <h1 className="auth-header">Set New Password</h1>
 
-        <p className="auth-title text-base font-normal text-gray-300">
-          Enter your new password below.
-        </p>
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="auth-input"
-          />
-
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className={`auth-input mt-2 ${inputBorderClass()}`}
-          />
-
-          {!passwordsMatch && confirmPassword && (
-            <p className="text-red-500 text-sm mt-1">
-              Passwords do not match
+        {isInvalidToken ? (
+          <>
+            <p className="auth-title text-base font-normal text-red-500">
+              Your password reset link is invalid or expired.
+              Please request a new one.
             </p>
-          )}
 
-          {passwordsMatch && confirmPassword && (
-            <p className="text-green-500 text-sm mt-1">
-              Passwords match
+            <Link
+              href="/forgot-password"
+              className="auth-link"
+            >
+              Request a new password reset link
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="auth-title text-base font-normal text-gray-300">
+              Enter your new password below.
             </p>
-          )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="auth-submit-btn mt-4"
-          >
-            {isSubmitting ? 'Resetting...' : 'Reset Password'}
-          </button>
-        </form>
+            <form onSubmit={handleSubmit} className="auth-form">
+              <input
+                type="password"
+                placeholder="New password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="auth-input"
+              />
+              <p className="text-sm text-gray-400">
+                Password must be at least {MIN_PASSWORD_LENGTH} characters.
+              </p>
+
+              <input
+                type="password"
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) =>
+                  setConfirmPassword(e.target.value)
+                }
+                required
+                className={`auth-input mt-2 ${inputBorderClass()}`}
+              />
+
+              {!passwordsMatch && confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">
+                  Passwords do not match
+                </p>
+              )}
+
+              {passwordsMatch && confirmPassword && (
+                <p className="text-green-500 text-sm mt-1">
+                  Passwords match
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="auth-submit-btn mt-4"
+              >
+                {isSubmitting ? 'Resetting...' : 'Reset Password'}
+              </button>
+            </form>
+          </>
+        )}
 
         <p className="auth-footer-text">
           Know your password?{' '}
-          <a href="/sign-in" className="auth-link">
+          <Link href="/sign-in" className="auth-link">
             Go back to login
-          </a>
+          </Link>
         </p>
       </div>
     </div>

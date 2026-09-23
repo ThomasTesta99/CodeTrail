@@ -61,18 +61,30 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
   });
 
   const onSubmit = async (data: EditFormData) => {
-    const newQuestion = data;
-    const oldQuestion = question;
-    if(newQuestion.label === "") newQuestion.label = "Unlabeled"
-    const result = await updateQuestion({ oldQuestion, newQuestion });
+    try {
+      const newQuestion = {
+        ...data, 
+        label: data.label.trim() || "Unlabeled",
+      }
 
-    if (result.success) {
-      toast.success(result.message);
-    } else {
-      toast.error(result.message);
+      const result = await updateQuestion({
+        oldQuestion: question, newQuestion, 
+      });
+
+      if(!result.success){
+        toast.error(result.message || "Failed to update question");
+        return;
+      }
+
+      toast.success(result.message || "Question updated successfully");
+
+      onClose();
+      router.push(`/question/${question.id}`);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update question: ", error);
+      toast.error("An unexpecteed error occurred. Please try again.");
     }
-    onClose();
-    router.push(`/question/${question.id}`);
   };
 
   return (

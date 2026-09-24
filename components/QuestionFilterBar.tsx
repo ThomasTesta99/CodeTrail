@@ -43,6 +43,13 @@ export default function QuestionFilterBar({
 
   const [localQuery, setLocalQuery] = useState(currentQuery);
 
+  const [previousQuery, setPreviousQuery] = useState(currentQuery);
+
+  if (currentQuery !== previousQuery) {
+    setPreviousQuery(currentQuery);
+    setLocalQuery(currentQuery);
+  }
+
   const currentLabel = searchParams.get("label") || "all";
 
   const currentSort =
@@ -129,6 +136,8 @@ export default function QuestionFilterBar({
   };
 
   const handleLabelChange = (value: string) => {
+    cancelPendingSearch();
+
     pushParams({
       label: value,
       q: localQuery,
@@ -136,6 +145,8 @@ export default function QuestionFilterBar({
   };
 
   const handleSortChange = (value: string) => {
+    cancelPendingSearch();
+
     pushParams({
       sort: value,
       q: localQuery,

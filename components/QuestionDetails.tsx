@@ -12,6 +12,7 @@ import { Attempt, Question } from '@/types/types';
 import type { AIFeedbackResponse } from '@/types/types';
 import { DeleteButton } from './DeleteButton';
 import AddAttemptTrigger from './AddAttemptTrigger';
+import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
 
 const QuestionDetails = ({ question }: { question: Question }) => {
   const [attempts, setAttempts] = useState(question.attempts || []);
@@ -215,6 +216,10 @@ const QuestionDetails = ({ question }: { question: Question }) => {
     });
   };
 
+  const displayLabel = normalizeQuestionLabel(
+    question.label
+  );
+
   return (
     <div className="question-container px-4 sm:px-6 w-full">
       <section className="question-header">
@@ -235,12 +240,11 @@ const QuestionDetails = ({ question }: { question: Question }) => {
             {question.difficulty}
           </span>
 
-          {question.label !== 'unlabeled' &&
-            question.label !== '' && (
-              <p className="label-badge">
-                {question.label}
-              </p>
-            )}
+          {displayLabel && (
+            <p className="label-badge">
+              {displayLabel}
+            </p>
+          )}
 
           {question.link && (
             <a

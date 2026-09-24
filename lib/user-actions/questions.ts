@@ -2,7 +2,7 @@
 
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
-import {  and, asc, desc, eq, ilike, inArray, isNotNull, sql } from "drizzle-orm";
+import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { getUserSession } from "./authActions";
 import { DatabaseQuestion, Question} from "@/types/types";
 import { EditFormData } from "@/components/EditQuestion";
@@ -10,6 +10,7 @@ import { SortKey } from "@/app/(root)/all-questions/page";
 import { attemptSchema, questionSchema } from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
+import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -40,7 +41,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
                 title: data.title,
                 description: data.description,
                 difficulty: data.difficulty,
-                label: data.label?.trim() || "Unlabeled",
+                label: normalizeQuestionLabel(data.label),
                 link: data.link || null,
                 createdAt: new Date(),
             })
@@ -85,8 +86,16 @@ export const getAllUserQuestions = async ({
 
         let whereClause = eq(question.userId, userId);
 
-        if(label && label.length > 0){
-            whereClause = and(whereClause, eq(question.label, label))!;
+        if (label === "__unlabeled__") {
+            whereClause = and(
+                whereClause,
+                isNull(question.label)
+            )!;
+            } else if (label && label !== "all") {
+            whereClause = and(
+                whereClause,
+                eq(question.label, label)
+            )!;
         }
 
         if(q && q.trim().length > 0){
@@ -486,7 +495,7 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                 title: newQuestion.title,
                 description: newQuestion.description,
                 difficulty: newQuestion.difficulty,
-                label: newQuestion.label,
+                label: normalizeQuestionLabel(newQuestion.label),
                 link: newQuestion.link ?? null,
             })
             .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)));
@@ -516,31 +525,55 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
 }
 
 export const getQuestionLabels = async () => {
-    try {
-        const session = await getUserSession();
-        if(!session?.user){
-            return {
-                ...getPublicError("UNAUTHORIZED"),
-                labels: [],
-            }
-        }
-        const userId = session.user.id;
-        const labelRows = await db.selectDistinct(
-            {label: question.label})
-            .from(question)
-            .where(and(eq(question.userId, userId), isNotNull(question.label)));
+  try {
+    const session = await getUserSession();
 
-        const labels = labelRows.map(r => r.label).filter((l): l is string => typeof l === "string" && labelRows.length > 0 && l !== "Unlabeled");
-
-        return {
-            success: true, 
-            message: "Successfully got labels.", 
-            labels: labels,
-        }
-    } catch (error) {
-        return {
-            ...handleActionError(error, "getQuestionLabels"),
-            labels: [],
-        };
+    if (!session?.user) {
+      return {
+        ...getPublicError("UNAUTHORIZED"),
+        labels: [],
+      };
     }
-}
+
+    const userId = session.user.id;
+
+    const labelRows = await db
+      .selectDistinct({
+        label: question.label,
+      })
+      .from(question)
+      .where(
+        and(
+          eq(question.userId, userId),
+          isNotNull(question.label)
+        )
+      );
+
+    const labels = [
+      ...new Set(
+        labelRows
+          .map((row) =>
+            normalizeQuestionLabel(row.label)
+          )
+          .filter(
+            (label): label is string =>
+              label !== null
+          )
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+
+    return {
+      success: true,
+      message: "Successfully got labels.",
+      labels,
+    };
+  } catch (error) {
+    return {
+      ...handleActionError(
+        error,
+        "getQuestionLabels"
+      ),
+      labels: [],
+    };
+  }
+};

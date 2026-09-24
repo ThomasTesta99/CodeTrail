@@ -27,7 +27,17 @@ export default function QuestionFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const sortedLabels = [...labels].sort();
+  const sortedLabels = [
+    ...new Set(
+      labels
+        .map((label) => label.trim())
+        .filter(
+          (label) =>
+            label.length > 0 &&
+            label.toLowerCase() !== "unlabeled"
+        )
+    ),
+  ].sort((a, b) => a.localeCompare(b));
 
   const currentQuery = searchParams.get("q") || "";
 
@@ -67,8 +77,6 @@ export default function QuestionFilterBar({
   };
 
   const pushParams = (next: Record<string, string>) => {
-    // Read the most recent parameters instead of
-    // using a potentially outdated render snapshot.
     const params = new URLSearchParams(
       searchParamsRef.current
     );
@@ -147,7 +155,6 @@ export default function QuestionFilterBar({
     <div className="w-full mb-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border-2 border-[#2C325D] bg-white p-4 shadow-sm">
 
-        {/* Topic filter */}
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-semibold text-gray-700">
             Topic
@@ -172,6 +179,13 @@ export default function QuestionFilterBar({
                   All
                 </SelectItem>
 
+                <SelectItem
+                  value="__unlabeled__"
+                  className="cursor-pointer"
+                >
+                  Unlabeled
+                </SelectItem>
+
                 {sortedLabels.map((label) => (
                   <SelectItem
                     key={label}
@@ -186,7 +200,7 @@ export default function QuestionFilterBar({
           </Select>
         </div>
 
-        {/* Search */}
+  
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-semibold text-gray-700">
             Search
@@ -202,7 +216,7 @@ export default function QuestionFilterBar({
           />
         </div>
 
-        {/* Sort and Clear */}
+      
         <div className="flex flex-wrap gap-2 items-center sm:justify-end">
           <p className="text-sm font-semibold text-gray-700">
             Sort

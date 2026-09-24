@@ -77,8 +77,12 @@ export default function QuestionFilterBar({
   };
 
   const pushParams = (next: Record<string, string>) => {
-    const params = new URLSearchParams(
+    const currentParams = new URLSearchParams(
       searchParamsRef.current
+    );
+
+    const params = new URLSearchParams(
+      currentParams
     );
 
     for (const [key, value] of Object.entries(next)) {
@@ -92,6 +96,15 @@ export default function QuestionFilterBar({
       } else {
         params.set(key, value);
       }
+    }
+
+    const hasChanged = Object.keys(next).some(
+      (key) =>
+        currentParams.get(key) !== params.get(key)
+    );
+
+    if (!hasChanged) {
+      return;
     }
 
     params.set("page", "1");

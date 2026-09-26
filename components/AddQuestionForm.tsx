@@ -17,8 +17,16 @@ type QuestionFormData = z.infer<typeof questionSchema>
 
 const AddQuestionForm = ({ user }: UserProps) => {
   const router = useRouter()
-  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<QuestionFormData>({
+  const { 
+    register, 
+    control, 
+    handleSubmit, 
+    formState: { errors, isSubmitting } 
+  } = useForm<QuestionFormData>({
     resolver: zodResolver(questionSchema),
+    defaultValues: {
+      label: "",
+    },
   })
 
   const onSubmit = async (data: QuestionFormData) => {

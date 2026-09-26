@@ -9,6 +9,7 @@ import { Question } from '@/types/types';
 import { updateQuestion } from '@/lib/user-actions/questions';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -43,7 +44,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
       description: question.description ?? '',
       difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') ?? 'Easy',
       link: question.link ?? '',
-      label: question.label ?? 'Unlabeled',
+      label: normalizeQuestionLabel(question.label) ?? "",
       attempts: (question.attempts ?? []).map(a => ({
         id: a.id,
         solutionCode: a.solutionCode ?? '',
@@ -62,13 +63,10 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
 
   const onSubmit = async (data: EditFormData) => {
     try {
-      const newQuestion = {
-        ...data, 
-        label: data.label.trim() || "Unlabeled",
-      }
 
       const result = await updateQuestion({
-        oldQuestion: question, newQuestion, 
+        oldQuestion: question, 
+        newQuestion: data, 
       });
 
       if(!result.success){

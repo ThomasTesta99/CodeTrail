@@ -67,9 +67,9 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   if(userQuestions.length === 0){
     return (
       <div className="all-questions-container">
-        {q.length > 0 && (
+        {(q.trim().length > 0 || label.length > 0) && (
           <div className="mt-20">
-            <QuestionFilterBar labels = {labels}/>
+            <QuestionFilterBar labels={labels} />
           </div>
         )}
         <div className="all-questions-wrapper text-center py-12">

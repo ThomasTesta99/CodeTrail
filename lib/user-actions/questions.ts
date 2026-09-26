@@ -5,9 +5,8 @@ import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { getUserSession } from "./authActions";
 import { DatabaseQuestion, Question} from "@/types/types";
-import { EditFormData } from "@/components/EditQuestion";
 import { SortKey } from "@/app/(root)/all-questions/page";
-import { attemptSchema, questionSchema } from "../validations/question";
+import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
@@ -217,8 +216,8 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
     });
 
     const sorted = combined
-    .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
-    .slice(0, limit);
+        .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
+        .slice(0, limit);
 
         
 
@@ -479,6 +478,15 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             }
         }
 
+        const parsed = editQuestionSchema.safeParse(newQuestion);
+        if(!parsed.success){
+            return {
+                ...getPublicError("VALIDATION_ERROR"), 
+            }
+        }
+
+        const data = parsed.data;
+
         const [existing] = await db.select().from(question)
             .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)))
             .limit(1);
@@ -492,16 +500,24 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
         await db
             .update(question)
             .set({
-                title: newQuestion.title,
-                description: newQuestion.description,
-                difficulty: newQuestion.difficulty,
-                label: normalizeQuestionLabel(newQuestion.label),
-                link: newQuestion.link ?? null,
+                title: data.title,
+                description: data.description,
+                difficulty: data.difficulty,
+                label: normalizeQuestionLabel(data.label),
+                link: data.link || null,
             })
-            .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)));
+            .where(
+                and(
+                eq(question.id, oldQuestion.id),
+                eq(
+                    question.userId,
+                    session.user.id
+                )
+                )
+            );
 
-        if(oldQuestion.attempts?.length === newQuestion.attempts?.length && newQuestion.attempts?.length){
-            for(const a of newQuestion.attempts){
+        if(oldQuestion.attempts?.length === data.attempts?.length && data.attempts?.length){
+            for(const a of data.attempts){
                 await db
                     .update(attempts)
                     .set({

@@ -3,54 +3,28 @@
 import { sidebarLinks } from "@/constants";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
 import React, { useState } from "react";
-import { logoutUser } from "@/lib/user-actions/authActions";
 import { UserProps } from "@/types/types";
-import { toast } from "react-hot-toast";
+import { useLogout } from "@/app/hooks/useLogout";
 
 const Topbar = ({ user }: UserProps) => {
   const pathName = usePathname();
-  const router = useRouter();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
   };
 
-  const signOut = async () => {
-    if (isLoggingOut) return;
+  const {
+    signOut, 
+    isLoggingOut, 
+  } = useLogout(() => 
+    setIsMenuOpen(false), 
+  )
 
-    setIsLoggingOut(true);
-
-    try {
-      const result = await logoutUser();
-
-      if (!result.success) {
-        toast.error(
-          result.message ||
-            "Unable to sign out. Please try again."
-        );
-        return;
-      }
-
-      setIsMenuOpen(false);
-
-      router.push("/sign-in");
-      router.refresh();
-    } catch (error) {
-      console.error("[Topbar] Sign-out failed:", error);
-
-      toast.error(
-        "Unable to sign out. Please try again."
-      );
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
 
   return (
     <div className="md:hidden w-full bg-[#1E1E2F] text-white">

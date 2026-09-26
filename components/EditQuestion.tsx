@@ -10,24 +10,7 @@ import { updateQuestion } from '@/lib/user-actions/questions';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
-
-const schema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().min(1, 'Description is required'),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard'], { required_error: 'Difficulty is required' }),
-  link: z.union([z.literal(''), z.string().url('Must be a valid URL')]).optional(),
-  label: z.string(),
-  attempts: z.array(z.object({
-    id: z.string(),
-    solutionCode: z.string().min(1, 'Solution code is required'),
-    language: z.string().min(1, 'Language is required'),
-    neededHelp: z.boolean(),
-    durationMinutes: z.coerce.number().int('Must be a whole number').min(1, 'Duration must be at least 1 minute'),
-    notes: z.string().optional(),
-  }))
-});
-
-export type EditFormData = z.infer<typeof schema>;
+import { EditFormData, editQuestionSchema } from '@/lib/validations/question';
 
 const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="text-sm text-red-600 mt-1">{message}</p> : null;
@@ -36,7 +19,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
   const router = useRouter();
 
   const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<EditFormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(editQuestionSchema),
     mode: 'onSubmit',
     reValidateMode: 'onChange',
     defaultValues: {

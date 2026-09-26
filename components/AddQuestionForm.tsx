@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/lib/user-actions/questions'
@@ -11,9 +10,7 @@ import { validUser } from '@/lib/user-actions/authActions'
 import { UserProps } from '@/types/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { SelectGroup } from '@radix-ui/react-select'
-import { questionSchema } from '@/lib/validations/question'
-
-type QuestionFormData = z.infer<typeof questionSchema>
+import { QuestionFormData, questionSchema } from '@/lib/validations/question'
 
 const AddQuestionForm = ({ user }: UserProps) => {
   const router = useRouter()

@@ -1,15 +1,12 @@
 'use client'
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { addAttempt } from '@/lib/user-actions/questions';
-import { attemptSchema } from '@/lib/validations/question';
+import { attemptSchema, AttemptFormData } from '@/lib/validations/question';
 import { Attempt } from '@/types/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { z } from 'zod'
-
-type AttemptFormData = z.infer<typeof attemptSchema>;
 
 const AddAttempt = (
   { questionId, 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
-import React, { useState } from "react";
+import { useState } from "react";
 import { UserProps } from "@/types/types";
 import { useLogout } from "@/app/hooks/useLogout";
 

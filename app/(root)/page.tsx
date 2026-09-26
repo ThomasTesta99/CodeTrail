@@ -3,7 +3,6 @@ import { getUserSession } from '@/lib/user-actions/authActions'
 import { getMostRecentUserQuestions } from '@/lib/user-actions/questions'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import React from 'react'
 
 const page = async () => {
   const session = await getUserSession();

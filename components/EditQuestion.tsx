@@ -1,9 +1,7 @@
 'use client'
 import Image from 'next/image';
-import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { LANGUAGE_OPTIONS } from '@/constants';
 import { Question } from '@/types/types';
 import { updateQuestion } from '@/lib/user-actions/questions';

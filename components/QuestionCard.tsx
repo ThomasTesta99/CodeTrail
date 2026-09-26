@@ -1,6 +1,5 @@
 import { Question } from '@/types/types';
 import Link from 'next/link';
-import React from 'react'
 
 const QuestionCard = ({ question }: { question: Question }) => {
   const attempts = question.attempts || [];

@@ -1,12 +1,11 @@
 "use client";
 
-import { SortKey } from "@/app/(root)/all-questions/page";
 import {
   usePathname,
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Select,
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { SortKey } from "@/types/types";
 
 export default function QuestionFilterBar({
   labels,

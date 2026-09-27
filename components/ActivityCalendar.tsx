@@ -4,7 +4,7 @@ import { createActivityMap, getMonthsForYear } from '@/lib/utils/activityUtils';
 import { getUserActivity } from '@/lib/user-actions/activity';
 
 import { Activity } from '@/types/types';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ActivityYearSelector from './ActivityHelpers/ActivityYearSelector';
 import ActivityMonth from './ActivityHelpers/ActivityMonth';
 import ActivityLegend from './ActivityHelpers/ActivityLegend';

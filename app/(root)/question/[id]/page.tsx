@@ -1,7 +1,6 @@
 import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
 import { DeleteButton } from '@/components/DeleteButton';
-import React from 'react'
 import EditQuestionTrigger from '@/components/EditQuestionTrigger';
 
 const page = async ({ params }: { params: Promise<{id : string}>}) => {

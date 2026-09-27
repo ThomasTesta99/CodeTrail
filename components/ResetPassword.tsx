@@ -11,6 +11,8 @@ import { MIN_PASSWORD_LENGTH } from '@/constants';
 const ResetPassword = () => {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const resetError = searchParams.get('error');
+
   const router = useRouter();
 
   const [password, setPassword] = useState('');
@@ -89,7 +91,7 @@ const ResetPassword = () => {
         ? 'border-green-500'
         : 'border-red-500';
 
-  const isInvalidToken = !token || tokenError;
+  const isInvalidToken = !token || tokenError || Boolean(resetError);
 
   return (
     <div className="auth-screen">

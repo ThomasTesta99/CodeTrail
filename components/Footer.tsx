@@ -1,46 +1,16 @@
 "use client";
 
-import { logoutUser } from "@/lib/user-actions/authActions";
 import { UserProps } from "@/types/types";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import React, { useState } from "react";
-import { toast } from "react-hot-toast";
+import { useLogout } from "@/app/hooks/useLogout";
 
 const Footer = ({ user }: UserProps) => {
-  const router = useRouter();
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const signOut = async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-
-    try {
-      const result = await logoutUser();
-
-      if (!result.success) {
-        toast.error(
-          result.message ||
-            "Unable to sign out. Please try again."
-        );
-        return;
-      }
-
-      router.push("/sign-in");
-      router.refresh();
-    } catch (error) {
-      console.error("[Footer] Sign-out failed:", error);
-
-      toast.error(
-        "Unable to sign out. Please try again."
-      );
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  const {
+    signOut, 
+    isLoggingOut, 
+  } = useLogout();
 
   return (
     <footer className="footer mt-auto">

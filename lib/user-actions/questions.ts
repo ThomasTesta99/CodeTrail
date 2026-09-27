@@ -3,14 +3,13 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { getUserSession } from "./authActions";
-import { DatabaseQuestion, Question} from "@/types/types";
-import { EditFormData } from "@/components/EditQuestion";
-import { SortKey } from "@/app/(root)/all-questions/page";
-import { attemptSchema, questionSchema } from "../validations/question";
+import { DatabaseQuestion, Question, SortKey} from "@/types/types";
+import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
+import { revalidatePath } from "next/cache";
+import { getUserSession } from "./authHelpers";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -45,7 +44,10 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
                 link: data.link || null,
                 createdAt: new Date(),
             })
-            .returning()
+            .returning();
+
+        revalidatePath("/");
+        revalidatePath("/all-questions");
 
         return {
             success: true,
@@ -217,8 +219,8 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
     });
 
     const sorted = combined
-    .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
-    .slice(0, limit);
+        .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
+        .slice(0, limit);
 
         
 
@@ -334,6 +336,10 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             }
         }
 
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${deleteItemId}`);
+
         return {
             success: true, 
             message: "Question deleted."
@@ -406,6 +412,10 @@ export const addAttempt = async ({
       })
       .returning();
 
+    revalidatePath("/");
+    revalidatePath("/all-questions");
+    revalidatePath(`/question/${questionId}`);
+
     return {
       success: true as const,
       message: "Attempt added successfully",
@@ -430,7 +440,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
         const userId = session.user.id;
 
         const [ownedAttempt] = await db
-            .select({id: attempts.id})
+            .select({id: attempts.id, questionId: question.id})
             .from(attempts)
             .innerJoin(
                 question, 
@@ -461,6 +471,10 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
             }
         }
 
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${ownedAttempt.questionId}`);
+
         return {
             success: true,
             message: "Attempt successfully deleted",
@@ -479,6 +493,15 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             }
         }
 
+        const parsed = editQuestionSchema.safeParse(newQuestion);
+        if(!parsed.success){
+            return {
+                ...getPublicError("VALIDATION_ERROR"), 
+            }
+        }
+
+        const data = parsed.data;
+
         const [existing] = await db.select().from(question)
             .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)))
             .limit(1);
@@ -492,16 +515,24 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
         await db
             .update(question)
             .set({
-                title: newQuestion.title,
-                description: newQuestion.description,
-                difficulty: newQuestion.difficulty,
-                label: normalizeQuestionLabel(newQuestion.label),
-                link: newQuestion.link ?? null,
+                title: data.title,
+                description: data.description,
+                difficulty: data.difficulty,
+                label: normalizeQuestionLabel(data.label),
+                link: data.link || null,
             })
-            .where(and(eq(question.id, oldQuestion.id), eq(question.userId, session.user.id)));
+            .where(
+                and(
+                eq(question.id, oldQuestion.id),
+                eq(
+                    question.userId,
+                    session.user.id
+                )
+                )
+            );
 
-        if(oldQuestion.attempts?.length === newQuestion.attempts?.length && newQuestion.attempts?.length){
-            for(const a of newQuestion.attempts){
+        if(oldQuestion.attempts?.length === data.attempts?.length && data.attempts?.length){
+            for(const a of data.attempts){
                 await db
                     .update(attempts)
                     .set({
@@ -514,6 +545,10 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                     .where(and(eq(attempts.id, a.id), eq(attempts.questionId, oldQuestion.id)));
             }
         }
+
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${oldQuestion.id}`);
 
         return {
             success: true,

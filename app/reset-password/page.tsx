@@ -1,5 +1,5 @@
 import ResetPassword from '@/components/ResetPassword'
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 
 const page = () => {
   return (

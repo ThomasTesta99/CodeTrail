@@ -2,15 +2,10 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth";
-import { db } from "@/database/drizzle";
-import { user } from "@/database/schema";
-import { eq } from "drizzle-orm";
 import {
   validateAuthRate,
-  validateWithArcjet,
 } from "../arcjet";
 import {
-  Action,
   CreateUserInfo,
   SignInUserInfo,
 } from "@/types/types";
@@ -19,6 +14,7 @@ import {
   handleActionError,
 } from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
+import { checkRate, getUserSession } from "./authHelpers";
 
 
 const isInvalidCredentialsError = (
@@ -142,130 +138,6 @@ export const signInUser = async ({
     return handleActionError(error, "signInUser");
   }
 };
-
-
-export const getUserSession = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  return session;
-};
-
-export const getUserByEmail = async ({
-  email,
-}: {
-  email: string;
-}) => {
-  try {
-    const session = await getUserSession();
-    if(!session?.user){
-        return getPublicError("UNAUTHORIZED");
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if(session.user.email.trim().toLowerCase() !== normalizedEmail){
-        return getPublicError("NOT_FOUND");
-    }
-
-    const [foundUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        emailVerified: user.emailVerified,
-      })
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
-
-    if (!foundUser) {
-      return getPublicError("NOT_FOUND");
-    }
-
-    return {
-      success: true,
-      user: foundUser,
-    };
-  } catch (error) {
-    return handleActionError(error, "getUserByEmail");
-  }
-};
-
-export const validUser = async (
-  userId: string
-) => {
-  try {
-    const session = await getUserSession();
-
-    if (!session?.user) {
-      return {
-        valid: false,
-        code: "UNAUTHORIZED" as const,
-        message: "Unauthorized",
-      };
-    }
-
-    if (session.user.id !== userId) {
-      return {
-        valid: false,
-        code: "UNAUTHORIZED" as const,
-        message: "Unauthorized",
-      };
-    }
-
-    return {
-      valid: true,
-      message: "Authorized",
-    };
-  } catch (error) {
-    const publicError = handleActionError(
-      error,
-      "validUser"
-    );
-
-    return {
-      valid: false,
-      code: publicError.code,
-      message: publicError.message,
-    };
-  }
-};
-
-export const checkRate = async (
-  fingerprint: string,
-  scope: Action
-) => {
-  try {
-    const rateCheck = await validateWithArcjet(
-      fingerprint,
-      scope
-    );
-
-    if (!rateCheck.valid) {
-      return {
-        valid: false,
-        message: getPublicError("RATE_LIMITED").message,
-      };
-    }
-
-    return rateCheck;
-  } catch (error) {
-    const publicError = handleActionError(
-      error,
-      "checkRate"
-    );
-
-    return {
-      valid: false,
-      code: publicError.code,
-      message: publicError.message,
-    };
-  }
-};
-
 
 export const sendResetPasswordEmail = async ({
   email,

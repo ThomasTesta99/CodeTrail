@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import AddAttempt from './AddAttempt';
 import { Attempt } from '@/types/types';
 

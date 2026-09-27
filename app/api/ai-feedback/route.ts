@@ -1,7 +1,7 @@
 import { MAX_AI_OUTPUT_TOKENS, MAX_ATTEMPTS, MAX_REQUEST_BYTES } from '@/constants';
 import { db } from '@/database/drizzle';
 import { attempts, question } from '@/database/schema';
-import { checkRate, getUserSession } from '@/lib/user-actions/authActions';
+import { checkRate, getUserSession } from '@/lib/user-actions/authHelpers';
 import { aiError, buildAIFeedbackPrompt, readLimitedBody, validateAIFeedbackInput, validateAIRequestBody } from '@/lib/utils/aiFeedbackUtils';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';

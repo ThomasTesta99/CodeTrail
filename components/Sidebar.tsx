@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
 import Footer from './Footer'
 import { UserProps } from '@/types/types'
 

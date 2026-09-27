@@ -45,7 +45,11 @@ export async function proxy(req: NextRequest){
     const isAuthFlowRoute = matchesRoute(pathname, authFlowRoutes);
     const isProtectedRoute = matchesRoute(pathname, protectedRoutes);
     const isPublicRoute = matchesRoute(pathname, publicRoutes);
-
+    
+    if(isPublicRoute || isAuthFlowRoute){
+        return NextResponse.next();
+    }
+    
     const data = await auth.api.getSession({headers: req.headers});
     const hasSession = Boolean(data?.session);
 
@@ -61,9 +65,6 @@ export async function proxy(req: NextRequest){
         );
     }
 
-    if(isPublicRoute || isAuthFlowRoute){
-        return NextResponse.next();
-    }
 
     return NextResponse.next();
 }

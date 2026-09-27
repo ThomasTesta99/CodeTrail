@@ -10,6 +10,7 @@ import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
+import { revalidatePath } from "next/cache";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {
@@ -44,7 +45,10 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
                 link: data.link || null,
                 createdAt: new Date(),
             })
-            .returning()
+            .returning();
+
+        revalidatePath("/");
+        revalidatePath("/all-questions");
 
         return {
             success: true,
@@ -333,6 +337,10 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             }
         }
 
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${deleteItemId}`);
+
         return {
             success: true, 
             message: "Question deleted."
@@ -405,6 +413,10 @@ export const addAttempt = async ({
       })
       .returning();
 
+    revalidatePath("/");
+    revalidatePath("/all-questions");
+    revalidatePath(`/question/${questionId}`);
+
     return {
       success: true as const,
       message: "Attempt added successfully",
@@ -429,7 +441,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
         const userId = session.user.id;
 
         const [ownedAttempt] = await db
-            .select({id: attempts.id})
+            .select({id: attempts.id, questionId: question.id})
             .from(attempts)
             .innerJoin(
                 question, 
@@ -459,6 +471,10 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
                 ...getPublicError("NOT_FOUND"),
             }
         }
+
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${ownedAttempt.questionId}`);
 
         return {
             success: true,
@@ -530,6 +546,10 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                     .where(and(eq(attempts.id, a.id), eq(attempts.questionId, oldQuestion.id)));
             }
         }
+
+        revalidatePath("/");
+        revalidatePath("/all-questions");
+        revalidatePath(`/question/${oldQuestion.id}`);
 
         return {
             success: true,

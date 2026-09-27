@@ -1,7 +1,7 @@
 
 import Sidebar from '@/components/Sidebar'
 import Topbar from '@/components/TopBar';
-import { getUserSession } from '@/lib/user-actions/authActions'
+import { getUserSession } from '@/lib/user-actions/authHelpers';
 import { ReactNode } from 'react'
 
 const layout = async ({children}: {children: ReactNode}) => {

@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/lib/user-actions/questions'
 import toast from 'react-hot-toast'
-import { validUser } from '@/lib/user-actions/authActions'
 import { UserProps } from '@/types/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { SelectGroup } from '@radix-ui/react-select'
@@ -28,11 +27,6 @@ const AddQuestionForm = ({ user }: UserProps) => {
   const onSubmit = async (data: QuestionFormData) => {
     if (!user?.id) {
       throw new Error('No User id');
-    }
-
-    if(!validUser(user.id)){
-      toast.error('Cannot add question')
-      throw new Error('Cannot add question')
     }
 
     const newQuestion = {

@@ -4,17 +4,16 @@ import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import { GetUserActivityResult } from "@/types/types";
 import { and, eq, gte, lt } from "drizzle-orm";
-import { getUserSession } from "./authActions";
 import {
   getPublicError,
   handleActionError,
 } from "../utils/actionError";
+import { getUserSession } from "./authHelpers";
 
 export const getUserActivity = async (
   year: number
 ): Promise<GetUserActivityResult> => {
   try {
-    // 1. Verify the authenticated user.
     const session = await getUserSession();
 
     if (!session?.user) {

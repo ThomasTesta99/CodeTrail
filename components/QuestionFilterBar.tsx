@@ -1,6 +1,5 @@
 "use client";
 
-import { SortKey } from "@/app/(root)/all-questions/page";
 import {
   usePathname,
   useRouter,
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { SortKey } from "@/types/types";
 
 export default function QuestionFilterBar({
   labels,

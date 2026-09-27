@@ -1,8 +1,9 @@
 import QuestionCard from '@/components/QuestionCard';
 import QuestionFilterBar from '@/components/QuestionFilterBar';
 import { QUESTIONS_PER_PAGE } from '@/constants';
-import { getUserSession } from '@/lib/user-actions/authActions';
+import { getUserSession } from '@/lib/user-actions/authHelpers';
 import { getAllUserQuestions, getQuestionLabels } from '@/lib/user-actions/questions';
+import { SortKey } from '@/types/types';
 import Link from 'next/link';
 
 type SearchParams = {
@@ -11,8 +12,6 @@ type SearchParams = {
   sort: SortKey
   q?: string, 
 }
-
-export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
 
 function buildHref(current: Record<string, string | undefined>, next: Record<string, string | undefined>) {
   const params = new URLSearchParams();

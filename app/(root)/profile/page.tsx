@@ -1,5 +1,5 @@
 import Profile from '@/components/Profile';
-import {getUserSession } from '@/lib/user-actions/authActions';
+import { getUserSession } from '@/lib/user-actions/authHelpers';
 
 const page = async () => {
     const session = await getUserSession();

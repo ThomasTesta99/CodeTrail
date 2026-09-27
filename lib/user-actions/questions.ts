@@ -3,14 +3,13 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { getUserSession } from "./authActions";
-import { DatabaseQuestion, Question} from "@/types/types";
-import { SortKey } from "@/app/(root)/all-questions/page";
+import { DatabaseQuestion, Question, SortKey} from "@/types/types";
 import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
+import { getUserSession } from "./authHelpers";
 
 export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
     try {

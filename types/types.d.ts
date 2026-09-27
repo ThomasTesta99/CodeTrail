@@ -108,3 +108,6 @@ export type AIFeedbackResponse =
     success: false, 
     error: string, 
   }
+
+
+export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";

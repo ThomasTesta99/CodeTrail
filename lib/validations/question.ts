@@ -22,7 +22,7 @@ export const attemptSchema = z.object({
 });
 
 export const editableAttemptSchema = attemptSchema.extend({
-  id: z.string(),
+  id: z.string().uuid(),
 });
 
 export const questionSchema = z.object({

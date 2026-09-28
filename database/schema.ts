@@ -70,7 +70,7 @@ export const question = pgTable('questions', {
 
 export const attempts = pgTable('attemtps', {
   id: uuid('id').defaultRandom().primaryKey(),
-  questionId: uuid('question_id').references(() => question.id).notNull(),
+  questionId: uuid('question_id').references(() => question.id, {onDelete: "cascade"}).notNull(),
   solutionCode: text('solution_code').notNull(),
   language: text('language').notNull(),
   neededHelp: boolean('needed_help').notNull(),

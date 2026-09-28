@@ -64,6 +64,13 @@
       "when": 1790277012830,
       "tag": "0008_third_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790631437853,
+      "tag": "0009_chunky_thor",
+      "breakpoints": true
     }
   ]
 }

@@ -28,7 +28,7 @@ const page = async ({ params }: { params: Promise<{id : string}>}) => {
   return (
     <div className='px-4 sm:px-6 max-w-screen-xl mx-auto w-full mb-4'>
 
-      <QuestionDetails question={question} />
+      <QuestionDetails key={JSON.stringify(question.attempts)} question={question} />
 
       <section className="button-section">
         <EditQuestionTrigger question={question}/>

@@ -318,7 +318,6 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             }
         }
 
-        await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
         const deletedQuestions = await db
             .delete(question)
             .where(
@@ -512,7 +511,27 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             }
         }
 
-        await db
+        const submittedAttemptIds = data.attempts.map((a) => a.id);
+
+        const existingAttempts = submittedAttemptIds.length > 0
+            ? await db
+                .select({ id: attempts.id })
+                .from(attempts)
+                .where(
+                    and(
+                        eq(attempts.questionId, existing.id),
+                        inArray(attempts.id, submittedAttemptIds)
+                    )
+                )
+            : [];
+
+        if(existingAttempts.length !== submittedAttemptIds.length){
+            return {
+                ...getPublicError("VALIDATION_ERROR"),
+            }
+        }
+
+        const questionUpdate = db
             .update(question)
             .set({
                 title: data.title,
@@ -523,17 +542,13 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             })
             .where(
                 and(
-                eq(question.id, oldQuestion.id),
-                eq(
-                    question.userId,
-                    session.user.id
-                )
+                    eq(question.id, existing.id),
+                    eq(question.userId, session.user.id)
                 )
             );
-
-        if(oldQuestion.attempts?.length === data.attempts?.length && data.attempts?.length){
-            for(const a of data.attempts){
-                await db
+            
+            const attemptUpdates = data.attempts.map((a) =>
+                db
                     .update(attempts)
                     .set({
                         solutionCode: a.solutionCode,
@@ -542,13 +557,24 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                         durationMinutes: a.durationMinutes,
                         notes: a.notes,
                     })
-                    .where(and(eq(attempts.id, a.id), eq(attempts.questionId, oldQuestion.id)));
-            }
-        }
+                    .where(
+                        and(
+                            eq(attempts.id, a.id),
+                            eq(attempts.questionId, existing.id)
+                        )
+                    )
+            );
+
+            
+
+        await db.batch([
+            questionUpdate, 
+            ...attemptUpdates, 
+        ] as [typeof questionUpdate, ...typeof attemptUpdates]);
 
         revalidatePath("/");
         revalidatePath("/all-questions");
-        revalidatePath(`/question/${oldQuestion.id}`);
+        revalidatePath(`/question/${existing.id}`);
 
         return {
             success: true,

@@ -119,12 +119,20 @@ export const getAllUserQuestions = async ({
 
         const orderByClause =
             sort === "oldest"
-                ? [asc(question.createdAt)]
+                ? [asc(question.createdAt), asc(question.id)]
                 : sort === "difficultyAsc"
-                    ? [asc(difficultyRank), desc(question.createdAt)]
+                    ? [
+                        asc(difficultyRank),
+                        desc(question.createdAt),
+                        asc(question.id),
+                    ]
                     : sort === "difficultyDesc"
-                        ? [desc(difficultyRank), desc(question.createdAt)]
-                        : [desc(question.createdAt)];
+                        ? [
+                            desc(difficultyRank),
+                            desc(question.createdAt),
+                            asc(question.id),
+                        ]
+                        : [desc(question.createdAt), asc(question.id)];
 
         const questionResult = await db
             .select({
@@ -277,6 +285,9 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             .from(attempts)
             .where(
                 eq(attempts.questionId, questionId)
+            ).orderBy(
+                asc(attempts.createdAt),
+                asc(attempts.id)
             );
 
         const fullQuestion = {

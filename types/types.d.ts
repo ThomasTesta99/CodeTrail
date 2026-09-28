@@ -111,3 +111,12 @@ export type AIFeedbackResponse =
 
 
 export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
+
+export type QuestionCardQuestion = Pick<
+  Question,
+  'id' | 'title' | 'description' | 'difficulty' | 'link'
+> & {
+  attempts?: Question['attempts'];
+  attemptCount?: number;
+  latestAttemptAt?: Date | null;
+};

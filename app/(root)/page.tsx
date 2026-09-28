@@ -28,12 +28,6 @@ const page = async () => {
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
     link: q.link ?? undefined,
-    createdAt: q.createdAt ?? new Date(),
-    attempts: q.attempts.map(a => ({
-      ...a,
-      notes: a.notes ?? '',
-      createdAt: a.createdAt ?? new Date(),
-    })),
   }));
 
   if(userQuestions.length === 0){
@@ -76,7 +70,7 @@ const page = async () => {
             Your Most Recent Questions
           </h2>
           <div className="dashboard-grid">
-            {userQuestions.slice(0, 6).map((question) => (
+            {userQuestions.map((question) => (
               <QuestionCard key={question.id} question={question} />
             ))}
           </div>

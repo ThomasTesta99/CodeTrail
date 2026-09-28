@@ -52,12 +52,6 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
     ...q,
     difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
     link: q.link ?? undefined,
-    createdAt: q.createdAt ?? new Date(),
-    attempts: q.attempts.map(a => ({
-      ...a,
-      notes: a.notes ?? '',
-      createdAt: a.createdAt ?? new Date(),
-    })),
   }));
 
   const labelResult = await getQuestionLabels();

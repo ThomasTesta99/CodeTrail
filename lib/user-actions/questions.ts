@@ -65,23 +65,24 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 export const getAllUserQuestions = async ({
     limit = 6,
     offset = 0,
-    label, 
-    sort = "newest", 
-    q, 
+    label,
+    sort = "newest",
+    q,
 }: {
     limit?: number;
     offset?: number;
-    label: string, 
-    sort: SortKey,
-    q: string,
+    label: string;
+    sort: SortKey;
+    q: string;
 }) => {
     try {
         const session = await getUserSession();
-        if(!session?.user){
+
+        if (!session?.user) {
             return {
                 ...getPublicError("UNAUTHORIZED"),
                 questions: [],
-            }
+            };
         }
 
         const userId = session.user.id;
@@ -93,16 +94,16 @@ export const getAllUserQuestions = async ({
                 whereClause,
                 isNull(question.label)
             )!;
-            } else if (label && label !== "all") {
+        } else if (label && label !== "all") {
             whereClause = and(
                 whereClause,
                 eq(question.label, label)
             )!;
         }
 
-        if(q && q.trim().length > 0){
+        if (q && q.trim().length > 0) {
             whereClause = and(
-                whereClause, 
+                whereClause,
                 ilike(question.title, `%${q.trim()}%`)
             )!;
         }
@@ -114,49 +115,61 @@ export const getAllUserQuestions = async ({
                 WHEN ${question.difficulty} = 'Hard' THEN 3
                 ELSE 999
             END
-            `;
+        `;
 
-        const orderByClause = 
-            sort === "oldest" 
-                ? asc(question.createdAt)
-                : sort === "difficultyAsc" 
+        const orderByClause =
+            sort === "oldest"
+                ? [asc(question.createdAt)]
+                : sort === "difficultyAsc"
                     ? [asc(difficultyRank), desc(question.createdAt)]
-                    : sort === "difficultyDesc" ?
-                        [desc(difficultyRank), desc(question.createdAt)]
+                    : sort === "difficultyDesc"
+                        ? [desc(difficultyRank), desc(question.createdAt)]
                         : [desc(question.createdAt)];
 
+        const questionResult = await db
+            .select({
+                id: question.id,
+                userId: question.userId,
+                title: question.title,
+                description: question.description,
+                difficulty: question.difficulty,
+                link: question.link,
+                label: question.label,
+                createdAt: question.createdAt,
 
-        const questionResult = await db.select()
+                attemptCount: sql<number>`
+                    COUNT(${attempts.id})::int
+                `,
+
+                latestAttemptAt: sql<Date | null>`
+                    MAX(${attempts.createdAt})
+                `,
+            })
             .from(question)
+            .leftJoin(
+                attempts,
+                eq(attempts.questionId, question.id)
+            )
             .where(whereClause)
-            .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
+            .groupBy(
+                question.id,
+                question.userId,
+                question.title,
+                question.description,
+                question.difficulty,
+                question.link,
+                question.label,
+                question.createdAt
+            )
+            .orderBy(...orderByClause)
             .limit(limit)
             .offset(offset);
-        
-        const questionIds = questionResult.map(q=>q.id);
 
-        const allAttempts = await db.select()
-            .from(attempts)
-            .where(inArray(attempts.questionId, questionIds));
-
-        const attemptsByQuestionId = allAttempts.reduce((acc, attempt) => {
-            if(!acc[attempt.questionId]){
-                acc[attempt.questionId] = [];
-            }
-            acc[attempt.questionId].push(attempt);
-            return acc;
-        },{} as Record<string, typeof allAttempts>);
-
-        const combined = questionResult.map(q => ({
-            ...q,
-            attempts: attemptsByQuestionId[q.id] || []
-        }))
-
-        return{
-            success: true, 
+        return {
+            success: true,
             message: "Successfully got questions from database",
-            questions: combined
-        }
+            questions: questionResult,
+        };
 
     } catch (error) {
         return {
@@ -164,73 +177,70 @@ export const getAllUserQuestions = async ({
             questions: [],
         };
     }
-}
+};
 
 export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) => {
-  try {
-    const session = await getUserSession();
-    if(!session?.user){
+    try {
+        const session = await getUserSession();
+
+        if (!session?.user) {
         return {
             ...getPublicError("UNAUTHORIZED"),
             questions: [],
+        };
         }
-    }
 
-    const userId = session.user.id;
+        const userId = session.user.id;
 
-    const questionResult = await db.select()
-      .from(question)
-      .where(eq(question.userId, userId));
+        const latestActivity = sql<Date>`
+            COALESCE(MAX(${attempts.createdAt}), ${question.createdAt})
+            `;
 
-    const questionIds = questionResult.map(q => q.id);
+        const questionResult = await db
+            .select({
+                id: question.id,
+                title: question.title,
+                description: question.description,
+                difficulty: question.difficulty,
+                link: question.link,
+                createdAt: question.createdAt,
 
-    const allAttempts = await db.select()
-      .from(attempts)
-      .where(inArray(attempts.questionId, questionIds));
+                attemptCount: sql<number>`
+                COUNT(${attempts.id})::int
+                `,
 
-    const attemptsByQuestionId = allAttempts.reduce((acc, attempt) => {
-      if (!acc[attempt.questionId]) {
-        acc[attempt.questionId] = [];
-      }
-      acc[attempt.questionId].push(attempt);
-      return acc;
-    }, {} as Record<string, typeof allAttempts>);
-
-    const combined = questionResult.map(q => {
-        const attempts = attemptsByQuestionId[q.id] || [];
-
-        let updatedAt: Date = q.createdAt ?? new Date(0); // fallback if somehow null
-
-        if (attempts.length > 0) {
-            const latestAttempt = attempts.reduce((latest, current) => {
-            const latestDate = latest.createdAt ?? new Date(0);
-            const currentDate = current.createdAt ?? new Date(0);
-            return currentDate > latestDate ? current : latest;
-            });
-
-            updatedAt = latestAttempt.createdAt ?? updatedAt;
-        }
+                latestAttemptAt: sql<Date | null>`
+                MAX(${attempts.createdAt})
+                `,
+            })
+            .from(question)
+            .leftJoin(
+                attempts,
+                eq(attempts.questionId, question.id)
+            )
+            .where(eq(question.userId, userId))
+            .groupBy(
+                question.id,
+                question.title,
+                question.description,
+                question.difficulty,
+                question.link,
+                question.createdAt
+            )
+            .orderBy(desc(latestActivity))
+            .limit(limit);
 
         return {
-            ...q,
-            attempts,
-            updatedAt,
+            success: true,
+            message: "Got recent questions",
+            questions: questionResult,
         };
-    });
-
-    const sorted = combined
-        .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
-        .slice(0, limit);
-
-        
-
-    return { success: true, message: 'Got recent questions', questions: sorted };
-  } catch (error) {
-    return {
-      ...handleActionError(error, "getMostRecentUserQuestions"),
-      questions: [],
-    };
-  }
+    } catch (error) {
+        return {
+            ...handleActionError(error, "getMostRecentUserQuestions"),
+            questions: [],
+        };
+    }
 };
 
 export const getQuestionById = async ({questionId} : {questionId:string}) => {

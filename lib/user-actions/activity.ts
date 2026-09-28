@@ -3,7 +3,7 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import { GetUserActivityResult } from "@/types/types";
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import {
   getPublicError,
   handleActionError,
@@ -44,9 +44,14 @@ export const getUserActivity = async (
       Date.UTC(year + 1, 0, 1)
     );
 
-    const userAttempts = await db
+    const activity = await db
       .select({
-        createdAt: attempts.createdAt,
+        date: sql<string>`
+          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        `,
+        attempts: sql<number>`
+          COUNT(*)::int
+        `,
       })
       .from(attempts)
       .innerJoin(
@@ -59,25 +64,17 @@ export const getUserActivity = async (
           gte(attempts.createdAt, startDate),
           lt(attempts.createdAt, endDate)
         )
+      )
+      .groupBy(
+        sql`
+          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        `
+      )
+      .orderBy(
+        sql`
+          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        `
       );
-
-    const activityMap: Record<string, number> = {};
-
-    for (const attempt of userAttempts) {
-      const date = attempt.createdAt
-        .toISOString()
-        .split("T")[0];
-
-      activityMap[date] =
-        (activityMap[date] ?? 0) + 1;
-    }
-    
-    const activity = Object.entries(activityMap).map(
-      ([date, attempts]) => ({
-        date,
-        attempts,
-      })
-    );
 
     return {
       success: true,

@@ -55,7 +55,7 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const pageNumber =
     Number.isNaN(parsedPage) || parsedPage < 1
       ? 1
-      : Math.min(parsedPage, 1000);
+      : parsedPage
 
   const offset = (pageNumber - 1) * QUESTIONS_PER_PAGE;
   const label = rawLabel || "";

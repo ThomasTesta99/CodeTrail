@@ -11,7 +11,8 @@ import {
 import { getUserSession } from "./authHelpers";
 
 export const getUserActivity = async (
-  year: number
+  year: number,
+  timeZone: string
 ): Promise<GetUserActivityResult> => {
   try {
     const session = await getUserSession();
@@ -34,21 +35,36 @@ export const getUserActivity = async (
       };
     }
 
+    try {
+      new Intl.DateTimeFormat("en-US", {
+        timeZone,
+      }).format();
+    } catch {
+      return {
+        ...getPublicError("VALIDATION_ERROR"),
+        activity: [],
+      };
+    }
+
     const userId = session.user.id;
 
-    const startDate = new Date(
-      Date.UTC(year, 0, 1)
-    );
+    const localDate = sql<string>`
+      TO_CHAR(
+        ${attempts.createdAt} AT TIME ZONE ${timeZone},
+        'YYYY-MM-DD'
+      )
+    `;
 
-    const endDate = new Date(
-      Date.UTC(year + 1, 0, 1)
-    );
+    const localYear = sql<number>`
+      EXTRACT(
+        YEAR FROM ${attempts.createdAt} AT TIME ZONE ${timeZone}
+      )
+    `;
 
     const activity = await db
       .select({
-        date: sql<string>`
-          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
-        `,
+        date: localDate,
+
         attempts: sql<number>`
           COUNT(*)::int
         `,
@@ -61,20 +77,11 @@ export const getUserActivity = async (
       .where(
         and(
           eq(question.userId, userId),
-          gte(attempts.createdAt, startDate),
-          lt(attempts.createdAt, endDate)
+          sql`${localYear} = ${year}`
         )
       )
-      .groupBy(
-        sql`
-          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
-        `
-      )
-      .orderBy(
-        sql`
-          TO_CHAR(${attempts.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')
-        `
-      );
+      .groupBy(sql`1`)
+      .orderBy(sql`1`);
 
     return {
       success: true,

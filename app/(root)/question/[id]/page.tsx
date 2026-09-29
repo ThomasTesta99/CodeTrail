@@ -16,13 +16,6 @@ const page = async ({ params }: { params: Promise<{id : string}>}) => {
   const question = {
     ...result.question,
     difficulty: result.question.difficulty as 'Easy' | 'Medium' | 'Hard',
-    link: result.question.link ?? undefined,
-    createdAt: result.question.createdAt ?? new Date(),
-    attempts: result.question.attempts?.map(a => ({
-      ...a,
-      notes: a.notes ?? '',
-      createdAt: a.createdAt ?? new Date(),
-    })) ?? [],
   };
 
   return (

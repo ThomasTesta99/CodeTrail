@@ -20,7 +20,11 @@ export const session = pgTable("session", {
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' })
-});
+},
+  (table) => [
+    index("session_user_id_idx").on(table.userId), 
+  ]
+);
 
 export const account = pgTable("account", {
   id: text('id').primaryKey(),
@@ -36,7 +40,11 @@ export const account = pgTable("account", {
   password: text('password'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull()
-});
+}, 
+  (table) => [
+    index("account_user_id_idx").on(table.userId),
+  ]
+);
 
 export const verification = pgTable("verification", {
   id: text('id').primaryKey(),
@@ -45,7 +53,10 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()),
   updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date())
-});
+}, 
+  (table) => [
+    index("verification_identifier_idx").on(table.identifier)
+]);
 
 export const question = pgTable('questions', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -55,7 +66,9 @@ export const question = pgTable('questions', {
   difficulty: text('difficulty').notNull(),
   link: text('link'),
   label: text('label'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
 },
   (table) => [
     index("questions_user_id_idx").on(table.userId),
@@ -83,7 +96,9 @@ export const attempts = pgTable('attemtps', {
   neededHelp: boolean('needed_help').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
   notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
 },
   (table) => [
     index("attempts_question_id_idx").on(table.questionId),

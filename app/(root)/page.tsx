@@ -24,11 +24,7 @@ const page = async () => {
     );
   }
 
-  const userQuestions = result.questions.map(q => ({
-    ...q,
-    difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
-    link: q.link ?? undefined,
-  }));
+  const userQuestions = result.questions;
 
   if(userQuestions.length === 0){
     return (

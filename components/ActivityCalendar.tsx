@@ -16,6 +16,8 @@ const ActivityCalendar = () => {
     const [activity, setActivity] = useState<Activity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     useEffect(() => {
         let ignore = false;
 
@@ -23,7 +25,10 @@ const ActivityCalendar = () => {
             try {
                 setIsLoading(true);
 
-                const result = await getUserActivity(selectedYear);
+                const result = await getUserActivity(
+                    selectedYear,
+                    timeZone
+                );
 
                 if (ignore) return;
 

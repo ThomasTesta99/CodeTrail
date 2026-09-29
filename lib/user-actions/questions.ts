@@ -3,15 +3,15 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { DatabaseQuestion, Question, SortKey} from "@/types/types";
-import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from "../validations/question";
+import { Question, SortKey} from "@/types/types";
+import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, QuestionFormData, difficultySchema} from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
 import { getUserSession } from "./authHelpers";
 
-export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
+export const addQuestion = async ({q} : {q : QuestionFormData}) => {
     try {
         const session = await getUserSession();
         if(!session?.user){
@@ -50,7 +50,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
         revalidatePath("/all-questions");
 
         return {
-            success: true,
+            success: true as const,
             message: 'Question added successfully',
             question: insertedQuestion,
         }
@@ -173,10 +173,15 @@ export const getAllUserQuestions = async ({
             .limit(limit)
             .offset(offset);
 
+        const validatedQuestions = questionResult.map((q) => ({
+            ...q,
+            difficulty: difficultySchema.parse(q.difficulty),
+        }));
+
         return {
-            success: true,
+            success: true as const,
             message: "Successfully got questions from database",
-            questions: questionResult,
+            questions: validatedQuestions,
         };
 
     } catch (error) {
@@ -238,10 +243,15 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
             .orderBy(desc(latestActivity))
             .limit(limit);
 
+        const validatedQuestions = questionResult.map((q) => ({
+            ...q,
+            difficulty: difficultySchema.parse(q.difficulty),
+        }));
+
         return {
-            success: true,
+            success: true as const,
             message: "Got recent questions",
-            questions: questionResult,
+            questions: validatedQuestions,
         };
     } catch (error) {
         return {
@@ -280,6 +290,8 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             }
         }
 
+        const validatedDifficulty = difficultySchema.parse(q.difficulty);
+
         const atts = await db
             .select()
             .from(attempts)
@@ -291,12 +303,13 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             );
 
         const fullQuestion = {
-            ...q, 
-            attempts: atts, 
+            ...q,
+            difficulty: validatedDifficulty,
+            attempts: atts,
         }
 
         return {
-            success: true,
+            success: true as const,
             message: "Found question",
             question: fullQuestion,
         }
@@ -350,10 +363,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             .returning({id: question.id});
 
         if(deletedQuestions.length === 0){
-            return {
-                success: false, 
-                message: "Question not found.",
-            }
+            return getPublicError("NOT_FOUND");
         }
 
         revalidatePath("/");
@@ -361,7 +371,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
         revalidatePath(`/question/${deleteItemId}`);
 
         return {
-            success: true, 
+            success: true as const, 
             message: "Question deleted."
         }
     } catch (error) {
@@ -496,7 +506,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
         revalidatePath(`/question/${ownedAttempt.questionId}`);
 
         return {
-            success: true,
+            success: true as const,
             message: "Attempt successfully deleted",
         }
     } catch (error) {
@@ -598,7 +608,7 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
         revalidatePath(`/question/${existing.id}`);
 
         return {
-            success: true,
+            success: true as const,
             message: "Question sucessfully updated"
         };
     } catch (error) {
@@ -645,7 +655,7 @@ export const getQuestionLabels = async () => {
     ].sort((a, b) => a.localeCompare(b));
 
     return {
-      success: true,
+      success: true as const,
       message: "Successfully got labels.",
       labels,
     };

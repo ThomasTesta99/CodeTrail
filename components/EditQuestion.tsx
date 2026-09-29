@@ -23,7 +23,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
     defaultValues: {
       title: question.title ?? '',
       description: question.description ?? '',
-      difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') ?? 'Easy',
+      difficulty: question.difficulty,
       link: question.link ?? '',
       label: normalizeQuestionLabel(question.label) ?? "",
       attempts: (question.attempts ?? []).map(a => ({

@@ -28,15 +28,8 @@ const AddQuestionForm = ({ user }: UserProps) => {
     if (!user?.id) {
       throw new Error('No User id');
     }
-
-    const newQuestion = {
-      id: crypto.randomUUID(),
-      ...data,
-      createdAt: new Date(),
-      attempts: [],
-    }
     
-    const result = await addQuestion({ q: newQuestion })
+    const result = await addQuestion({ q: data })
 
     if (result.success) {
       toast.success(result.message);

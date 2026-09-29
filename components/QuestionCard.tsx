@@ -11,6 +11,8 @@ const QuestionCard = ({
   const totalAttempts =
     question.attemptCount ?? attempts.length;
 
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const latestAttemptFromArray =
     attempts.length > 0
       ? attempts.reduce((latest, attempt) =>
@@ -60,7 +62,12 @@ const QuestionCard = ({
             <span>
               Last:{' '}
               {latestAttemptAt
-                ? new Date(latestAttemptAt).toLocaleDateString()
+                ? new Date(latestAttemptAt).toLocaleDateString(
+                    'en-US',
+                    {
+                      timeZone,
+                    }
+                  )
                 : 'N/A'}
             </span>
           </div>

@@ -75,11 +75,7 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   const q = rawQuery || "";
 
   const result = await getAllUserQuestions({ limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
-  const userQuestions = result.questions.map(q => ({
-    ...q,
-    difficulty: q.difficulty as 'Easy' | 'Medium' | 'Hard',
-    link: q.link ?? undefined,
-  }));
+  const userQuestions = result.questions;
 
   const labelResult = await getQuestionLabels();
   const labels = labelResult.labels;

@@ -1,17 +1,10 @@
+import { attempts, question } from "@/database/schema";
+import { auth } from "@/lib/auth";
+import type { Difficulty } from "@/lib/validations/question";
+
 declare interface FooterProps {
   user?: User;
   type?: 'mobile' | 'desktop'
-}
-
-declare interface User {
-  id?: string;
-  name: string;
-  email: string;
-  emailVerified?: boolean;
-  password?: string | null;
-  image?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 declare interface CreateUserInfo {
@@ -25,41 +18,13 @@ declare interface SignInUserInfo{
   password: string;
 }
 
+export type AuthSession = typeof auth.$Infer.Session;
+
+export type User = AuthSession["user"];
+export type Session = AuthSession["session"];
+
 declare interface UserProps{
   user?: User;
-}
-
-declare interface Attempt {
-  id: string;
-  questionId: string;
-  solutionCode: string;
-  language: string;
-  neededHelp: boolean;
-  durationMinutes: number;
-  notes?: string | null;
-  createdAt: Date;
-}
-
-declare interface Question {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  link?: string;
-  label: string | null;
-  attempts?: Attempt[];
-  createdAt: Date;
-}
-
-declare interface DatabaseQuestion {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  link?: string;
-  label?: string;
-  attempts?: Attempt[];
-  createdAt: Date;
 }
 
 export type Action = 'ai-feedback' | 'password-reset' | 'verify-email';
@@ -71,11 +36,18 @@ export type Activity = {
   attempts: number, 
 }
 
-export type GetUserActivityResult = {
-    success: boolean;
-    activity: Activity[];
-    message: string;
-};
+export type GetUserActivityResult =
+  | {
+      success: true;
+      activity: Activity[];
+      message: string;
+    }
+  | {
+      success: false;
+      code: ActionErrorCode;
+      message: string;
+      activity: [];
+    };
 
 
 export type AIFeedbackAttempt = {
@@ -111,3 +83,21 @@ export type AIFeedbackResponse =
 
 
 export type SortKey = "oldest" | "newest" | "difficultyAsc" | "difficultyDesc";
+
+export type QuestionCardQuestion = Pick<
+  Question,
+  'id' | 'title' | 'description' | 'difficulty' | 'link'
+> & {
+  attempts?: Question['attempts'];
+  attemptCount?: number;
+  latestAttemptAt?: Date | null;
+};
+
+export type Attempt = AttemptRow;
+export type QuestionRow = typeof question.$inferSelect;
+export type AttemptRow = typeof attempts.$inferSelect;
+
+export type Question = Omit<QuestionRow, "difficulty"> & {
+  difficulty: Difficulty;
+  attempts: AttemptRow[];
+};

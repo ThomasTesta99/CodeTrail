@@ -16,19 +16,12 @@ const page = async ({ params }: { params: Promise<{id : string}>}) => {
   const question = {
     ...result.question,
     difficulty: result.question.difficulty as 'Easy' | 'Medium' | 'Hard',
-    link: result.question.link ?? undefined,
-    createdAt: result.question.createdAt ?? new Date(),
-    attempts: result.question.attempts?.map(a => ({
-      ...a,
-      notes: a.notes ?? '',
-      createdAt: a.createdAt ?? new Date(),
-    })) ?? [],
   };
 
   return (
     <div className='px-4 sm:px-6 max-w-screen-xl mx-auto w-full mb-4'>
 
-      <QuestionDetails question={question} />
+      <QuestionDetails key={JSON.stringify(question.attempts)} question={question} />
 
       <section className="button-section">
         <EditQuestionTrigger question={question}/>

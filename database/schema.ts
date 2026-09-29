@@ -1,4 +1,5 @@
-import { pgTable, text, integer, timestamp, boolean, uuid, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, integer, timestamp, boolean, uuid, index, check } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text('id').primaryKey(),
@@ -19,7 +20,11 @@ export const session = pgTable("session", {
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   userId: text('user_id').notNull().references(()=> user.id, { onDelete: 'cascade' })
-});
+},
+  (table) => [
+    index("session_user_id_idx").on(table.userId), 
+  ]
+);
 
 export const account = pgTable("account", {
   id: text('id').primaryKey(),
@@ -35,7 +40,11 @@ export const account = pgTable("account", {
   password: text('password'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull()
-});
+}, 
+  (table) => [
+    index("account_user_id_idx").on(table.userId),
+  ]
+);
 
 export const verification = pgTable("verification", {
   id: text('id').primaryKey(),
@@ -44,17 +53,22 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').$defaultFn(() => /* @__PURE__ */ new Date()),
   updatedAt: timestamp('updated_at').$defaultFn(() => /* @__PURE__ */ new Date())
-});
+}, 
+  (table) => [
+    index("verification_identifier_idx").on(table.identifier)
+]);
 
 export const question = pgTable('questions', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').references(() => user.id).notNull(),
+  userId: text('user_id').references(() => user.id, {onDelete: "cascade"}).notNull(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   difficulty: text('difficulty').notNull(),
   link: text('link'),
   label: text('label'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
 },
   (table) => [
     index("questions_user_id_idx").on(table.userId),
@@ -66,17 +80,25 @@ export const question = pgTable('questions', {
       table.userId,
       table.createdAt
     ),
+
+
+    check(
+      "questions_difficulty_check", 
+      sql`${table.difficulty} IN ('Easy', 'Medium', 'Hard')`
+    )
   ]);
 
 export const attempts = pgTable('attemtps', {
   id: uuid('id').defaultRandom().primaryKey(),
-  questionId: uuid('question_id').references(() => question.id).notNull(),
+  questionId: uuid('question_id').references(() => question.id, {onDelete: "cascade"}).notNull(),
   solutionCode: text('solution_code').notNull(),
   language: text('language').notNull(),
   neededHelp: boolean('needed_help').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
   notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
 },
   (table) => [
     index("attempts_question_id_idx").on(table.questionId),
@@ -85,6 +107,11 @@ export const attempts = pgTable('attemtps', {
     index("attempts_question_created_at_idx").on(
       table.questionId,
       table.createdAt
+    ),
+
+    check(
+      "attempts_duration_minutes_check",
+      sql`${table.durationMinutes} >= 1`
     ),
   ]);
 

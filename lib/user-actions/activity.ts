@@ -3,7 +3,7 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import { GetUserActivityResult } from "@/types/types";
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import {
   getPublicError,
   handleActionError,
@@ -11,7 +11,8 @@ import {
 import { getUserSession } from "./authHelpers";
 
 export const getUserActivity = async (
-  year: number
+  year: number,
+  timeZone: string
 ): Promise<GetUserActivityResult> => {
   try {
     const session = await getUserSession();
@@ -34,19 +35,39 @@ export const getUserActivity = async (
       };
     }
 
+    try {
+      new Intl.DateTimeFormat("en-US", {
+        timeZone,
+      }).format();
+    } catch {
+      return {
+        ...getPublicError("VALIDATION_ERROR"),
+        activity: [],
+      };
+    }
+
     const userId = session.user.id;
 
-    const startDate = new Date(
-      Date.UTC(year, 0, 1)
-    );
+    const localDate = sql<string>`
+      TO_CHAR(
+        ${attempts.createdAt} AT TIME ZONE ${timeZone},
+        'YYYY-MM-DD'
+      )
+    `;
 
-    const endDate = new Date(
-      Date.UTC(year + 1, 0, 1)
-    );
+    const localYear = sql<number>`
+      EXTRACT(
+        YEAR FROM ${attempts.createdAt} AT TIME ZONE ${timeZone}
+      )
+    `;
 
-    const userAttempts = await db
+    const activity = await db
       .select({
-        createdAt: attempts.createdAt,
+        date: localDate,
+
+        attempts: sql<number>`
+          COUNT(*)::int
+        `,
       })
       .from(attempts)
       .innerJoin(
@@ -56,28 +77,11 @@ export const getUserActivity = async (
       .where(
         and(
           eq(question.userId, userId),
-          gte(attempts.createdAt, startDate),
-          lt(attempts.createdAt, endDate)
+          sql`${localYear} = ${year}`
         )
-      );
-
-    const activityMap: Record<string, number> = {};
-
-    for (const attempt of userAttempts) {
-      const date = attempt.createdAt
-        .toISOString()
-        .split("T")[0];
-
-      activityMap[date] =
-        (activityMap[date] ?? 0) + 1;
-    }
-    
-    const activity = Object.entries(activityMap).map(
-      ([date, attempts]) => ({
-        date,
-        attempts,
-      })
-    );
+      )
+      .groupBy(sql`1`)
+      .orderBy(sql`1`);
 
     return {
       success: true,

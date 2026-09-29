@@ -1,37 +1,74 @@
-import { Question } from '@/types/types';
+import { QuestionCardQuestion } from '@/types/types';
 import Link from 'next/link';
 
-const QuestionCard = ({ question }: { question: Question }) => {
+const QuestionCard = ({
+  question,
+}: {
+  question: QuestionCardQuestion;
+}) => {
   const attempts = question.attempts || [];
-  const totalAtempts = attempts.length;
-  const lastAttempt = totalAtempts > 0 
-    ? attempts.reduce((latest, attempt) =>
-        new Date(attempt.createdAt) > new Date(latest.createdAt) ? attempt : latest,
-        attempts[0]
-      )
-    : null;
+
+  const totalAttempts =
+    question.attemptCount ?? attempts.length;
+
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const latestAttemptFromArray =
+    attempts.length > 0
+      ? attempts.reduce((latest, attempt) =>
+          new Date(attempt.createdAt) > new Date(latest.createdAt)
+            ? attempt
+            : latest
+        ).createdAt
+      : null;
+
+  const latestAttemptAt =
+    question.latestAttemptAt ?? latestAttemptFromArray;
 
   return (
     <div className="question-card">
-      <Link href={`/question/${question.id}`} className="question-card-link">
+      <Link
+        href={`/question/${question.id}`}
+        className="question-card-link"
+      >
         <div>
           <div className="question-card-header">
-            <h2 className="question-card-title">{question.title}</h2>
-            <span className={`question-card-badge ${
-              question.difficulty === 'Easy' ? 'bg-green-500/90 text-white' :
-              question.difficulty === 'Medium' ? 'bg-yellow-500/90 text-black' :
-              'bg-red-500/90 text-white'
-            }`}>
+            <h2 className="question-card-title">
+              {question.title}
+            </h2>
+
+            <span
+              className={`question-card-badge ${
+                question.difficulty === 'Easy'
+                  ? 'bg-green-500/90 text-white'
+                  : question.difficulty === 'Medium'
+                    ? 'bg-yellow-500/90 text-black'
+                    : 'bg-red-500/90 text-white'
+              }`}
+            >
               {question.difficulty}
             </span>
           </div>
 
-          <p className="question-card-desc">{question.description}</p>
+          <p className="question-card-desc">
+            {question.description}
+          </p>
 
           <div className="question-card-footer">
-            <span>{totalAtempts} Attempt{totalAtempts !== 1 ? 's' : ''}</span>
             <span>
-              Last: {lastAttempt ? new Date(lastAttempt.createdAt).toLocaleDateString() : 'N/A'}
+              {totalAttempts} Attempt{totalAttempts !== 1 ? 's' : ''}
+            </span>
+
+            <span>
+              Last:{' '}
+              {latestAttemptAt
+                ? new Date(latestAttemptAt).toLocaleDateString(
+                    'en-US',
+                    {
+                      timeZone,
+                    }
+                  )
+                : 'N/A'}
             </span>
           </div>
         </div>
@@ -51,5 +88,4 @@ const QuestionCard = ({ question }: { question: Question }) => {
   );
 };
 
-
-export default QuestionCard
+export default QuestionCard;

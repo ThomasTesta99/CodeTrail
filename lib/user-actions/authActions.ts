@@ -87,7 +87,7 @@ export const signUpUser = async ({
     });
 
     return {
-      success: true,
+      success: true as const,
       message: "Signed up successfully.",
       newUser,
     };
@@ -122,14 +122,14 @@ export const signInUser = async ({
     });
 
     return {
-      success: true,
+      success: true as const,
       message: "User successfully logged in.",
       user: signedInUser,
     };
   } catch (error) {
     if (isInvalidCredentialsError(error)) {
       return {
-        success: false,
+        success: false as const,
         code: "INVALID_CREDENTIALS" as const,
         message: "Invalid email or password.",
       };
@@ -169,7 +169,7 @@ export const sendResetPasswordEmail = async ({
 
     if (!eligible) {
       return {
-        success: true,
+        success: true as const,
         message: publicMessage,
       };
     }
@@ -185,7 +185,7 @@ export const sendResetPasswordEmail = async ({
     });
 
     return {
-      success: true,
+      success: true as const,
       message: publicMessage,
     };
   } catch (error) {
@@ -210,7 +210,7 @@ export const sendVerificationEmail = async ({
 
     if (session.user.emailVerified) {
       return {
-        success: false,
+        success: false as const,
         code: "ALREADY_VERIFIED" as const,
         message: "Email is already verified.",
       };
@@ -250,7 +250,7 @@ export const sendVerificationEmail = async ({
     }
 
     return {
-      success: true,
+      success: true as const,
       message: "Verification email sent",
     };
   } catch (error) {

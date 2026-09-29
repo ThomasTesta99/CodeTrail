@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const difficultySchema = z.enum([
+  "Easy",
+  "Medium",
+  "Hard",
+]);
+
 export const durationMinutesSchema = z
   .number()
   .int("Must be a whole number")
@@ -22,7 +28,7 @@ export const attemptSchema = z.object({
 });
 
 export const editableAttemptSchema = attemptSchema.extend({
-  id: z.string(),
+  id: z.string().uuid(),
 });
 
 export const questionSchema = z.object({
@@ -34,11 +40,7 @@ export const questionSchema = z.object({
     .string()
     .min(1, "Description is required"),
 
-  difficulty: z.enum([
-    "Easy",
-    "Medium",
-    "Hard",
-  ]),
+  difficulty: difficultySchema,
 
   label: z.string().optional(),
 
@@ -54,6 +56,9 @@ export const questionSchema = z.object({
       }
     ),
 });
+
+
+export type Difficulty = z.infer<typeof difficultySchema>;
 
 export const editQuestionSchema =
   questionSchema.extend({

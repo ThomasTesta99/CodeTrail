@@ -6,7 +6,7 @@ import { LANGUAGE_OPTIONS } from '@/constants';
 import { Question } from '@/types/types';
 import { updateQuestion } from '@/lib/user-actions/questions';
 import toast from 'react-hot-toast';
-//import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
 import { EditFormData, editQuestionSchema } from '@/lib/validations/question';
 
@@ -14,7 +14,7 @@ const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="text-sm text-red-600 mt-1">{message}</p> : null;
 
 const EditQuestion = ({ question, onClose }: { question: Question; onClose: () => void }) => {
-  //const router = useRouter();
+  const router = useRouter();
 
   const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<EditFormData>({
     resolver: zodResolver(editQuestionSchema),
@@ -23,7 +23,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
     defaultValues: {
       title: question.title ?? '',
       description: question.description ?? '',
-      difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') ?? 'Easy',
+      difficulty: question.difficulty,
       link: question.link ?? '',
       label: normalizeQuestionLabel(question.label) ?? "",
       attempts: (question.attempts ?? []).map(a => ({
@@ -58,7 +58,7 @@ const EditQuestion = ({ question, onClose }: { question: Question; onClose: () =
       toast.success(result.message || "Question updated successfully");
 
       onClose();
-      //router.refresh();
+      router.refresh();
     } catch (error) {
       console.error("Failed to update question: ", error);
       toast.error("An unexpecteed error occurred. Please try again.");

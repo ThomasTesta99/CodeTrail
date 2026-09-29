@@ -3,15 +3,15 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { DatabaseQuestion, Question, SortKey} from "@/types/types";
-import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, } from "../validations/question";
+import { Question, SortKey} from "@/types/types";
+import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, QuestionFormData, difficultySchema} from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
 import { getUserSession } from "./authHelpers";
 
-export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
+export const addQuestion = async ({q} : {q : QuestionFormData}) => {
     try {
         const session = await getUserSession();
         if(!session?.user){
@@ -50,7 +50,7 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
         revalidatePath("/all-questions");
 
         return {
-            success: true,
+            success: true as const,
             message: 'Question added successfully',
             question: insertedQuestion,
         }
@@ -65,23 +65,24 @@ export const addQuestion = async ({q} : {q : DatabaseQuestion}) => {
 export const getAllUserQuestions = async ({
     limit = 6,
     offset = 0,
-    label, 
-    sort = "newest", 
-    q, 
+    label,
+    sort = "newest",
+    q,
 }: {
     limit?: number;
     offset?: number;
-    label: string, 
-    sort: SortKey,
-    q: string,
+    label: string;
+    sort: SortKey;
+    q: string;
 }) => {
     try {
         const session = await getUserSession();
-        if(!session?.user){
+
+        if (!session?.user) {
             return {
                 ...getPublicError("UNAUTHORIZED"),
                 questions: [],
-            }
+            };
         }
 
         const userId = session.user.id;
@@ -93,16 +94,16 @@ export const getAllUserQuestions = async ({
                 whereClause,
                 isNull(question.label)
             )!;
-            } else if (label && label !== "all") {
+        } else if (label && label !== "all") {
             whereClause = and(
                 whereClause,
                 eq(question.label, label)
             )!;
         }
 
-        if(q && q.trim().length > 0){
+        if (q && q.trim().length > 0) {
             whereClause = and(
-                whereClause, 
+                whereClause,
                 ilike(question.title, `%${q.trim()}%`)
             )!;
         }
@@ -114,49 +115,74 @@ export const getAllUserQuestions = async ({
                 WHEN ${question.difficulty} = 'Hard' THEN 3
                 ELSE 999
             END
-            `;
+        `;
 
-        const orderByClause = 
-            sort === "oldest" 
-                ? asc(question.createdAt)
-                : sort === "difficultyAsc" 
-                    ? [asc(difficultyRank), desc(question.createdAt)]
-                    : sort === "difficultyDesc" ?
-                        [desc(difficultyRank), desc(question.createdAt)]
-                        : [desc(question.createdAt)];
+        const orderByClause =
+            sort === "oldest"
+                ? [asc(question.createdAt), asc(question.id)]
+                : sort === "difficultyAsc"
+                    ? [
+                        asc(difficultyRank),
+                        desc(question.createdAt),
+                        asc(question.id),
+                    ]
+                    : sort === "difficultyDesc"
+                        ? [
+                            desc(difficultyRank),
+                            desc(question.createdAt),
+                            asc(question.id),
+                        ]
+                        : [desc(question.createdAt), asc(question.id)];
 
+        const questionResult = await db
+            .select({
+                id: question.id,
+                userId: question.userId,
+                title: question.title,
+                description: question.description,
+                difficulty: question.difficulty,
+                link: question.link,
+                label: question.label,
+                createdAt: question.createdAt,
 
-        const questionResult = await db.select()
+                attemptCount: sql<number>`
+                    COUNT(${attempts.id})::int
+                `,
+
+                latestAttemptAt: sql<Date | null>`
+                    MAX(${attempts.createdAt})
+                `,
+            })
             .from(question)
+            .leftJoin(
+                attempts,
+                eq(attempts.questionId, question.id)
+            )
             .where(whereClause)
-            .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
+            .groupBy(
+                question.id,
+                question.userId,
+                question.title,
+                question.description,
+                question.difficulty,
+                question.link,
+                question.label,
+                question.createdAt
+            )
+            .orderBy(...orderByClause)
             .limit(limit)
             .offset(offset);
-        
-        const questionIds = questionResult.map(q=>q.id);
 
-        const allAttempts = await db.select()
-            .from(attempts)
-            .where(inArray(attempts.questionId, questionIds));
-
-        const attemptsByQuestionId = allAttempts.reduce((acc, attempt) => {
-            if(!acc[attempt.questionId]){
-                acc[attempt.questionId] = [];
-            }
-            acc[attempt.questionId].push(attempt);
-            return acc;
-        },{} as Record<string, typeof allAttempts>);
-
-        const combined = questionResult.map(q => ({
+        const validatedQuestions = questionResult.map((q) => ({
             ...q,
-            attempts: attemptsByQuestionId[q.id] || []
-        }))
+            difficulty: difficultySchema.parse(q.difficulty),
+        }));
 
-        return{
-            success: true, 
+        return {
+            success: true as const,
             message: "Successfully got questions from database",
-            questions: combined
-        }
+            questions: validatedQuestions,
+        };
 
     } catch (error) {
         return {
@@ -164,73 +190,75 @@ export const getAllUserQuestions = async ({
             questions: [],
         };
     }
-}
+};
 
 export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) => {
-  try {
-    const session = await getUserSession();
-    if(!session?.user){
+    try {
+        const session = await getUserSession();
+
+        if (!session?.user) {
         return {
             ...getPublicError("UNAUTHORIZED"),
             questions: [],
+        };
         }
-    }
 
-    const userId = session.user.id;
+        const userId = session.user.id;
 
-    const questionResult = await db.select()
-      .from(question)
-      .where(eq(question.userId, userId));
+        const latestActivity = sql<Date>`
+            COALESCE(MAX(${attempts.createdAt}), ${question.createdAt})
+            `;
 
-    const questionIds = questionResult.map(q => q.id);
+        const questionResult = await db
+            .select({
+                id: question.id,
+                title: question.title,
+                description: question.description,
+                difficulty: question.difficulty,
+                link: question.link,
+                createdAt: question.createdAt,
 
-    const allAttempts = await db.select()
-      .from(attempts)
-      .where(inArray(attempts.questionId, questionIds));
+                attemptCount: sql<number>`
+                COUNT(${attempts.id})::int
+                `,
 
-    const attemptsByQuestionId = allAttempts.reduce((acc, attempt) => {
-      if (!acc[attempt.questionId]) {
-        acc[attempt.questionId] = [];
-      }
-      acc[attempt.questionId].push(attempt);
-      return acc;
-    }, {} as Record<string, typeof allAttempts>);
+                latestAttemptAt: sql<Date | null>`
+                MAX(${attempts.createdAt})
+                `,
+            })
+            .from(question)
+            .leftJoin(
+                attempts,
+                eq(attempts.questionId, question.id)
+            )
+            .where(eq(question.userId, userId))
+            .groupBy(
+                question.id,
+                question.title,
+                question.description,
+                question.difficulty,
+                question.link,
+                question.createdAt
+            )
+            .orderBy(desc(latestActivity))
+            .limit(limit);
 
-    const combined = questionResult.map(q => {
-        const attempts = attemptsByQuestionId[q.id] || [];
-
-        let updatedAt: Date = q.createdAt ?? new Date(0); // fallback if somehow null
-
-        if (attempts.length > 0) {
-            const latestAttempt = attempts.reduce((latest, current) => {
-            const latestDate = latest.createdAt ?? new Date(0);
-            const currentDate = current.createdAt ?? new Date(0);
-            return currentDate > latestDate ? current : latest;
-            });
-
-            updatedAt = latestAttempt.createdAt ?? updatedAt;
-        }
+        const validatedQuestions = questionResult.map((q) => ({
+            ...q,
+            difficulty: difficultySchema.parse(q.difficulty),
+        }));
 
         return {
-            ...q,
-            attempts,
-            updatedAt,
+            success: true as const,
+            message: "Got recent questions",
+            questions: validatedQuestions,
         };
-    });
-
-    const sorted = combined
-        .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0))
-        .slice(0, limit);
-
-        
-
-    return { success: true, message: 'Got recent questions', questions: sorted };
-  } catch (error) {
-    return {
-      ...handleActionError(error, "getMostRecentUserQuestions"),
-      questions: [],
-    };
-  }
+    } catch (error) {
+        return {
+            ...handleActionError(error, "getMostRecentUserQuestions"),
+            questions: [],
+        };
+    }
 };
 
 export const getQuestionById = async ({questionId} : {questionId:string}) => {
@@ -262,20 +290,26 @@ export const getQuestionById = async ({questionId} : {questionId:string}) => {
             }
         }
 
+        const validatedDifficulty = difficultySchema.parse(q.difficulty);
+
         const atts = await db
             .select()
             .from(attempts)
             .where(
                 eq(attempts.questionId, questionId)
+            ).orderBy(
+                asc(attempts.createdAt),
+                asc(attempts.id)
             );
 
         const fullQuestion = {
-            ...q, 
-            attempts: atts, 
+            ...q,
+            difficulty: validatedDifficulty,
+            attempts: atts,
         }
 
         return {
-            success: true,
+            success: true as const,
             message: "Found question",
             question: fullQuestion,
         }
@@ -318,7 +352,6 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             }
         }
 
-        await db.delete(attempts).where(eq(attempts.questionId, deleteItemId));
         const deletedQuestions = await db
             .delete(question)
             .where(
@@ -330,10 +363,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
             .returning({id: question.id});
 
         if(deletedQuestions.length === 0){
-            return {
-                success: false, 
-                message: "Question not found.",
-            }
+            return getPublicError("NOT_FOUND");
         }
 
         revalidatePath("/");
@@ -341,7 +371,7 @@ export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => 
         revalidatePath(`/question/${deleteItemId}`);
 
         return {
-            success: true, 
+            success: true as const, 
             message: "Question deleted."
         }
     } catch (error) {
@@ -476,7 +506,7 @@ export const deleteAttempt = async ({deleteItemId} : {deleteItemId : string}) =>
         revalidatePath(`/question/${ownedAttempt.questionId}`);
 
         return {
-            success: true,
+            success: true as const,
             message: "Attempt successfully deleted",
         }
     } catch (error) {
@@ -512,7 +542,27 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             }
         }
 
-        await db
+        const submittedAttemptIds = data.attempts.map((a) => a.id);
+
+        const existingAttempts = submittedAttemptIds.length > 0
+            ? await db
+                .select({ id: attempts.id })
+                .from(attempts)
+                .where(
+                    and(
+                        eq(attempts.questionId, existing.id),
+                        inArray(attempts.id, submittedAttemptIds)
+                    )
+                )
+            : [];
+
+        if(existingAttempts.length !== submittedAttemptIds.length){
+            return {
+                ...getPublicError("VALIDATION_ERROR"),
+            }
+        }
+
+        const questionUpdate = db
             .update(question)
             .set({
                 title: data.title,
@@ -523,17 +573,13 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
             })
             .where(
                 and(
-                eq(question.id, oldQuestion.id),
-                eq(
-                    question.userId,
-                    session.user.id
-                )
+                    eq(question.id, existing.id),
+                    eq(question.userId, session.user.id)
                 )
             );
-
-        if(oldQuestion.attempts?.length === data.attempts?.length && data.attempts?.length){
-            for(const a of data.attempts){
-                await db
+            
+            const attemptUpdates = data.attempts.map((a) =>
+                db
                     .update(attempts)
                     .set({
                         solutionCode: a.solutionCode,
@@ -542,16 +588,27 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                         durationMinutes: a.durationMinutes,
                         notes: a.notes,
                     })
-                    .where(and(eq(attempts.id, a.id), eq(attempts.questionId, oldQuestion.id)));
-            }
-        }
+                    .where(
+                        and(
+                            eq(attempts.id, a.id),
+                            eq(attempts.questionId, existing.id)
+                        )
+                    )
+            );
+
+            
+
+        await db.batch([
+            questionUpdate, 
+            ...attemptUpdates, 
+        ] as [typeof questionUpdate, ...typeof attemptUpdates]);
 
         revalidatePath("/");
         revalidatePath("/all-questions");
-        revalidatePath(`/question/${oldQuestion.id}`);
+        revalidatePath(`/question/${existing.id}`);
 
         return {
-            success: true,
+            success: true as const,
             message: "Question sucessfully updated"
         };
     } catch (error) {
@@ -598,7 +655,7 @@ export const getQuestionLabels = async () => {
     ].sort((a, b) => a.localeCompare(b));
 
     return {
-      success: true,
+      success: true as const,
       message: "Successfully got labels.",
       labels,
     };

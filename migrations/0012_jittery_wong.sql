@@ -1,0 +1,1 @@
+ALTER TABLE "attemtps" ADD CONSTRAINT "attempts_duration_minutes_check" CHECK ("attemtps"."duration_minutes" >= 1);

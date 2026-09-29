@@ -1,0 +1,1 @@
+ALTER TABLE "questions" ADD CONSTRAINT "questions_difficulty_check" CHECK ("questions"."difficulty" IN ('Easy', 'Medium', 'Hard'));

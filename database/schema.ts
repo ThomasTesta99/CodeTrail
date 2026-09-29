@@ -1,4 +1,5 @@
-import { pgTable, text, integer, timestamp, boolean, uuid, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, integer, timestamp, boolean, uuid, index, check } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text('id').primaryKey(),
@@ -48,13 +49,13 @@ export const verification = pgTable("verification", {
 
 export const question = pgTable('questions', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').references(() => user.id).notNull(),
+  userId: text('user_id').references(() => user.id, {onDelete: "cascade"}).notNull(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   difficulty: text('difficulty').notNull(),
   link: text('link'),
   label: text('label'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 },
   (table) => [
     index("questions_user_id_idx").on(table.userId),
@@ -66,6 +67,12 @@ export const question = pgTable('questions', {
       table.userId,
       table.createdAt
     ),
+
+
+    check(
+      "questions_difficulty_check", 
+      sql`${table.difficulty} IN ('Easy', 'Medium', 'Hard')`
+    )
   ]);
 
 export const attempts = pgTable('attemtps', {
@@ -85,6 +92,11 @@ export const attempts = pgTable('attemtps', {
     index("attempts_question_created_at_idx").on(
       table.questionId,
       table.createdAt
+    ),
+
+    check(
+      "attempts_duration_minutes_check",
+      sql`${table.durationMinutes} >= 1`
     ),
   ]);
 

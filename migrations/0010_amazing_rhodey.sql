@@ -1,0 +1,1 @@
+ALTER TABLE "questions" ALTER COLUMN "created_at" SET NOT NULL;

@@ -19,30 +19,48 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const [currentAttemptIndex, setCurrentAttemptIndex] = useState(0);
 
   const [feedback, setFeedback] = useState('');
-  const [displayedFeedback, setDisplayedFeedback] = useState('');
+  const [feedbackAttemptId, setFeedbackAttemptId] = useState<string | null>(null);
+  const [revealIndex, setRevealIndex] = useState(0);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
-  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
 
-  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const requestControllerRef = useRef<AbortController | null>(null);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+  const [isAnimatingFeedback, setIsAnimatingFeedback] = useState(false);
+
+  const typingIntervalRef =
+    useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const requestControllerRef =
+    useRef<AbortController | null>(null);
 
   const totalAttempts = attempts.length;
   const currentAttempt = attempts[currentAttemptIndex];
+
+  const displayedFeedback =
+    feedbackAttemptId === currentAttempt?.id
+      ? feedback.slice(0, revealIndex)
+      : '';
+
+  const isFeedbackBusy =
+    isLoadingFeedback || isAnimatingFeedback;
 
   const stopTyping = () => {
     if (typingIntervalRef.current !== null) {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
+
+    setIsAnimatingFeedback(false);
   };
 
   const clearFeedback = () => {
     stopTyping();
+
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
 
     setFeedback('');
-    setDisplayedFeedback('');
+    setFeedbackAttemptId(null);
+    setRevealIndex(0);
     setFeedbackError(null);
     setIsLoadingFeedback(false);
   };
@@ -58,7 +76,10 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   }, []);
 
   const handlePrev = () => {
-    if (currentAttemptIndex === 0 || isLoadingFeedback) {
+    if (
+      currentAttemptIndex === 0 ||
+      isFeedbackBusy
+    ) {
       return;
     }
 
@@ -70,7 +91,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const handleNext = () => {
     if (
       currentAttemptIndex >= totalAttempts - 1 ||
-      isLoadingFeedback
+      isFeedbackBusy
     ) {
       return;
     }
@@ -81,9 +102,11 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   };
 
   const getAIResponse = async () => {
-    if (isLoadingFeedback || !currentAttempt) {
+    if (isFeedbackBusy || !currentAttempt) {
       return;
     }
+
+    const attemptId = currentAttempt.id;
 
     clearFeedback();
     setIsLoadingFeedback(true);
@@ -98,7 +121,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          attemptId: currentAttempt.id,
+          attemptId,
         }),
         signal: controller.signal,
       });
@@ -115,7 +138,9 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         !('success' in data) ||
         typeof data.success !== 'boolean'
       ) {
-        throw new Error('Invalid AI feedback response.');
+        throw new Error(
+          'Invalid AI feedback response.'
+        );
       }
 
       const result = data as AIFeedbackResponse;
@@ -137,23 +162,32 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         typeof result.feedback !== 'string' ||
         !result.feedback.trim()
       ) {
-        throw new Error('The AI returned an empty feedback response.');
+        throw new Error(
+          'The AI returned an empty feedback response.'
+        );
       }
 
       const text = result.feedback;
 
       setFeedback(text);
-      setDisplayedFeedback('');
+      setFeedbackAttemptId(attemptId);
+      setRevealIndex(0);
+      setIsAnimatingFeedback(true);
 
       let index = 0;
 
       typingIntervalRef.current = setInterval(() => {
-        index++;
+        index += 1;
 
-        setDisplayedFeedback(text.slice(0, index));
+        setRevealIndex(index);
 
         if (index >= text.length) {
-          stopTyping();
+          if (typingIntervalRef.current !== null) {
+            clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+          }
+
+          setIsAnimatingFeedback(false);
         }
       }, 10);
 
@@ -174,7 +208,9 @@ const QuestionDetails = ({ question }: { question: Question }) => {
       toast.error(errorMessage);
 
     } finally {
-      if (requestControllerRef.current === controller) {
+      if (
+        requestControllerRef.current === controller
+      ) {
         requestControllerRef.current = null;
         setIsLoadingFeedback(false);
       }
@@ -184,21 +220,31 @@ const QuestionDetails = ({ question }: { question: Question }) => {
   const handleAddAttempt = (newAttempt: Attempt) => {
     clearFeedback();
 
-    setAttempts((prev) => [...prev, newAttempt]);
+    setAttempts((prev) => [
+      ...prev,
+      newAttempt,
+    ]);
+
     setCurrentAttemptIndex(attempts.length);
   };
 
-  const handleDeleteAttempt = (deletedAttemptId: string) => {
+  const handleDeleteAttempt = (
+    deletedAttemptId: string
+  ) => {
     clearFeedback();
 
     const deletedIndex = attempts.findIndex(
-      (attempt) => attempt.id === deletedAttemptId
+      (attempt) =>
+        attempt.id === deletedAttemptId
     );
 
-    if (deletedIndex === -1) return;
+    if (deletedIndex === -1) {
+      return;
+    }
 
     const remainingAttempts = attempts.filter(
-      (attempt) => attempt.id !== deletedAttemptId
+      (attempt) =>
+        attempt.id !== deletedAttemptId
     );
 
     setAttempts(remainingAttempts);
@@ -212,13 +258,15 @@ const QuestionDetails = ({ question }: { question: Question }) => {
         return prev - 1;
       }
 
-      return Math.min(prev, remainingAttempts.length - 1);
+      return Math.min(
+        prev,
+        remainingAttempts.length - 1
+      );
     });
   };
 
-  const displayLabel = normalizeQuestionLabel(
-    question.label
-  );
+  const displayLabel =
+    normalizeQuestionLabel(question.label);
 
   return (
     <div className="question-container px-4 sm:px-6 w-full">

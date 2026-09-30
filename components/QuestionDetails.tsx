@@ -387,7 +387,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                   onClick={handlePrev}
                   disabled={
                     currentAttemptIndex === 0 ||
-                    isLoadingFeedback
+                    isFeedbackBusy
                   }
                   className="nav-button"
                 >
@@ -399,7 +399,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
                   onClick={handleNext}
                   disabled={
                     currentAttemptIndex === totalAttempts - 1 ||
-                    isLoadingFeedback
+                    isFeedbackBusy
                   }
                   className="nav-button"
                 >
@@ -506,7 +506,7 @@ const QuestionDetails = ({ question }: { question: Question }) => {
               type="button"
               onClick={getAIResponse}
               disabled={
-                isLoadingFeedback ||
+                isFeedbackBusy ||
                 totalAttempts === 0
               }
               className="mt-4 cursor-pointer px-4 py-2 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-md"

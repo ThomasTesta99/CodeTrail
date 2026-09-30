@@ -324,12 +324,16 @@
     max-height: 90vh;
   }
 
+  .modal-content::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
   .modal-close {
     @apply absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-xl cursor-pointer;
   }
 
   .modal-title {
-    @apply text-2xl font-bold mb-4 text-center text-[#2C325D];
+    @apply text-5xl font-bold mb-4 text-center text-[#2C325D];
   }
 
   .modal-form {

@@ -1,20 +1,31 @@
 'use client'
-import { useState } from 'react'
-import EditQuestion from './EditQuestion'
-import { Question } from '@/types/types'
 
-const EditQuestionTrigger = ({question} : {question: Question}) => {
-    const [showModal, setShowModal] = useState(false)
+import { useState } from 'react';
+import EditQuestion from './EditQuestion';
+import { Question } from '@/types/types';
+import {Dialog,DialogTrigger} from '@/components/ui/dialog';
+
+const EditQuestionTrigger = ({ question }: { question: Question }) => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <>
-        <button className = "add-attempt-button" onClick={() => setShowModal(true)}>
-            Edit Question
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+      modal={true}
+    >
+      <DialogTrigger asChild>
+        <button className="add-attempt-button">
+          Edit Question
         </button>
-        {showModal && (
-            <EditQuestion question = {question} onClose={() => setShowModal(false)}/>
-        )}
-    </>
-  )
-}
+      </DialogTrigger>
 
-export default EditQuestionTrigger
+      <EditQuestion
+        question={question}
+        onClose={() => setOpen(false)}
+      />
+    </Dialog>
+  );
+};
+
+export default EditQuestionTrigger;

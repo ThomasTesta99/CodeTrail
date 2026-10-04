@@ -5,6 +5,8 @@ import {schema} from "@/database/schema"
 import {nextCookies} from 'better-auth/next-js'
 import { sendEmail, sendVerifiation } from './email'
 import { MIN_PASSWORD_LENGTH } from '@/constants'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
+import { validateAuthRate } from './arcjet'
 
 
 
@@ -21,36 +23,69 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
         // github: { 
-        //     clientId: process.env.GITHUB_CLIENT_ID!, 
-        //     clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
-        // }, 
-    },
-    emailAndPassword:{
-        enabled: true,
-        autoSignIn: true,
-        minPasswordLength: MIN_PASSWORD_LENGTH, 
-        revokeSessionsOnPasswordReset: true,  
-        sendResetPassword: async ({user, url}) => {
-            await sendEmail({
-                to: user.email, 
-                resetLink: url
-            })
+            //     clientId: process.env.GITHUB_CLIENT_ID!, 
+            //     clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
+            // }, 
         },
-    },
-    emailVerification:{
-        sendVerificationEmail: async ({user, url}) => {
-            await sendVerifiation({
-                to: user.email, 
-                subject: "Verify your email",
-                templateParams: {
-                    user_name: user.name ?? "there", 
-                    action_url: url, 
-                    type: "Verify your email",
+        emailAndPassword:{
+            enabled: true,
+            autoSignIn: true,
+            minPasswordLength: MIN_PASSWORD_LENGTH, 
+            revokeSessionsOnPasswordReset: true,  
+            sendResetPassword: async ({user, url}) => {
+                await sendEmail({
+                    to: user.email, 
+                    resetLink: url
+                })
+            },
+        },
+        emailVerification:{
+            sendVerificationEmail: async ({user, url}) => {
+                await sendVerifiation({
+                    to: user.email, 
+                    subject: "Verify your email",
+                    templateParams: {
+                        user_name: user.name ?? "there", 
+                        action_url: url, 
+                        type: "Verify your email",
+                    }
+                })
+            }
+        },
+        hooks: {
+            before: createAuthMiddleware(async (ctx) => {
+                const protectedAuthPaths = {
+                    "/sign-in/email": "sign-in",
+                    "/sign-up/email": "sign-up",
+                    "/request-password-reset": "password-reset",
+                    "/send-verification-email": "verify-email",
+                } as const;
+    
+                const action = 
+                    protectedAuthPaths[
+                        ctx.path as keyof typeof protectedAuthPaths
+                    ];
+                
+                if(!action) return;
+    
+                const email = 
+                    typeof ctx.body?.email === "string"
+                        ? ctx.body.email
+                        : null;
+    
+                if(!email) return;
+    
+                const rateLimit = await validateAuthRate(email, action);
+    
+                if(!rateLimit.valid){
+                    throw new APIError("TOO_MANY_REQUESTS", {
+                        message: rateLimit.message, 
+                        code: "RATE_LIMITED", 
+                    });
                 }
-            })
-        }
-    },
-    plugins: [nextCookies()],
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL!,
-
-})
+            }),
+        },
+        plugins: [nextCookies()],
+        baseURL: process.env.NEXT_PUBLIC_BASE_URL!,
+        
+    })

@@ -117,136 +117,205 @@ export const validateWithArcjet = async (
 };
 
 const signInByEmail = arcjet({
-    key: process.env.ARCJET_API_KEY!, 
-    characteristics: ["authEmail"],
-    rules: [
-        fixedWindow({
-            mode: "LIVE", 
-            window: '5m', 
-            max: 5, 
-        }),
-    ],
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["authEmail"],
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "5m",
+      max: 5,
+    }),
+  ],
 });
 
 const signInByIP = arcjet({
-    key: process.env.ARCJET_API_KEY!,
-    rules: [
-        fixedWindow({
-        mode: "LIVE",
-        window: "5m",
-        max: 20,
-        }),
-    ],
-})
+  key: process.env.ARCJET_API_KEY!,
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "5m",
+      max: 20,
+    }),
+  ],
+});
 
 const signUpByEmail = arcjet({
-    key: process.env.ARCJET_API_KEY!,
-    characteristics: ["authEmail"],
-    rules: [
-        fixedWindow({
-            mode: "LIVE",
-            window: "1h",
-            max: 3,
-        }),
-    ],
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["authEmail"],
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "1h",
+      max: 3,
+    }),
+  ],
 });
 
-const signUpByIp = arcjet({
-    key: process.env.ARCJET_API_KEY!,
-    rules: [
-        fixedWindow({
-        mode: "LIVE",
-        window: "1h",
-        max: 10,
-        }),
-    ],
+const signUpByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "1h",
+      max: 10,
+    }),
+  ],
 });
+
+const passwordResetByEmail = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["authEmail"],
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 2,
+    }),
+  ],
+});
+
+const passwordResetByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 10,
+    }),
+  ],
+});
+
+const verificationEmailByEmail = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["authEmail"],
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 2,
+    }),
+  ],
+});
+
+const verificationEmailByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 10,
+    }),
+  ],
+});
+
+type AuthRateAction =
+  | "sign-in"
+  | "sign-up"
+  | "password-reset"
+  | "verify-email";
 
 export const validateAuthRate = async (
-    email: string,
-    action: "sign-in" | "sign-up",
+  email: string,
+  action: AuthRateAction
 ) => {
-    const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
-    if (!normalizedEmail) {
-        return {
-            valid: false,
-            message: "Please enter a valid email address.",
-        };
+  if (!normalizedEmail) {
+    return {
+      valid: false,
+      message: "Please enter a valid email address.",
+    };
+  }
+
+  try {
+    const req = await request();
+
+    let emailLimiter;
+    let ipLimiter;
+
+    switch (action) {
+      case "sign-in":
+        emailLimiter = signInByEmail;
+        ipLimiter = signInByIP;
+        break;
+
+      case "sign-up":
+        emailLimiter = signUpByEmail;
+        ipLimiter = signUpByIP;
+        break;
+
+      case "password-reset":
+        emailLimiter = passwordResetByEmail;
+        ipLimiter = passwordResetByIP;
+        break;
+
+      case "verify-email":
+        emailLimiter = verificationEmailByEmail;
+        ipLimiter = verificationEmailByIP;
+        break;
     }
 
-    try {
-        const req = await request();
+    const emailDecision = await emailLimiter.protect(req, {
+      authEmail: normalizedEmail,
+    });
 
-        const emailLimiter =
-            action === "sign-in"
-                ? signInByEmail
-                : signUpByEmail;
+    if (emailDecision.isErrored()) {
+      console.error(
+        "Authentication email rate limiter failed:",
+        action
+      );
 
-        const ipLimiter =
-            action === "sign-in"
-                ? signInByIP
-                : signUpByIp;
-
-        const emailDecision = await emailLimiter.protect(req, {
-            authEmail: normalizedEmail,
-        });
-
-        if (emailDecision.isErrored()) {
-            console.error(
-                "Authentication email rate limiter failed"
-            );
-
-            return {
-                valid: false,
-                message:
-                    "Authentication is temporarily unavailable. Please try again later.",
-            };
-        }
-
-        if (emailDecision.isDenied()) {
-            return {
-                valid: false,
-                message:
-                    "Too many attempts. Please try again later.",
-            };
-        }
-
-        const ipDecision = await ipLimiter.protect(req);
-        if (ipDecision.isErrored()) {
-            console.error(
-                "Authentication IP rate limiter failed"
-            );
-
-            return {
-                valid: false,
-                message:
-                    "Authentication is temporarily unavailable. Please try again later.",
-            };
-        }
-
-        if (ipDecision.isDenied()) {
-            return {
-                valid: false,
-                message:
-                    "Too many attempts. Please try again later.",
-            };
-        }
-
-        return {
-            valid: true,
-            message: "",
-        };
-    } catch (error) {
-        console.error(
-            "Authentication rate-limit check failed",
-            error
-        );
-
-        return {
-            valid: false,
-            message:
-                "Authentication is temporarily unavailable. Please try again later.",
-        };
+      return {
+        valid: false,
+        message:
+          "Authentication is temporarily unavailable. Please try again later.",
+      };
     }
+
+    if (emailDecision.isDenied()) {
+      return {
+        valid: false,
+        message: "Too many attempts. Please try again later.",
+      };
+    }
+
+    const ipDecision = await ipLimiter.protect(req);
+
+    if (ipDecision.isErrored()) {
+      console.error(
+        "Authentication IP rate limiter failed:",
+        action
+      );
+
+      return {
+        valid: false,
+        message:
+          "Authentication is temporarily unavailable. Please try again later.",
+      };
+    }
+
+    if (ipDecision.isDenied()) {
+      return {
+        valid: false,
+        message: "Too many attempts. Please try again later.",
+      };
+    }
+
+    return {
+      valid: true,
+      message: "",
+    };
+  } catch (error) {
+    console.error(
+      "Authentication rate-limit check failed:",
+      action,
+      error
+    );
+
+    return {
+      valid: false,
+      message:
+        "Authentication is temporarily unavailable. Please try again later.",
+    };
+  }
 };

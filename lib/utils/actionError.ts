@@ -22,5 +22,18 @@ export const handleActionError = (
   actionName: string
 ) => {
   console.error(`[${actionName}]`, error);
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "body" in error &&
+    typeof error.body === "object" &&
+    error.body !== null &&
+    "code" in error.body &&
+    error.body.code === "RATE_LIMITED"
+  ) {
+    return getPublicError("RATE_LIMITED");
+  }
+
   return getPublicError("INTERNAL_ERROR");
 };

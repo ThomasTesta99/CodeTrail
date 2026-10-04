@@ -3,9 +3,6 @@
 import { headers } from "next/headers";
 import { auth } from "../auth";
 import {
-  validateAuthRate,
-} from "../arcjet";
-import {
   CreateUserInfo,
   SignInUserInfo,
 } from "@/types/types";
@@ -14,7 +11,7 @@ import {
   handleActionError,
 } from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
-import { checkRate, getUserSession } from "./authHelpers";
+import { getUserSession } from "./authHelpers";
 
 
 const isInvalidCredentialsError = (
@@ -68,15 +65,6 @@ export const signUpUser = async ({
   try {
     const normalizedEmail = email.trim().toLowerCase();
 
-    const rateLimit = await validateAuthRate(
-      normalizedEmail,
-      "sign-up"
-    );
-
-    if (!rateLimit.valid) {
-      return getPublicError("RATE_LIMITED");
-    }
-
     const newUser = await auth.api.signUpEmail({
       body: {
         name,
@@ -103,15 +91,6 @@ export const signInUser = async ({
 }: SignInUserInfo) => {
   try {
     const normalizedEmail = email.trim().toLowerCase();
-
-    const rateLimit = await validateAuthRate(
-      normalizedEmail,
-      "sign-in"
-    );
-
-    if (!rateLimit.valid) {
-      return getPublicError("RATE_LIMITED");
-    }
 
     const signedInUser = await auth.api.signInEmail({
       body: {
@@ -146,19 +125,6 @@ export const sendResetPasswordEmail = async ({
 }) => {
   try {
     const normalizedEmail = email.trim().toLowerCase();
-
-    const rateLimit = await checkRate(
-      normalizedEmail,
-      "password-reset"
-    );
-
-    if (!rateLimit.valid) {
-      if ("code" in rateLimit) {
-        return getPublicError("INTERNAL_ERROR");
-      }
-
-      return getPublicError("RATE_LIMITED");
-    }
 
     const publicMessage =
       "If an eligible account exists for this email, a reset link has been sent.";
@@ -218,19 +184,6 @@ export const sendVerificationEmail = async ({
 
     const normalizedEmail =
       session.user.email.trim().toLowerCase();
-
-    const rateLimit = await checkRate(
-      normalizedEmail,
-      "verify-email"
-    );
-
-    if (!rateLimit.valid) {
-      if ("code" in rateLimit) {
-        return getPublicError("INTERNAL_ERROR");
-      }
-
-      return getPublicError("RATE_LIMITED");
-    }
 
     const result =
       await auth.api.sendVerificationEmail({

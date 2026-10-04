@@ -3,7 +3,7 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import { GetUserActivityResult } from "@/types/types";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   getPublicError,
   handleActionError,

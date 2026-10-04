@@ -11,6 +11,13 @@ import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
 import { getUserSession } from "./authHelpers";
 
+const escapeLikePattern = (value: string) => {
+    return value
+        .replace(/\\/g, "\\\\")
+        .replace(/%/g, "\\%")
+        .replace(/_/g, "\\_");
+};
+
 export const addQuestion = async ({q} : {q : QuestionFormData}) => {
     try {
         const session = await getUserSession();
@@ -101,9 +108,10 @@ export const getAllUserQuestions = async ({
         }
 
         if (q && q.trim().length > 0) {
+            const escapedQuery = escapeLikePattern(q.trim());
             whereClause = and(
                 whereClause,
-                ilike(question.title, `%${q.trim()}%`)
+                ilike(question.title, `%${escapedQuery}%`)
             )!;
         }
 

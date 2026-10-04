@@ -36,16 +36,16 @@ export async function POST(req: NextRequest) {
     );
 
     if (!rateCheck.valid) {
-      if ('code' in rateCheck) {
+      if (rateCheck.code === "RATE_LIMITED") {
         return aiError(
-          'AI feedback is temporarily unavailable. Please try again later.',
-          503
+          rateCheck.message,
+          429
         );
       }
 
       return aiError(
-        rateCheck.message || 'Rate limit exceeded.',
-        429
+        rateCheck.message,
+        503
       );
     }
 

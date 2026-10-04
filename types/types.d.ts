@@ -69,7 +69,25 @@ export type ActionErrorCode =
   | "VALIDATION_ERROR"
   | "DATABASE_ERROR"
   | "RATE_LIMITED"
+  | "SERVICE_UNAVAILABLE"
   | "INTERNAL_ERROR";
+
+ export type RateLimitResult =
+  | {
+      status: "allowed";
+      valid: true;
+      message: "";
+    }
+  | {
+      status: "denied";
+      valid: false;
+      message: string;
+    }
+  | {
+      status: "unavailable";
+      valid: false;
+      message: string;
+    };
 
 export type AIFeedbackResponse = 
 | {

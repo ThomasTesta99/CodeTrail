@@ -1,5 +1,5 @@
 import { AI_DAILY_MAX, AI_DAILY_WINDOW } from '@/constants';
-import { Action } from '@/types/types';
+import { Action, RateLimitResult } from '@/types/types';
 import arcjet, { fixedWindow, request } from '@arcjet/next'
 
 const aj = arcjet({
@@ -22,19 +22,20 @@ const aiDailyLimiter = aj.withRule(
 export const validateWithArcjet = async (
   fingerprint: string,
   action: Action
-) => {
+): Promise<RateLimitResult> => {
   if (!fingerprint.trim()) {
     return {
+      status: "unavailable",
       valid: false,
-      message: 'Invalid rate limit identifier',
+      message: "This feature is temporarily unavailable. Please try again later.",
     };
   }
 
   try {
     const rateLimit = aj.withRule(
       fixedWindow({
-        mode: 'LIVE',
-        window: '3m',
+        mode: "LIVE",
+        window: "3m",
         max: 2,
         characteristics: [action],
       })
@@ -48,70 +49,74 @@ export const validateWithArcjet = async (
 
     if (decision.isErrored()) {
       console.error(
-        'Rate limiter failed:',
-        action
+        "Rate limiter failed:",
+        action,
+        decision
       );
 
       return {
+        status: "unavailable",
         valid: false,
         message:
-          'This feature is temporarily unavailable. Please try again later.',
+          "This feature is temporarily unavailable. Please try again later.",
       };
     }
 
     if (decision.isDenied()) {
       return {
+        status: "denied",
         valid: false,
         message:
-          'Rate limit exceeded. Please try again later.',
+          "Rate limit exceeded. Please try again later.",
       };
     }
 
-    if (action === 'ai-feedback') {
-      const dailyDecision = await aiDailyLimiter.protect(
-        req,
-        {
-          aiUserId: fingerprint,
-        }
-      );
+    if (action === "ai-feedback") {
+      const dailyDecision = await aiDailyLimiter.protect(req, {
+        aiUserId: fingerprint,
+      });
 
       if (dailyDecision.isErrored()) {
         console.error(
-          'AI feedback usage limiter failed'
+          "AI feedback usage limiter failed:",
+          dailyDecision
         );
 
         return {
+          status: "unavailable",
           valid: false,
           message:
-            'AI feedback is temporarily unavailable. Please try again later.',
+            "AI feedback is temporarily unavailable. Please try again later.",
         };
       }
 
       if (dailyDecision.isDenied()) {
         return {
+          status: "denied",
           valid: false,
           message:
-            'You have reached your AI feedback usage limit. Please try again later.',
+            "You have reached your AI feedback usage limit. Please try again later.",
         };
       }
     }
 
     return {
+      status: "allowed",
       valid: true,
-      message: '',
+      message: "",
     };
-
   } catch (error) {
     console.error(
-      'Rate limit check failed:',
+      "Rate limit check failed:",
       action,
       error
     );
 
     return {
+      status: "unavailable",
       valid: false,
       message:
-        'This feature is temporarily unavailable. Please try again later.',
+        "This feature is temporarily unavailable. Please try again later.",
     };
   }
 };
@@ -217,13 +222,14 @@ type AuthRateAction =
 export const validateAuthRate = async (
   email: string,
   action: AuthRateAction
-) => {
+): Promise<RateLimitResult> => {
   const normalizedEmail = email.trim().toLowerCase();
 
   if (!normalizedEmail) {
     return {
+      status: "unavailable",
       valid: false,
-      message: "Please enter a valid email address.",
+      message: "Authentication is temporarily unavailable. Please try again later.",
     };
   }
 
@@ -262,10 +268,12 @@ export const validateAuthRate = async (
     if (emailDecision.isErrored()) {
       console.error(
         "Authentication email rate limiter failed:",
-        action
+        action,
+        emailDecision
       );
 
       return {
+        status: "unavailable",
         valid: false,
         message:
           "Authentication is temporarily unavailable. Please try again later.",
@@ -274,6 +282,7 @@ export const validateAuthRate = async (
 
     if (emailDecision.isDenied()) {
       return {
+        status: "denied",
         valid: false,
         message: "Too many attempts. Please try again later.",
       };
@@ -284,10 +293,12 @@ export const validateAuthRate = async (
     if (ipDecision.isErrored()) {
       console.error(
         "Authentication IP rate limiter failed:",
-        action
+        action,
+        ipDecision
       );
 
       return {
+        status: "unavailable",
         valid: false,
         message:
           "Authentication is temporarily unavailable. Please try again later.",
@@ -296,12 +307,14 @@ export const validateAuthRate = async (
 
     if (ipDecision.isDenied()) {
       return {
+        status: "denied",
         valid: false,
         message: "Too many attempts. Please try again later.",
       };
     }
 
     return {
+      status: "allowed",
       valid: true,
       message: "",
     };
@@ -313,6 +326,7 @@ export const validateAuthRate = async (
     );
 
     return {
+      status: "unavailable",
       valid: false,
       message:
         "Authentication is temporarily unavailable. Please try again later.",

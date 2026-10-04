@@ -27,24 +27,30 @@ export const checkRate = async (
       scope
     );
 
-    if (!rateCheck.valid) {
+    if (rateCheck.status === "denied") {
       return {
-        valid: false,
+        valid: false as const,
+        code: "RATE_LIMITED" as const,
         message: getPublicError("RATE_LIMITED").message,
+      };
+    }
+
+    if (rateCheck.status === "unavailable") {
+      return {
+        valid: false as const,
+        code: "SERVICE_UNAVAILABLE" as const,
+        message: getPublicError("SERVICE_UNAVAILABLE").message,
       };
     }
 
     return rateCheck;
   } catch (error) {
-    const publicError = handleActionError(
-      error,
-      "checkRate"
-    );
+    handleActionError(error, "checkRate");
 
     return {
-      valid: false,
-      code: publicError.code,
-      message: publicError.message,
+      valid: false as const,
+      code: "SERVICE_UNAVAILABLE" as const,
+      message: getPublicError("SERVICE_UNAVAILABLE").message,
     };
   }
 };

@@ -77,10 +77,18 @@ export const auth = betterAuth({
     
                 const rateLimit = await validateAuthRate(email, action);
     
-                if(!rateLimit.valid){
+                if (rateLimit.status === "denied") {
                     throw new APIError("TOO_MANY_REQUESTS", {
-                        message: rateLimit.message, 
-                        code: "RATE_LIMITED", 
+                        message: "Too many attempts. Please try again later.",
+                        code: "RATE_LIMITED",
+                    });
+                }
+
+                if (rateLimit.status === "unavailable") {
+                    throw new APIError("SERVICE_UNAVAILABLE", {
+                        message:
+                        "Authentication is temporarily unavailable. Please try again later.",
+                        code: "SERVICE_UNAVAILABLE",
                     });
                 }
             }),

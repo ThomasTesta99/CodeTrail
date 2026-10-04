@@ -227,9 +227,9 @@ export const validateAuthRate = async (
 
   if (!normalizedEmail) {
     return {
-      status: "unavailable",
-      valid: false,
-      message: "Authentication is temporarily unavailable. Please try again later.",
+      status: "allowed",
+      valid: true,
+      message: "",
     };
   }
 

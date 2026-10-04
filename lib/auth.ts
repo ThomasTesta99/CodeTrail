@@ -73,7 +73,7 @@ export const auth = betterAuth({
                         ? ctx.body.email
                         : null;
     
-                if(!email) return;
+                if(!email?.trim()) return;
     
                 const rateLimit = await validateAuthRate(email, action);
     

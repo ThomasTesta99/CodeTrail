@@ -106,6 +106,7 @@ const AddQuestionForm = ({ user }: UserProps) => {
             placeholder='Unlabeled'
             {...register('label')}
           />
+          {errors.label && <p className="error-text">{errors.label.message}</p>}
         </div>
 
         <button type="submit" disabled={isSubmitting} className="submit-button">

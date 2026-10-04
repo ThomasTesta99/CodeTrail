@@ -143,7 +143,14 @@ const AddAttempt = ({
             {...register('notes')}
             placeholder='Notes'
             className="input-field"
+            aria-invalid={!!errors.notes}
+            aria-describedby={errors.notes ? 'notes-error' : undefined}
           />
+          {errors.notes && (
+            <p id="notes-error" className="error-text">
+              {errors.notes.message}
+            </p>
+          )}
         </div>
 
         <button

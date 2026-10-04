@@ -88,7 +88,6 @@ export const getAllUserQuestions = async ({
         const userId = session.user.id;
 
         let whereClause = eq(question.userId, userId);
-
         if (label === "__unlabeled__") {
             whereClause = and(
                 whereClause,

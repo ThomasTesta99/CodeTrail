@@ -73,13 +73,6 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
       : "newest";
       
   const q = rawQuery || "";
-
-  const result = await getAllUserQuestions({ limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
-  const userQuestions = result.questions;
-
-  const labelResult = await getQuestionLabels();
-  const labels = labelResult.labels;
-  
   const currentParams = {
     page: String(pageNumber),
     label: label || undefined,
@@ -87,12 +80,53 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
     q: q || undefined,
   };
 
+  const result = await getAllUserQuestions({ limit: QUESTIONS_PER_PAGE + 1, offset , label, sort, q});
+  
+  if (!result.success) {
+    return (
+      <div className="all-questions-container">
+        <div className="all-questions-wrapper text-center py-12">
+          <h2 className="text-2xl font-semibold mb-2">
+            Unable to Load Questions
+          </h2>
+
+          <p className="text-gray-600 mb-6">
+            Your questions could not be loaded right now. Please try again.
+          </p>
+
+          <a
+            href={buildHref(currentParams, {})}
+            className="all-questions-pagination-link"
+          >
+            Try Again
+          </a>
+        </div>
+      </div>
+    );
+  }
+    
+  const userQuestions = result.questions;
+
+  const labelResult = await getQuestionLabels();
+  const labels = labelResult.success
+    ? labelResult.labels
+    : [];
+
+  const labelsFailed = !labelResult.success;
+  
+
   if(userQuestions.length === 0){
 
     return (
       <div className="all-questions-container">
         {(q.trim().length > 0 || label.length > 0 || pageNumber > 1) && (
           <div className="mt-20">
+            {labelsFailed && (
+              <p className="mb-4 text-sm text-gray-500">
+                Labels could not be loaded right now. Your questions are still available.
+              </p>
+            )}
+
             <QuestionFilterBar labels={labels} />
           </div>
         )}
@@ -135,7 +169,13 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
           </p>
         </header>
 
-        <QuestionFilterBar labels = {labels}/>
+        {labelsFailed && (
+          <p className="mb-4 text-sm text-gray-500">
+            Labels could not be loaded right now. Your questions are still available.
+          </p>
+        )}
+
+        <QuestionFilterBar labels={labels} />
 
         <section>
           <div className="all-questions-grid">

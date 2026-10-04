@@ -13,8 +13,10 @@ import ActivityLegend from './ActivityHelpers/ActivityLegend';
 const ActivityCalendar = () => {
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState(currentYear);
-    const [activity, setActivity] = useState<Activity[]>([]);
+    const [activity, setActivity] = useState<Activity[] | null>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
 
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -24,6 +26,7 @@ const ActivityCalendar = () => {
         const fetchActivity = async () => {
             try {
                 setIsLoading(true);
+                setHasError(false);
 
                 const result = await getUserActivity(
                     selectedYear,
@@ -35,7 +38,8 @@ const ActivityCalendar = () => {
                 if (result.success) {
                     setActivity(result.activity);
                 } else {
-                    setActivity([]);
+                    setActivity(null);
+                    setHasError(true);
                 }
 
             } catch (error) {
@@ -46,7 +50,8 @@ const ActivityCalendar = () => {
                     error
                 );
 
-                setActivity([]);
+                setActivity(null);
+                setHasError(true);
 
             } finally {
                 if (!ignore) {
@@ -60,10 +65,10 @@ const ActivityCalendar = () => {
         return () => {
             ignore = true;
         };
-    }, [selectedYear]);
+    }, [selectedYear, timeZone, retryCount]);
 
     const activityMap =
-        createActivityMap(activity);
+        createActivityMap(activity ?? []);
 
     const months =
         getMonthsForYear(selectedYear);
@@ -90,7 +95,26 @@ const ActivityCalendar = () => {
                     Loading activity...
                 </p>
 
-            ) : activity.length === 0 ? (
+            ) : hasError ? (
+                <div className="py-12 text-center">
+                    <p className="text-base font-medium text-gray-300">
+                        Unable to load activity for {selectedYear}.
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                        Your activity could not be loaded right now. Please try again.
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => setRetryCount((count) => count + 1)}
+                        className="mt-4"
+                    >
+                        Try Again
+                    </button>
+                </div>
+
+            ) : activity?.length === 0 ? (
                 <div className="py-12 text-center">
                     <p className="text-base font-medium text-gray-300">
                         No activity recorded for {selectedYear}.

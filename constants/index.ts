@@ -316,6 +316,8 @@ export const MAX_LANGUAGE_LENGTH = 50;
 export const MAX_ATTEMPTS = 5;
 export const MAX_PROMPT_LENGTH = 50_000;
 export const MAX_AI_OUTPUT_TOKENS = 1500;
+export const MAX_LABEL_LENGTH = 100;
+export const MAX_LINK_LENGTH = 2_000;
 
 export const AI_DAILY_MAX = 10;
 export const AI_DAILY_WINDOW = '24h';

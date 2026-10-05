@@ -2,10 +2,15 @@
 
 import { useState } from 'react';
 import EditQuestion from './EditQuestion';
-import { Question } from '@/types/types';
+import { Attempt, Question } from '@/types/types';
 import {Dialog,DialogTrigger} from '@/components/ui/dialog';
 
-const EditQuestionTrigger = ({ question }: { question: Question }) => {
+const EditQuestionTrigger = ({ question, onAttemptsUpdated, }: { 
+  question: Question,
+  onAttemptsUpdated?: (
+    attempts: Attempt[]
+  ) => void;
+ }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,6 +28,7 @@ const EditQuestionTrigger = ({ question }: { question: Question }) => {
       <EditQuestion
         question={question}
         onClose={() => setOpen(false)}
+        onAttemptsUpdated={onAttemptsUpdated}
       />
     </Dialog>
   );

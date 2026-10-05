@@ -10,6 +10,7 @@ import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
 import { getUserSession } from "./authHelpers";
+import { ATTEMPT_BATCH_SIZE } from "@/constants";
 
 const escapeLikePattern = (value: string) => {
     return value
@@ -268,69 +269,151 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
     }
 };
 
-export const getQuestionById = async ({questionId} : {questionId:string}) => {
-    try {
-        const session = await getUserSession();
-        if(!session?.user){
-            return {
-                ...getPublicError("UNAUTHORIZED"),
-                question: null,
-            }
-        }
+export const getQuestionById = async ({
+  questionId,
+}: {
+  questionId: string;
+}) => {
+  try {
+    const session = await getUserSession();
 
-        const userId = session.user.id;
-        const [q] = await db
-            .select()
-            .from(question)
-            .where(
-                and(
-                    eq(question.id, questionId),
-                    eq(question.userId, userId)
-                )
-            )
-            .limit(1);
-
-        if(!q){
-            return{
-                ...getPublicError("NOT_FOUND"),
-                question: null
-            }
-        }
-
-        const validatedDifficulty = difficultySchema.parse(q.difficulty);
-
-        const atts = await db
-            .select()
-            .from(attempts)
-            .where(
-                eq(attempts.questionId, questionId)
-            ).orderBy(
-                asc(attempts.createdAt),
-                asc(attempts.id)
-            );
-
-        const fullQuestion = {
-            ...q,
-            difficulty: validatedDifficulty,
-            attempts: atts,
-        }
-
-        return {
-            success: true as const,
-            message: "Found question",
-            question: fullQuestion,
-        }
-
-    } catch (error) {
-        return {
-            ...handleActionError(
-                error, 
-                "getQuestionById"
-            ),
-            question: null,
-        };
+    if (!session?.user) {
+      return {
+        ...getPublicError("UNAUTHORIZED"),
+        question: null,
+      };
     }
-}
+
+    const userId = session.user.id;
+
+    const [q] = await db
+      .select()
+      .from(question)
+      .where(
+        and(
+          eq(question.id, questionId),
+          eq(question.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (!q) {
+      return {
+        ...getPublicError("NOT_FOUND"),
+        question: null,
+      };
+    }
+
+    const validatedDifficulty =
+      difficultySchema.parse(q.difficulty);
+
+    const [countResult] = await db
+      .select({
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(attempts)
+      .where(eq(attempts.questionId, questionId));
+
+    const atts = await db
+      .select()
+      .from(attempts)
+      .where(eq(attempts.questionId, questionId))
+      .orderBy(
+        asc(attempts.createdAt),
+        desc(attempts.id)
+      )
+      .limit(ATTEMPT_BATCH_SIZE);
+
+    const fullQuestion = {
+      ...q,
+      difficulty: validatedDifficulty,
+      attempts: atts,
+      attemptCount: countResult?.count ?? 0,
+    };
+
+    return {
+      success: true as const,
+      message: "Found question",
+      question: fullQuestion,
+    };
+  } catch (error) {
+    return {
+      ...handleActionError(
+        error,
+        "getQuestionById"
+      ),
+      question: null,
+    };
+  }
+};
+
+export const getQuestionAttempts = async ({questionId, offset}: {questionId: string, offset: number}) => {
+  try {
+    const session = await getUserSession();
+
+    if (!session?.user) {
+      return {
+        ...getPublicError("UNAUTHORIZED"),
+        attempts: [],
+      };
+    }
+
+    if (
+      !Number.isInteger(offset) ||
+      offset < 0
+    ) {
+      return {
+        ...getPublicError("VALIDATION_ERROR"),
+        attempts: [],
+      };
+    }
+
+    const [ownedQuestion] = await db
+      .select({
+        id: question.id,
+      })
+      .from(question)
+      .where(
+        and(
+          eq(question.id, questionId),
+          eq(question.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!ownedQuestion) {
+      return {
+        ...getPublicError("NOT_FOUND"),
+        attempts: [],
+      };
+    }
+
+    const attemptResults = await db
+      .select()
+      .from(attempts)
+      .where(eq(attempts.questionId, ownedQuestion.id))
+      .orderBy(
+        asc(attempts.createdAt),
+        desc(attempts.id)
+      )
+      .limit(ATTEMPT_BATCH_SIZE)
+      .offset(offset);
+
+    return {
+      success: true as const,
+      message: "Attempts loaded successfully",
+      attempts: attemptResults,
+    };
+  } catch (error) {
+    return {
+      ...handleActionError(
+        error,
+        "getQuestionAttempts"
+      ),
+      attempts: [],
+    };
+  }
+};
 
 export const deleteQuestion = async ({deleteItemId}: {deleteItemId: string}) => {
     try {
@@ -603,12 +686,34 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
                     )
             );
 
-            
-
         await db.batch([
             questionUpdate, 
             ...attemptUpdates, 
         ] as [typeof questionUpdate, ...typeof attemptUpdates]);
+
+
+      const updatedAttempts =
+        submittedAttemptIds.length > 0
+          ? await db
+              .select()
+              .from(attempts)
+              .where(
+                and(
+                  eq(
+                    attempts.questionId,
+                    existing.id
+                  ),
+                  inArray(
+                    attempts.id,
+                    submittedAttemptIds
+                  )
+                )
+              )
+              .orderBy(
+                asc(attempts.createdAt),
+                desc(attempts.id)
+              )
+          : [];
 
         revalidatePath("/");
         revalidatePath("/all-questions");
@@ -616,7 +721,8 @@ export const updateQuestion = async ({oldQuestion, newQuestion} : {oldQuestion: 
 
         return {
             success: true as const,
-            message: "Question sucessfully updated"
+            message: "Question sucessfully updated",
+            attempts: updatedAttempts, 
         };
     } catch (error) {
         return handleActionError(error, "updateQuestion");

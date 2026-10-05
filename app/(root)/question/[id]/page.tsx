@@ -1,8 +1,6 @@
-import QuestionDetails from '@/components/QuestionDetails';
 import { getQuestionById } from '@/lib/user-actions/questions';
-import { DeleteButton } from '@/components/DeleteButton';
-import EditQuestionTrigger from '@/components/EditQuestionTrigger';
 import { notFound, redirect } from 'next/navigation';
+import QuestionPageContent from '@/components/QuestionPageContent';
 
 const page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const p = await params;
@@ -50,21 +48,10 @@ const page = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className="px-4 sm:px-6 max-w-screen-xl mx-auto w-full mb-4">
-      <QuestionDetails
-        key={JSON.stringify(question.attempts)}
+      <QuestionPageContent
         question={question}
+        questionId={questionId}
       />
-
-      <section className="button-section">
-        <EditQuestionTrigger question={question} />
-
-        <DeleteButton
-          deleteItemId={questionId}
-          buttonLabel="Delete Question"
-          deleteType="delete-question"
-          className="delete-question-button"
-        />
-      </section>
     </div>
   );
 };

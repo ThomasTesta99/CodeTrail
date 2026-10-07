@@ -118,4 +118,9 @@ export type AttemptRow = typeof attempts.$inferSelect;
 export type Question = Omit<QuestionRow, "difficulty"> & {
   difficulty: Difficulty;
   attempts: AttemptRow[];
+  attemptCount?: number;
 };
+
+export type QuestionDetailsHandle = {
+  updateAttempts: (updatedAttempts: Attempt[]) => void;
+}

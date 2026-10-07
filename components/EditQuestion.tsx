@@ -1,15 +1,25 @@
 'use client'
 
+import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LANGUAGE_OPTIONS } from '@/constants';
-import { Question } from '@/types/types';
-import { updateQuestion } from '@/lib/user-actions/questions';
+import { Attempt, Question } from '@/types/types';
+import {
+  getQuestionAttempts,
+  updateQuestion,
+} from '@/lib/user-actions/questions';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
-import { EditFormData, editQuestionSchema } from '@/lib/validations/question';
-import { DialogContent, DialogTitle } from './ui/dialog';
+import {
+  EditFormData,
+  editQuestionSchema,
+} from '@/lib/validations/question';
+import {
+  DialogContent,
+  DialogTitle,
+} from './ui/dialog';
 
 const FieldError = ({
   id,
@@ -19,7 +29,10 @@ const FieldError = ({
   message?: string;
 }) =>
   message ? (
-    <p id={id} className="text-sm text-red-600 mt-1">
+    <p
+      id={id}
+      className="text-sm text-red-600 mt-1"
+    >
       {message}
     </p>
   ) : null;
@@ -27,11 +40,28 @@ const FieldError = ({
 const EditQuestion = ({
   question,
   onClose,
+  onAttemptsUpdated
 }: {
   question: Question;
   onClose: () => void;
+  onAttemptsUpdated?: (
+    attempts: Attempt[]
+  ) => void;
 }) => {
   const router = useRouter();
+
+  const [nextAttemptOffset, setNextAttemptOffset] =
+    useState(question.attempts?.length ?? 0);
+
+  const [
+    isLoadingMoreAttempts,
+    setIsLoadingMoreAttempts,
+  ] = useState(false);
+
+  const totalAttemptCount =
+    question.attemptCount ??
+    question.attempts?.length ??
+    0;
 
   const {
     register,
@@ -47,24 +77,106 @@ const EditQuestion = ({
       description: question.description ?? '',
       difficulty: question.difficulty,
       link: question.link ?? '',
-      label: normalizeQuestionLabel(question.label) ?? '',
-      attempts: (question.attempts ?? []).map((a) => ({
-        id: a.id,
-        solutionCode: a.solutionCode ?? '',
-        language: a.language ?? (LANGUAGE_OPTIONS[0]?.value ?? ''),
-        neededHelp: Boolean(a.neededHelp),
-        durationMinutes: Number(a.durationMinutes ?? 1),
-        notes: a.notes ?? '',
-      })),
+      label:
+        normalizeQuestionLabel(question.label) ??
+        '',
+      attempts: (question.attempts ?? []).map(
+        (a) => ({
+          id: a.id,
+          solutionCode: a.solutionCode ?? '',
+          language:
+            a.language ??
+            (LANGUAGE_OPTIONS[0]?.value ?? ''),
+          neededHelp: Boolean(a.neededHelp),
+          durationMinutes: Number(
+            a.durationMinutes ?? 1
+          ),
+          notes: a.notes ?? '',
+        })
+      ),
     },
   });
 
-  const { fields } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control,
     name: 'attempts',
   });
 
-  const onSubmit = async (data: EditFormData) => {
+  const hasMoreAttempts =
+    nextAttemptOffset < totalAttemptCount;
+
+  const handleLoadMoreAttempts = async () => {
+    if (
+      isLoadingMoreAttempts ||
+      !hasMoreAttempts
+    ) {
+      return;
+    }
+
+    setIsLoadingMoreAttempts(true);
+
+    try {
+      const result =
+        await getQuestionAttempts({
+          questionId: question.id,
+          offset: nextAttemptOffset,
+        });
+
+      if (!result.success) {
+        toast.error(
+          result.message ||
+            'Unable to load more attempts.'
+        );
+        return;
+      }
+
+      if (result.attempts.length === 0) {
+        setNextAttemptOffset(
+          totalAttemptCount
+        );
+        return;
+      }
+
+      append(
+        result.attempts.map((attempt) => ({
+          id: attempt.id,
+          solutionCode:
+            attempt.solutionCode ?? '',
+          language:
+            attempt.language ??
+            (LANGUAGE_OPTIONS[0]?.value ??
+              ''),
+          neededHelp: Boolean(
+            attempt.neededHelp
+          ),
+          durationMinutes: Number(
+            attempt.durationMinutes ?? 1
+          ),
+          notes: attempt.notes ?? '',
+        }))
+      );
+
+      setNextAttemptOffset(
+        (prev) =>
+          prev + result.attempts.length
+      );
+    } catch (error) {
+      console.error(
+        '[EditQuestion] Failed to load more attempts:',
+        error
+      );
+
+      toast.error(
+        'Unable to load more attempts.'
+      );
+    } finally {
+      setIsLoadingMoreAttempts(false);
+    }
+  };
+
+  const onSubmit = async (
+    data: EditFormData
+  ) => {
     try {
       const result = await updateQuestion({
         oldQuestion: question,
@@ -72,18 +184,26 @@ const EditQuestion = ({
       });
 
       if (!result.success) {
-        toast.error(result.message || 'Failed to update question');
+        toast.error(
+          result.message ||
+            'Failed to update question'
+        );
         return;
       }
 
       toast.success(
-        result.message || 'Question updated successfully'
+        result.message ||
+          'Question updated successfully'
       );
-
+      onAttemptsUpdated?.(result.attempts);
       onClose();
       router.refresh();
     } catch (error) {
-      console.error('Failed to update question: ', error);
+      console.error(
+        'Failed to update question: ',
+        error
+      );
+
       toast.error(
         'An unexpected error occurred. Please try again.'
       );
@@ -115,7 +235,9 @@ const EditQuestion = ({
             className="input-field"
             aria-invalid={!!errors.title}
             aria-describedby={
-              errors.title ? 'edit-title-error' : undefined
+              errors.title
+                ? 'edit-title-error'
+                : undefined
             }
           />
 
@@ -138,7 +260,9 @@ const EditQuestion = ({
             {...register('description')}
             placeholder="Description"
             className="input-field"
-            aria-invalid={!!errors.description}
+            aria-invalid={
+              !!errors.description
+            }
             aria-describedby={
               errors.description
                 ? 'edit-description-error'
@@ -148,7 +272,9 @@ const EditQuestion = ({
 
           <FieldError
             id="edit-description-error"
-            message={errors.description?.message}
+            message={
+              errors.description?.message
+            }
           />
         </div>
 
@@ -164,22 +290,34 @@ const EditQuestion = ({
             id="edit-difficulty"
             {...register('difficulty')}
             className="select-field"
-            aria-invalid={!!errors.difficulty}
+            aria-invalid={
+              !!errors.difficulty
+            }
             aria-describedby={
               errors.difficulty
                 ? 'edit-difficulty-error'
                 : undefined
             }
           >
-            <option value="">Select Difficulty</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+            <option value="">
+              Select Difficulty
+            </option>
+            <option value="Easy">
+              Easy
+            </option>
+            <option value="Medium">
+              Medium
+            </option>
+            <option value="Hard">
+              Hard
+            </option>
           </select>
 
           <FieldError
             id="edit-difficulty-error"
-            message={errors.difficulty?.message}
+            message={
+              errors.difficulty?.message
+            }
           />
         </div>
 
@@ -199,14 +337,17 @@ const EditQuestion = ({
             className="input-field"
             aria-invalid={!!errors.link}
             aria-describedby={
-              errors.link ? 'edit-link-error' : undefined
+              errors.link
+                ? 'edit-link-error'
+                : undefined
             }
           />
 
           <FieldError
             id="edit-link-error"
             message={
-              typeof errors.link?.message === 'string'
+              typeof errors.link?.message ===
+              'string'
                 ? errors.link.message
                 : undefined
             }
@@ -228,7 +369,9 @@ const EditQuestion = ({
             className="input-field"
             aria-invalid={!!errors.label}
             aria-describedby={
-              errors.label ? 'edit-label-error' : undefined
+              errors.label
+                ? 'edit-label-error'
+                : undefined
             }
           />
 
@@ -280,10 +423,14 @@ const EditQuestion = ({
                   className="input-field"
                   placeholder="Solution Code"
                   aria-invalid={
-                    !!errors.attempts?.[index]?.solutionCode
+                    !!errors.attempts?.[
+                      index
+                    ]?.solutionCode
                   }
                   aria-describedby={
-                    errors.attempts?.[index]?.solutionCode
+                    errors.attempts?.[
+                      index
+                    ]?.solutionCode
                       ? solutionCodeErrorId
                       : undefined
                   }
@@ -292,8 +439,9 @@ const EditQuestion = ({
                 <FieldError
                   id={solutionCodeErrorId}
                   message={
-                    errors.attempts?.[index]?.solutionCode
-                      ?.message
+                    errors.attempts?.[
+                      index
+                    ]?.solutionCode?.message
                   }
                 />
               </div>
@@ -313,29 +461,36 @@ const EditQuestion = ({
                   )}
                   className="select-field"
                   aria-invalid={
-                    !!errors.attempts?.[index]?.language
+                    !!errors.attempts?.[
+                      index
+                    ]?.language
                   }
                   aria-describedby={
-                    errors.attempts?.[index]?.language
+                    errors.attempts?.[
+                      index
+                    ]?.language
                       ? languageErrorId
                       : undefined
                   }
                 >
-                  {LANGUAGE_OPTIONS.map((opt) => (
-                    <option
-                      key={opt.value}
-                      value={opt.value}
-                    >
-                      {opt.label}
-                    </option>
-                  ))}
+                  {LANGUAGE_OPTIONS.map(
+                    (opt) => (
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                      >
+                        {opt.label}
+                      </option>
+                    )
+                  )}
                 </select>
 
                 <FieldError
                   id={languageErrorId}
                   message={
-                    errors.attempts?.[index]?.language
-                      ?.message
+                    errors.attempts?.[
+                      index
+                    ]?.language?.message
                   }
                 />
               </div>
@@ -362,12 +517,14 @@ const EditQuestion = ({
                   className="input-field"
                   placeholder="Duration (min)"
                   aria-invalid={
-                    !!errors.attempts?.[index]
-                      ?.durationMinutes
+                    !!errors.attempts?.[
+                      index
+                    ]?.durationMinutes
                   }
                   aria-describedby={
-                    errors.attempts?.[index]
-                      ?.durationMinutes
+                    errors.attempts?.[
+                      index
+                    ]?.durationMinutes
                       ? durationErrorId
                       : undefined
                   }
@@ -376,8 +533,10 @@ const EditQuestion = ({
                 <FieldError
                   id={durationErrorId}
                   message={
-                    errors.attempts?.[index]
-                      ?.durationMinutes?.message
+                    errors.attempts?.[
+                      index
+                    ]?.durationMinutes
+                      ?.message
                   }
                 />
               </div>
@@ -408,10 +567,14 @@ const EditQuestion = ({
                   className="input-field"
                   placeholder="Notes"
                   aria-invalid={
-                    !!errors.attempts?.[index]?.notes
+                    !!errors.attempts?.[
+                      index
+                    ]?.notes
                   }
                   aria-describedby={
-                    errors.attempts?.[index]?.notes
+                    errors.attempts?.[
+                      index
+                    ]?.notes
                       ? notesErrorId
                       : undefined
                   }
@@ -420,26 +583,52 @@ const EditQuestion = ({
                 <FieldError
                   id={notesErrorId}
                   message={
-                    errors.attempts?.[index]?.notes
-                      ?.message
+                    errors.attempts?.[
+                      index
+                    ]?.notes?.message
                   }
                 />
               </div>
 
               <input
                 type="hidden"
-                {...register(`attempts.${index}.id`)}
+                {...register(
+                  `attempts.${index}.id`
+                )}
               />
             </div>
           );
         })}
 
+        {hasMoreAttempts && (
+          <button
+            type="button"
+            onClick={
+              handleLoadMoreAttempts
+            }
+            disabled={
+              isLoadingMoreAttempts ||
+              isSubmitting
+            }
+            className="nav-button"
+          >
+            {isLoadingMoreAttempts
+              ? 'Loading...'
+              : 'Load More Attempts'}
+          </button>
+        )}
+
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={
+            isSubmitting ||
+            isLoadingMoreAttempts
+          }
           className="submit-button"
         >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting
+            ? 'Saving...'
+            : 'Save Changes'}
         </button>
       </form>
     </DialogContent>

@@ -124,3 +124,22 @@ export type Question = Omit<QuestionRow, "difficulty"> & {
 export type QuestionDetailsHandle = {
   updateAttempts: (updatedAttempts: Attempt[]) => void;
 }
+
+export type SettingsSectionProps = {
+    title: string;
+    description?: string;
+    danger?: boolean;
+    children: ReactNode;
+};
+
+export type SettingsButtonProps = {
+    children: ReactNode;
+    danger?: boolean;
+};
+
+export type SettingsRowProps = {
+    title: string;
+    description: ReactNode;
+    badge?: ReactNode;
+    action?: ReactNode;
+};

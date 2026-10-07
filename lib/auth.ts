@@ -46,12 +46,30 @@ export const auth = betterAuth({
                     to: user.email, 
                     subject: "Verify your email",
                     templateParams: {
-                        user_name: user.name ?? "there", 
+                        user_name: user.name ?? "their", 
                         action_url: url, 
-                        type: "Verify your email",
+                        type_header: "Verify your email",
+                        type_body: "verfiy your email"
                     }
                 })
             }
+        },
+        user: {
+            changeEmail: {
+                enabled: true, 
+                sendChangeEmailConfirmation: async ({user, newEmail, url}) => {
+                    await sendVerifiation({
+                        to: user.email, 
+                        subject: "Approve Email Change", 
+                        templateParams: {
+                            user_name: user.name ?? "their", 
+                            action_url: url, 
+                            type_header: "Change your email",
+                            type_body: "change your email",
+                        }
+                    })
+                }
+            },
         },
         hooks: {
             before: createAuthMiddleware(async (ctx) => {
@@ -60,6 +78,7 @@ export const auth = betterAuth({
                     "/sign-up/email": "sign-up",
                     "/request-password-reset": "password-reset",
                     "/send-verification-email": "verify-email",
+                    "/change-email": "change-email",
                 } as const;
     
                 const action = 
@@ -69,10 +88,9 @@ export const auth = betterAuth({
                 
                 if(!action) return;
     
-                const email = 
-                    typeof ctx.body?.email === "string"
-                        ? ctx.body.email
-                        : null;
+                const email = ctx.path === "/change-email"
+                    ? typeof ctx.body?.newEmail === "string" ? ctx.body.newEmail : null
+                    : typeof ctx.body?.email === "string" ? ctx.body.email : null;
     
                 if(!email?.trim()) return;
     

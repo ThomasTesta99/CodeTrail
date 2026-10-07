@@ -16,6 +16,7 @@ const guestOnlyRoutes = [
 const authFlowRoutes = [
     "/reset-password",
     "/email-verified",
+    "/email-change-approved"
 ];
 
 const protectedRoutes = [
@@ -24,6 +25,7 @@ const protectedRoutes = [
     "/all-questions",
     "/profile",
     "/question",
+    "/settings"
 ];
 
 const matchesRoute = (pathname: string, routes : string[]) => {

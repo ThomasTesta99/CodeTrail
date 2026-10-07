@@ -213,11 +213,35 @@ const verificationEmailByIP = arcjet({
   ],
 });
 
+const changeEmailByEmail = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["authEmail"],
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 2,
+    }),
+  ],
+});
+
+const changeEmailByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [
+    fixedWindow({
+      mode: "LIVE",
+      window: "3m",
+      max: 10,
+    }),
+  ],
+});
+
 type AuthRateAction =
   | "sign-in"
   | "sign-up"
   | "password-reset"
-  | "verify-email";
+  | "verify-email"
+  | "change-email";
 
 export const validateAuthRate = async (
   email: string,
@@ -258,6 +282,11 @@ export const validateAuthRate = async (
       case "verify-email":
         emailLimiter = verificationEmailByEmail;
         ipLimiter = verificationEmailByIP;
+        break;
+
+      case "change-email":
+        emailLimiter = changeEmailByEmail;
+        ipLimiter = changeEmailByIP;
         break;
     }
 

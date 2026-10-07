@@ -352,6 +352,125 @@
     @apply flex items-center gap-2 text-sm text-gray-700;
   }
 
+
+  /* SETTINGS */
+
+  .settings-page {
+    @apply min-h-screen bg-white px-4 py-12 sm:px-6 lg:px-8;
+  }
+
+  .settings-wrapper {
+    @apply mx-auto w-full max-w-5xl;
+  }
+
+  .settings-page-header {
+    @apply mb-10 text-center;
+  }
+
+  .settings-page-title {
+    @apply text-4xl font-bold text-[#2C325D];
+  }
+
+  .settings-page-description {
+    @apply mt-3 text-lg text-gray-600;
+  }
+
+  .settings-sections {
+    @apply space-y-8;
+  }
+
+
+  /* Settings Section */
+
+  .settings-section {
+    @apply overflow-hidden rounded-3xl border-2 border-[#2C325D] bg-white shadow-md;
+  }
+
+  .settings-section-danger {
+    @apply border-red-600;
+  }
+
+  .settings-section-header {
+    @apply border-b-2 border-[#2C325D] bg-[#2C325D] px-6 py-5 text-white sm:px-8;
+  }
+
+  .settings-section-header-danger {
+    @apply border-red-600 bg-red-600;
+  }
+
+  .settings-section-title {
+    @apply text-2xl font-bold;
+  }
+
+  .settings-section-description {
+    @apply mt-1 text-sm text-gray-200;
+  }
+
+  .settings-section-description-danger {
+    @apply text-red-100;
+  }
+
+  .settings-section-body {
+    @apply divide-y divide-gray-200;
+  }
+
+
+  /* Settings Row */
+
+  .settings-row {
+    @apply flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8;
+  }
+
+  .settings-row-content {
+    @apply min-w-0;
+  }
+
+  .settings-row-heading {
+    @apply flex flex-wrap items-center gap-3;
+  }
+
+  .settings-row-title {
+    @apply font-semibold text-gray-900;
+  }
+
+  .settings-row-description {
+    @apply mt-1 max-w-2xl text-sm leading-relaxed text-gray-600;
+  }
+
+
+  /* Settings Button */
+
+  .settings-button {
+    @apply w-fit shrink-0 cursor-pointer rounded-lg bg-[#2C325D] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3B3F6A];
+  }
+
+  .settings-button-danger {
+    @apply bg-red-600 hover:bg-red-700;
+  }
+
+
+  /* Settings Status */
+
+  .settings-status {
+    @apply rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .settings-status-verified {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .settings-status-unverified {
+    @apply bg-yellow-100 text-yellow-700;
+  }
+
+  .settings-input {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition focus:border-[#2C325D] focus:outline-none focus:ring-2 focus:ring-[#2C325D]/20;
+  }
+
+  .settings-button {
+    @apply w-fit shrink-0 cursor-pointer rounded-lg bg-[#2C325D] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3B3F6A];
+  }
+
 }
 
 .modal-backdrop {

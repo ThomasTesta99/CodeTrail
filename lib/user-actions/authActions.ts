@@ -12,6 +12,7 @@ import {
 } from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
+import { changeEmailSchema, changeNameSchema } from "../validations/settings";
 
 
 const isInvalidCredentialsError = (
@@ -162,11 +163,7 @@ export const sendResetPasswordEmail = async ({
   }
 };
 
-export const sendVerificationEmail = async ({
-  url,
-}: {
-  url: string;
-}) => {
+export const sendVerificationEmail = async () => {
   try {
     const session = await getUserSession();
 
@@ -182,34 +179,116 @@ export const sendVerificationEmail = async ({
       };
     }
 
-    const normalizedEmail =
-      session.user.email.trim().toLowerCase();
+    const normalizedEmail = session.user.email.trim().toLowerCase();
 
-    const result =
-      await auth.api.sendVerificationEmail({
-        body: {
-          email: normalizedEmail,
-          callbackURL: url,
-        },
-        headers: await headers(),
-      });
+    const result = await auth.api.sendVerificationEmail({
+      body: {
+        email: normalizedEmail,
+        callbackURL: "/email-verified",
+      },
+      headers: await headers(),
+    });
 
     if (!result.status) {
-      console.error(
-        "[sendVerificationEmail] Verification email was not sent."
-      );
-
+      console.error("[sendVerificationEmail] Verification email was not sent.");
       return getPublicError("INTERNAL_ERROR");
     }
 
     return {
       success: true as const,
-      message: "Verification email sent",
+      message: "Verification email sent.",
     };
   } catch (error) {
-    return handleActionError(
-      error,
-      "sendVerificationEmail"
-    );
+    return handleActionError(error, "sendVerificationEmail");
   }
 };
+
+export const updateUserName = async ({name} : {name: string}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    const parsed = changeNameSchema.safeParse({name});
+    if(!parsed.success){
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const, 
+        message: parsed.error.issues[0]?.message ?? "Invalid name."
+      }
+    }
+
+    const newName = parsed.data.name;
+
+    if(newName === session.user.name){
+      return {
+        success: true, 
+        message: "Your name is already up to date.", 
+      }
+    }
+
+    await auth.api.updateUser({
+      body: {
+        name: newName, 
+      },
+      headers: await headers(),
+    })
+
+    return {
+      success: true as const, 
+      message: "Name updated successfully."
+    }
+  } catch (error) {
+    return handleActionError(error, "updateUserName");
+  }
+}
+
+export const changeUserEmail = async ({email}: {email: string}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+    if (!session.user.emailVerified) {
+      return {
+        success: false as const,
+        code: "EMAIL_NOT_VERIFIED" as const,
+        message: "Verify your current email before changing it.",
+      };
+    }
+
+    const parsed = changeEmailSchema.safeParse({ email });
+    if (!parsed.success) {
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const,
+        message: parsed.error.issues[0]?.message || "Invalid email address.",
+      };
+    }
+
+    const normalizedEmail = parsed.data.email.toLowerCase();
+    if (normalizedEmail === session.user.email.toLowerCase()) {
+      return {
+        success: false as const,
+        code: "SAME_EMAIL" as const,
+        message: "Enter a different email address.",
+      };
+    }
+
+    await auth.api.changeEmail({
+      body:{
+        newEmail: normalizedEmail,
+        callbackURL: "/email-change-approved", 
+      },
+      headers: await headers(), 
+    })
+
+    return {
+      success: true as const, 
+      message: `A request for an email change has been sent to your current email`
+    }
+  } catch (error) {
+    return handleActionError(error, "changeUserEmail");
+  }
+}

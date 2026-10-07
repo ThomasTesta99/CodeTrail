@@ -29,6 +29,14 @@ export const DeleteButton = ({
     setIsDeleting(true);
 
     try {
+      const deleteMessage = deleteType === "delete-question"
+        ? "Are you sure you want to delete this question? All attempts associated with it will also be deleted. This action cannot be undone."
+        : "Are you sure you want to delete this attempt? This action cannot be undone."
+      
+      if(!confirm(deleteMessage)){
+        return;
+      }
+
       const result = 
         deleteType === "delete-question"
           ? await deleteQuestion({deleteItemId})

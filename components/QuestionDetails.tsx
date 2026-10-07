@@ -23,84 +23,44 @@ import { DeleteButton } from './DeleteButton';
 import AddAttemptTrigger from './AddAttemptTrigger';
 import { normalizeQuestionLabel } from '@/lib/utils/normalizeLabel';
 
-const QuestionDetails = forwardRef<
-  QuestionDetailsHandle,
-  { question: Question }
->(
+const QuestionDetails = forwardRef<QuestionDetailsHandle,{ question: Question }>(
   function QuestionDetails({ question }, ref) {
     const [attempts, setAttempts] = useState(
       question.attempts || []
     );
 
-    const [
-      currentAttemptIndex,
-      setCurrentAttemptIndex,
-    ] = useState(0);
+    const [currentAttemptIndex,setCurrentAttemptIndex] = useState(0);
 
-    const [
-      totalAttemptCount,
-      setTotalAttemptCount,
-    ] = useState(
+    const [totalAttemptCount,setTotalAttemptCount] = useState(
       question.attemptCount ??
         question.attempts?.length ??
         0
     );
 
-    const [nextOffset, setNextOffset] =
-      useState(
-        question.attempts?.length ?? 0
-      );
+    const [nextOffset, setNextOffset] = useState(question.attempts?.length ?? 0);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [feedback, setFeedback] = useState('');
+    const [feedbackAttemptId,setFeedbackAttemptId] = useState<string | null>(null);
+    const [revealIndex, setRevealIndex] =useState(0);
+    const [feedbackError,setFeedbackError] = useState<string | null>(null);
+    const [isLoadingFeedback,setIsLoadingFeedback,] = useState(false);
 
-    const [isLoadingMore, setIsLoadingMore] =
-      useState(false);
+    const [isAnimatingFeedback,setIsAnimatingFeedback,] = useState(false);
 
-    const [feedback, setFeedback] =
-      useState('');
+    const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const [
-      feedbackAttemptId,
-      setFeedbackAttemptId,
-    ] = useState<string | null>(null);
+    const requestControllerRef = useRef<AbortController | null>(null);
 
-    const [revealIndex, setRevealIndex] =
-      useState(0);
+    const currentAttempt = attempts[currentAttemptIndex];
 
-    const [
-      feedbackError,
-      setFeedbackError,
-    ] = useState<string | null>(null);
-
-    const [
-      isLoadingFeedback,
-      setIsLoadingFeedback,
-    ] = useState(false);
-
-    const [
-      isAnimatingFeedback,
-      setIsAnimatingFeedback,
-    ] = useState(false);
-
-    const typingIntervalRef = useRef<
-      ReturnType<typeof setInterval> | null
-    >(null);
-
-    const requestControllerRef =
-      useRef<AbortController | null>(null);
-
-    const currentAttempt =
-      attempts[currentAttemptIndex];
-
-    const hasMoreAttempts =
-      nextOffset < totalAttemptCount;
+    const hasMoreAttempts = nextOffset < totalAttemptCount;
 
     const displayedFeedback =
       feedbackAttemptId === currentAttempt?.id
         ? feedback.slice(0, revealIndex)
         : '';
 
-    const isFeedbackBusy =
-      isLoadingFeedback ||
-      isAnimatingFeedback;
+    const isFeedbackBusy = isLoadingFeedback || isAnimatingFeedback;
 
     const stopTyping = () => {
       if (
@@ -442,35 +402,22 @@ const QuestionDetails = forwardRef<
       }
     };
 
-    const handleAddAttempt = (
-      newAttempt: Attempt
-    ) => {
+    const handleAddAttempt = (newAttempt: Attempt) => {
       clearFeedback();
 
-      const hadMoreAttempts =
-        nextOffset <
-        totalAttemptCount;
+      const hadMoreAttempts = nextOffset < totalAttemptCount;
 
-      setAttempts((prev) => [
-        ...prev,
-        newAttempt,
-      ]);
+      setTotalAttemptCount((prev) => prev + 1);
 
-      setTotalAttemptCount(
-        (prev) => prev + 1
-      );
-
-      if (!hadMoreAttempts) {
-        setNextOffset(
-          (prev) => prev + 1
-        );
+      if (hadMoreAttempts) {
+        return;
       }
 
-      setCurrentAttemptIndex(
-        attempts.length
-      );
+      setAttempts((prev) => [...prev, newAttempt]);
+      setNextOffset((prev) => prev + 1);
+      setCurrentAttemptIndex(attempts.length);
     };
-
+    
     const handleDeleteAttempt = (
       deletedAttemptId: string
     ) => {

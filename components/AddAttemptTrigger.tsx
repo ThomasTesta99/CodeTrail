@@ -25,11 +25,11 @@ const AddAttemptTrigger = ({
         </button>
       </DialogTrigger>
 
-      <AddAttempt
+      {open && <AddAttempt
         questionId={questionId}
         onAdd={onAdd}
         onClose={() => setOpen(false)}
-      />
+      />}
     </Dialog>
   );
 };

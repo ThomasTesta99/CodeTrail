@@ -327,4 +327,4 @@ export const UUID_REGEX =
 
 export const MIN_PASSWORD_LENGTH = 10;
 
-export const ATTEMPT_BATCH_SIZE = 1;
+export const ATTEMPT_BATCH_SIZE = 10;

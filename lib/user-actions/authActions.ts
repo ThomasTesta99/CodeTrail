@@ -489,3 +489,27 @@ export const changeUserPassword = async ({currentPassword, newPassword, confirmP
     return handleActionError(error, "changeUserPassword");
   }
 };
+
+export const signOutOtherSessions = async () => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    const result = await auth.api.revokeOtherSessions({
+      headers: await headers(),
+    });
+
+    if(!result.status){
+      return getPublicError("INTERNAL_ERROR");
+    }
+
+    return {
+      success: true as const,
+      message: "Signed out of all other sessions successfully.",
+    };
+  } catch(error) {
+    return handleActionError(error, "signOutOtherSessions");
+  }
+};

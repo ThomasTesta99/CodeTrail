@@ -3,6 +3,7 @@ import ChangePassword from "@/components/settings/ChangePassword";
 import EmailSettings from "@/components/settings/EmailSettings";
 import SetPassword from "@/components/settings/SetPassword";
 import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
+import SignOutOtherSessions from "@/components/settings/SignOutOtherSessions";
 import UnlinkSocialButton from "@/components/settings/UnlinkButton";
 import { SOCIAL_PROVIDERS } from "@/lib/socialProviders";
 import {  connectSocialAccount, getUserAccounts } from "@/lib/user-actions/authActions";
@@ -175,12 +176,8 @@ const page = async ({searchParams} : {searchParams: Promise<{linkError? : string
 
                         <SettingsRow
                             title="Active sessions"
-                            description="Sign out of CodeTrail on all other devices."
-                            action={
-                                <SettingsButton>
-                                    Sign out other sessions
-                                </SettingsButton>
-                            }
+                            description="Sign out of CodeTrail on all other devices and browsers while keeping this session active."
+                            action={<SignOutOtherSessions/>}
                         />
                     </SettingsSection>
 

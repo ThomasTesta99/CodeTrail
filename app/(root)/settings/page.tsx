@@ -1,10 +1,12 @@
 import ChangeName from "@/components/settings/ChangeName";
 import ChangePassword from "@/components/settings/ChangePassword";
+import DeleteAccount from "@/components/settings/DeleteAccount";
 import EmailSettings from "@/components/settings/EmailSettings";
 import SetPassword from "@/components/settings/SetPassword";
 import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
 import SignOutOtherSessions from "@/components/settings/SignOutOtherSessions";
 import UnlinkSocialButton from "@/components/settings/UnlinkButton";
+import { isAccountDeletionBlocked } from "@/lib/security/protectedAccount";
 import { SOCIAL_PROVIDERS } from "@/lib/socialProviders";
 import {  connectSocialAccount, getUserAccounts } from "@/lib/user-actions/authActions";
 import { getUserSession } from "@/lib/user-actions/authHelpers";
@@ -195,10 +197,13 @@ const page = async ({searchParams} : {searchParams: Promise<{linkError? : string
                                     account data. This action cannot be undone.
                                 </>
                             }
-                            action={
-                                <SettingsButton danger = {true}>
-                                    Delete account
-                                </SettingsButton>
+                            action={isAccountDeletionBlocked(user.id) ? (
+                                    <span className="text-sm text-gray-500">
+                                        Account deletion disabled
+                                    </span>
+                                ) : result.success ? (
+                                    <DeleteAccount hasPassword={hasPassword}/>
+                                ) : undefined
                             }
                         />
                     </SettingsSection>

@@ -71,7 +71,10 @@ export type ActionErrorCode =
   | "RATE_LIMITED"
   | "SERVICE_UNAVAILABLE"
   | "INTERNAL_ERROR"
-  | "LAST_SIGN_IN_METHOD";
+  | "LAST_SIGN_IN_METHOD"
+  | "INVALID_PASSWORD"
+  | "REAUTH_REQUIRED"
+  | "ACCOUNT_DELETION_BLOCKED";
 
  export type RateLimitResult =
   | {

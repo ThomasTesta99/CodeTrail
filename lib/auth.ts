@@ -7,6 +7,7 @@ import { sendEmail, sendVerifiation } from './email'
 import { MIN_PASSWORD_LENGTH } from '@/constants'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { validateAuthRate } from './arcjet'
+import { isAccountDeletionBlocked } from './security/protectedAccount'
 
 
 
@@ -16,6 +17,9 @@ export const auth = betterAuth({
         provider: 'pg',
         schema,
     }),
+    session: {
+        freshAge: 60 * 5, 
+    },
     socialProviders:{
         google:{
             prompt: "select_account",
@@ -76,6 +80,17 @@ export const auth = betterAuth({
                     })
                 }
             },
+            deleteUser: {
+                enabled: true, 
+                beforeDelete: async (user) => {
+                    if(isAccountDeletionBlocked(user.id)){
+                        throw new APIError("FORBIDDEN", {
+                            code: "ACCOUNT_DELETION_BLOCKED",
+                            message: "Account deletion is disabled for this account.",
+                        });
+                    }
+                }
+            }
         },
         hooks: {
             before: createAuthMiddleware(async (ctx) => {

@@ -10,6 +10,7 @@ import { changeEmailSchema, changeNameSchema } from "../validations/settings";
 import { isSocialProviderId } from "../socialProviders";
 import { changePasswordSchema, setPasswordSchema } from "../validations/password";
 import { APIError } from "better-auth/api";
+import { isAccountDeletionBlocked } from "../security/protectedAccount";
 
 
 const isInvalidCredentialsError = (
@@ -511,5 +512,64 @@ export const signOutOtherSessions = async () => {
     };
   } catch(error) {
     return handleActionError(error, "signOutOtherSessions");
+  }
+};
+
+export const deleteUserAccount = async ({password, confirmation}: {password: string, confirmation: string}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    if(isAccountDeletionBlocked(session.user.id)){
+      return getPublicError("ACCOUNT_DELETION_BLOCKED");
+  }
+
+    if(confirmation !== "DELETE"){
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const,
+        message: "Type DELETE to confirm account deletion.",
+      };
+    }
+
+    const requestHeaders = await headers();
+    const accounts = await auth.api.listUserAccounts({headers: requestHeaders});
+    const hasPassword = accounts.some(account => account.providerId === "credential");
+
+    if(hasPassword && !password){
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const,
+        message: "Enter your current password to delete your account.",
+      };
+    }
+
+    const result = await auth.api.deleteUser({
+      body: hasPassword ? {password} : {},
+      headers: requestHeaders,
+    });
+
+    if(!result.success){
+      return getPublicError("INTERNAL_ERROR");
+    }
+
+    return {
+      success: true as const,
+      message: "Your CodeTrail account has been permanently deleted.",
+    };
+  } catch(error) {
+    if(error instanceof APIError && error.body?.code === "SESSION_EXPIRED"){
+      return getPublicError("INVALID_PASSWORD");
+    }
+    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
+      return getPublicError("REAUTH_REQUIRED");
+    }
+    if(error instanceof APIError && error.body?.code === "ACCOUNT_DELETION_BLOCKED"){
+      return getPublicError("ACCOUNT_DELETION_BLOCKED");
+    }
+
+    return handleActionError(error, "deleteUserAccount");
   }
 };

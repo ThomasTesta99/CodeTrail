@@ -6,7 +6,7 @@ import {nextCookies} from 'better-auth/next-js'
 import { sendEmail, sendVerifiation } from './email'
 import { MIN_PASSWORD_LENGTH } from '@/constants'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
-import { validateAuthRate } from './arcjet'
+import { validateAuthRate, validateSensitiveAuthRate } from './arcjet'
 import { isAccountDeletionBlocked } from './security/protectedAccount'
 import { and, eq } from "drizzle-orm";
 
@@ -94,7 +94,10 @@ export const auth = betterAuth({
         },
         hooks: {
             before: createAuthMiddleware(async (ctx) => {
-                if(ctx.path === "/delete-user" || ctx.path === "/delete-user/callback"){
+                const isDeletionPath = ctx.path === "/delete-user" || ctx.path === "/delete-user/callback";
+                const isSensitiveAuthPath = isDeletionPath || ctx.path === "/change-password" || ctx.path === "/verify-password";
+
+                if(isSensitiveAuthPath){
                     if(!ctx.headers){
                         throw new APIError("UNAUTHORIZED", {
                             code: "UNAUTHORIZED",
@@ -111,18 +114,36 @@ export const auth = betterAuth({
                         });
                     }
 
-                    const credentialAccounts = await db.select({id: schema.account.id})
-                        .from(schema.account)
-                        .where(and(eq(schema.account.userId, session.user.id), eq(schema.account.providerId, "credential")))
-                        .limit(1);
+                    const rateLimit = await validateSensitiveAuthRate(session.user.id);
 
-                    const hasPassword = credentialAccounts.length > 0;
-
-                    if(hasPassword && (ctx.path !== "/delete-user" || typeof ctx.body?.password !== "string" || ctx.body.password.length === 0)){
-                        throw new APIError("BAD_REQUEST", {
-                            code: "PASSWORD_REQUIRED",
-                            message: "Enter your current password to delete your account.",
+                    if(rateLimit.status === "denied"){
+                        throw new APIError("TOO_MANY_REQUESTS", {
+                            code: "RATE_LIMITED",
+                            message: "Too many attempts. Please try again later.",
                         });
+                    }
+
+                    if(rateLimit.status === "unavailable"){
+                        throw new APIError("SERVICE_UNAVAILABLE", {
+                            code: "RATE_LIMIT_UNAVAILABLE",
+                            message: "Authentication is temporarily unavailable. Please try again later.",
+                        });
+                    }
+
+                    if(isDeletionPath){
+                        const credentialAccounts = await db.select({id: schema.account.id})
+                            .from(schema.account)
+                            .where(and(eq(schema.account.userId, session.user.id), eq(schema.account.providerId, "credential")))
+                            .limit(1);
+
+                        const hasPassword = credentialAccounts.length > 0;
+
+                        if(hasPassword && (ctx.path !== "/delete-user" || typeof ctx.body?.password !== "string" || ctx.body.password.length === 0)){
+                            throw new APIError("BAD_REQUEST", {
+                                code: "PASSWORD_REQUIRED",
+                                message: "Enter your current password to delete your account.",
+                            });
+                        }
                     }
                 }
 

@@ -362,3 +362,57 @@ export const validateAuthRate = async (
     };
   }
 };
+
+const sensitiveAuthByUser = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["securityUserId"],
+  rules: [fixedWindow({mode: "LIVE", window: "10m", max: 5})],
+});
+
+const sensitiveAuthByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [fixedWindow({mode: "LIVE", window: "10m", max: 20})],
+});
+
+export const validateSensitiveAuthRate = async (userId: string): Promise<RateLimitResult> => {
+  const unavailable: RateLimitResult = {
+    status: "unavailable",
+    valid: false,
+    message: "Authentication is temporarily unavailable. Please try again later.",
+  };
+
+  const denied: RateLimitResult = {
+    status: "denied",
+    valid: false,
+    message: "Too many attempts. Please try again later.",
+  };
+
+  if(!userId.trim()) return unavailable;
+
+  try {
+    const req = await request();
+
+    const userDecision = await sensitiveAuthByUser.protect(req, {securityUserId: userId});
+
+    if(userDecision.isErrored()) {
+      console.error("[sensitive-auth] User rate limiter unavailable.");
+      return unavailable;
+    }
+
+    if(userDecision.isDenied()) return denied;
+
+    const ipDecision = await sensitiveAuthByIP.protect(req);
+
+    if(ipDecision.isErrored()) {
+      console.error("[sensitive-auth] IP rate limiter unavailable.");
+      return unavailable;
+    }
+
+    if(ipDecision.isDenied()) return denied;
+
+    return {status: "allowed", valid: true, message: ""};
+  } catch {
+    console.error("[sensitive-auth] Rate-limit check failed.");
+    return unavailable;
+  }
+};

@@ -1,16 +1,40 @@
 import ChangeName from "@/components/settings/ChangeName";
 import EmailSettings from "@/components/settings/EmailSettings";
 import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
+import { SOCIAL_PROVIDERS } from "@/lib/socialProviders";
+import {  connectSocialAccount, getUserAccounts } from "@/lib/user-actions/authActions";
 import { getUserSession } from "@/lib/user-actions/authHelpers";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
-const page = async () => {
+const page = async ({searchParams} : {searchParams: Promise<{linkError? : string}>}) => {
     const session = await getUserSession();
     const user = session?.user;
 
     if (!user) {
         redirect("/");
     }
+
+    const {linkError} = await searchParams;
+    const socialConnectionError = linkError === "1"
+        ? "Unable to connect your account. Please try again."
+        : null;
+
+    const result = await getUserAccounts();
+    const accounts = result.success ? result.accounts : [];
+    const hasPassword = accounts.some(account => account.providerId === "credential");
+
+    const handleConnectSocial = async (formData: FormData) => {
+        "use server";
+
+        const result = await connectSocialAccount({provider: formData.get("provider")});
+
+        if(!result.success){
+            redirect("/settings?linkError=1");
+        }
+
+        redirect(result.url);
+    };
 
     return (
         <main className="settings-page">
@@ -55,7 +79,7 @@ const page = async () => {
                         />
                     </SettingsSection>
 
-                    <SettingsSection title="Sign-in & Security">
+                    <SettingsSection title="Sign-in & Security" description="Manage how you sign in and protect your account.">
                         <SettingsRow
                             title="Password"
                             description="Change the password used to sign in to your account."
@@ -67,13 +91,75 @@ const page = async () => {
                         />
 
                         <SettingsRow
-                            title="Active sessions"
+                            title="Connected sign-in methods"
                             description={
-                                <>
-                                    Sign out of CodeTrail on all other devices
-                                    while keeping this session active.
-                                </>
+                                !result.success ? (
+                                    <p role="alert" className="text-sm text-red-600">
+                                        Unable to load connected sign-in methods. Please refresh the page and try again.
+                                    </p>
+                                ) : (
+                                    <div className="settings-connected-methods-list">
+                                        <p className="settings-connected-methods-description">
+                                            Manage the methods you can use to sign in to CodeTrail.
+                                        </p>
+
+                                        <div className="settings-connected-method">
+                                            <div>
+                                                <p className="settings-connected-method-title">Email & password</p>
+                                                <p className="settings-connected-method-description">
+                                                    {hasPassword ? "Sign in using your email address." : "No password configured."}
+                                                </p>
+                                            </div>
+
+                                            <span className={`settings-status ${hasPassword ? "settings-status-verified" : "settings-status-unverified"}`}>
+                                                {hasPassword ? "Connected" : "Not configured"}
+                                            </span>
+                                        </div>
+
+                                        {SOCIAL_PROVIDERS.map(provider => {
+                                            const connected = accounts.some(account => account.providerId === provider.id);
+
+                                            return (
+                                                <div key={provider.id} className="settings-connected-method">
+                                                    <div>
+                                                        <div className="flex flex-row items-center gap-2">
+                                                            {provider.image && (
+                                                                <Image src={provider.image} alt={`${provider.name} logo`} width={24} height={24}/>
+                                                            )}
+                                                            <p className="settings-connected-method-title">{provider.name}</p>
+                                                        </div>
+                                                        <p className="settings-connected-method-description">
+                                                            {connected ? `${provider.name} account connected.` : `Connect your ${provider.name} account to sign in.`}
+                                                        </p>
+                                                    </div>
+
+                                                    {connected ? (
+                                                        <span className="settings-status settings-status-verified">Connected</span>
+                                                    ) : (
+                                                        <form action={handleConnectSocial}>
+                                                            <input type="hidden" name="provider" value={provider.id}/>
+                                                            <button type="submit" className="settings-connected-method-action">
+                                                                Connect
+                                                            </button>
+                                                        </form>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {socialConnectionError && (
+                                            <p role="alert" className="text-sm text-red-600">
+                                                {socialConnectionError}
+                                            </p>
+                                        )}
+                                    </div>
+                                )
                             }
+                        />
+
+                        <SettingsRow
+                            title="Active sessions"
+                            description="Sign out of CodeTrail on all other devices."
                             action={
                                 <SettingsButton>
                                     Sign out other sessions

@@ -22,10 +22,10 @@ export const auth = betterAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!, 
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
-        // github: { 
-            //     clientId: process.env.GITHUB_CLIENT_ID!, 
-            //     clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
-            // }, 
+        github: { 
+            clientId: process.env.GITHUB_CLIENT_ID!, 
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
+        }, 
         },
         emailAndPassword:{
             enabled: true,
@@ -52,6 +52,12 @@ export const auth = betterAuth({
                         type_body: "verfiy your email"
                     }
                 })
+            }
+        },
+        account: {
+            accountLinking: {
+                enabled: true, 
+                disableImplicitLinking: true, 
             }
         },
         user: {

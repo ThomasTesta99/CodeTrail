@@ -29,9 +29,9 @@ type SignUpType = z.infer<typeof signUpSchema>;
 type AuthFormType = SignInType | SignUpType;
 
 
-// const handleGitHubSignIn = async () => {
-  //   return await authClient.signIn.social({provider: 'github'})
-  // }
+const handleGitHubSignIn = async () => {
+    return await authClient.signIn.social({provider: 'github'})
+  }
   
 const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
   const router = useRouter();
@@ -167,13 +167,13 @@ const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
                 ? "Connecting to Google..."
                 : "Sign In with Google"}
             </button>
-            {/* <button
+            <button
               onClick={() => handleGitHubSignIn()}
               className="auth-social-btn" 
             >
               <Image src="/assets/icons/github.svg" alt="GitHub" width={20} height={20} />
               Sign In with GitHub
-            </button> */}
+            </button>
           </div>
           <div className="auth-extra-links">
             <Link href="/forgot-password" className="auth-link">Forgot Password?</Link>

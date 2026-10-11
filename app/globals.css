@@ -422,7 +422,11 @@
   }
 
   .settings-row-content {
-    @apply min-w-0;
+    @apply min-w-0 flex-1;
+  }
+
+  .settings-row-description {
+    @apply mt-1 w-full text-sm leading-relaxed text-gray-600;
   }
 
   .settings-row-heading {
@@ -433,9 +437,7 @@
     @apply font-semibold text-gray-900;
   }
 
-  .settings-row-description {
-    @apply mt-1 max-w-2xl text-sm leading-relaxed text-gray-600;
-  }
+
 
 
   /* Settings Button */
@@ -465,6 +467,38 @@
 
   .settings-input {
     @apply w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition focus:border-[#2C325D] focus:outline-none focus:ring-2 focus:ring-[#2C325D]/20;
+  }
+
+  .settings-connected-methods {
+    @apply px-6 py-6 sm:px-8;
+  }
+
+  .settings-connected-methods-header {
+    @apply mb-4;
+  }
+
+  .settings-connected-methods-list {
+    @apply mt-4 w-full space-y-3;
+  }
+
+  .settings-connected-methods-description {
+    @apply mb-4 text-sm text-gray-600;
+  }
+
+  .settings-connected-method {
+    @apply flex items-center justify-between gap-4 rounded-lg border border-gray-300 px-4 py-3;
+  }
+
+  .settings-connected-method-title {
+    @apply text-sm font-semibold text-gray-900;
+  }
+
+  .settings-connected-method-description {
+    @apply mt-1 text-xs text-gray-600;
+  }
+
+  .settings-connected-method-action {
+    @apply shrink-0 cursor-pointer rounded-lg border border-[#2C325D] px-4 py-2 text-xs font-semibold text-[#2C325D] transition hover:bg-[#2C325D] hover:text-white;
   }
 
 }

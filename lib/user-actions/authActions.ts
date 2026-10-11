@@ -13,6 +13,8 @@ import {
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
+import { redirect } from "next/navigation";
+import { isSocialProviderId } from "../socialProviders";
 
 
 const isInvalidCredentialsError = (
@@ -292,3 +294,57 @@ export const changeUserEmail = async ({email}: {email: string}) => {
     return handleActionError(error, "changeUserEmail");
   }
 }
+
+export const getUserAccounts = async () => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    const accounts = await auth.api.listUserAccounts({headers: await headers()});
+
+    return {
+      success: true as const,
+      accounts: accounts.map(account => ({
+        providerId: account.providerId,
+      }))
+    }
+  } catch (error) {
+    return handleActionError(error, "getUserAccounts");
+  }
+}
+
+export const connectSocialAccount = async ({provider}: {provider: unknown}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    if(!isSocialProviderId(provider)){
+      return getPublicError("VALIDATION_ERROR");
+    }
+
+    const result = await auth.api.linkSocialAccount({
+      body: {
+        provider,
+        callbackURL: "/settings",
+        errorCallbackURL: "/auth/link-error",
+      },
+      headers: await headers(),
+    });
+
+    if(!result.url){
+      return getPublicError("INTERNAL_ERROR");
+    }
+
+    return {
+      success: true as const,
+      message: "Account authorization initiated successfully.",
+      url: result.url,
+    };
+  } catch(error) {
+    return handleActionError(error, "connectSocialAccount");
+  }
+};

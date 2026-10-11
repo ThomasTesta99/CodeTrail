@@ -1,5 +1,7 @@
 import ChangeName from "@/components/settings/ChangeName";
+import ChangePassword from "@/components/settings/ChangePassword";
 import EmailSettings from "@/components/settings/EmailSettings";
+import SetPassword from "@/components/settings/SetPassword";
 import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
 import UnlinkSocialButton from "@/components/settings/UnlinkButton";
 import { SOCIAL_PROVIDERS } from "@/lib/socialProviders";
@@ -83,12 +85,15 @@ const page = async ({searchParams} : {searchParams: Promise<{linkError? : string
                     <SettingsSection title="Sign-in & Security" description="Manage how you sign in and protect your account.">
                         <SettingsRow
                             title="Password"
-                            description="Change the password used to sign in to your account."
-                            action={
-                                <SettingsButton>
-                                    Change password
-                                </SettingsButton>
+                            description={!result.success
+                                ? "Unable to load password settings. Please refresh the page."
+                                : hasPassword
+                                    ? "Change the password used to sign in to your account."
+                                    : "Set a password to enable email and password sign-in."
                             }
+                            action={result.success ? (
+                                hasPassword ? <ChangePassword/> : <SetPassword/>
+                            ) : undefined}
                         />
 
                         <SettingsRow

@@ -2,18 +2,14 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth";
-import {
-  CreateUserInfo,
-  SignInUserInfo,
-} from "@/types/types";
-import {
-  getPublicError,
-  handleActionError,
-} from "../utils/actionError";
+import {CreateUserInfo,SignInUserInfo} from "@/types/types";
+import {getPublicError,handleActionError} from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
 import { isSocialProviderId } from "../socialProviders";
+import { changePasswordSchema, setPasswordSchema } from "../validations/password";
+import { APIError } from "better-auth/api";
 
 
 const isInvalidCredentialsError = (
@@ -389,5 +385,107 @@ export const unlinkSocialAccount = async ({provider}: {provider: unknown}) => {
     };
   } catch(error) {
     return handleActionError(error, "unlinkSocialAccount");
+  }
+};
+
+export const setUserPassword = async ({newPassword, confirmPassword}: {newPassword: string, confirmPassword: string}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    if(!session.user.emailVerified){
+      return {
+        success: false as const,
+        code: "EMAIL_NOT_VERIFIED" as const,
+        message: "Verify your email before setting a password.",
+      };
+    }
+
+    const sessionCreatedAt = new Date(session.session.createdAt).getTime();
+    if(!Number.isFinite(sessionCreatedAt) || Date.now() - sessionCreatedAt > 5 * 60 * 1000){
+      return {
+        success: false as const,
+        code: "REAUTH_REQUIRED" as const,
+        message: "For security, please sign out and sign back in before setting a password.",
+      };
+    }
+
+    const parsed = setPasswordSchema.safeParse({newPassword, confirmPassword});
+    if(!parsed.success){
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const,
+        message: parsed.error.issues[0]?.message ?? "Invalid password.",
+      };
+    }
+
+    const accounts = await auth.api.listUserAccounts({headers: await headers()});
+    if(accounts.some(account => account.providerId === "credential")){
+      return {
+        success: false as const,
+        code: "PASSWORD_ALREADY_SET" as const,
+        message: "A password is already configured for this account.",
+      };
+    }
+
+    await auth.api.setPassword({
+      body: {newPassword: parsed.data.newPassword},
+      headers: await headers(),
+    });
+
+    return {
+      success: true as const,
+      message: "Password set successfully. You can now sign in using your email and password.",
+    };
+  } catch(error) {
+    return handleActionError(error, "setUserPassword");
+  }
+};
+
+export const changeUserPassword = async ({currentPassword, newPassword, confirmPassword}: {
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    const parsed = changePasswordSchema.safeParse({currentPassword, newPassword, confirmPassword});
+    if(!parsed.success){
+      return {
+        success: false as const,
+        code: "VALIDATION_ERROR" as const,
+        message: parsed.error.issues[0]?.message ?? "Invalid password.",
+      };
+    }
+
+    await auth.api.changePassword({
+      body: {
+        currentPassword: parsed.data.currentPassword,
+        newPassword: parsed.data.newPassword,
+        revokeOtherSessions: true,
+      },
+      headers: await headers(),
+    });
+
+    return {
+      success: true as const,
+      message: "Password changed successfully.",
+    };
+  } catch(error) {
+    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
+      return {
+        success: false as const,
+        code: "INVALID_PASSWORD" as const,
+        message: "Your current password is incorrect.",
+      };
+    }
+
+    return handleActionError(error, "changeUserPassword");
   }
 };

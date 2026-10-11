@@ -520,9 +520,9 @@ const QuestionDetails = forwardRef<QuestionDetailsHandle,{ question: Question }>
             {question.link && (
               <a
                 href={question.link}
-                className="leetcode-link"
+                className="problem-link"
               >
-                View on LeetCode →
+                View Problem →
               </a>
             )}
           </div>

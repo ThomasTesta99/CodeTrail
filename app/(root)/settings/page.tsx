@@ -97,7 +97,7 @@ const page = async () => {
                                 </>
                             }
                             action={
-                                <SettingsButton danger>
+                                <SettingsButton danger = {true}>
                                     Delete account
                                 </SettingsButton>
                             }

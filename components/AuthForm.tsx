@@ -33,27 +33,27 @@ type AuthFormType = SignInType | SignUpType;
   //   return await authClient.signIn.social({provider: 'github'})
   // }
   
-  const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [isOAuthLoading, setIsOAuthLoading] = useState(false);
-    
-    const handleGoogleSignIn = async () => {
-      setIsOAuthLoading(true);
-      try {
-        const {error} = await authClient.signIn.social({provider: 'google'});
+const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  
+  const handleGoogleSignIn = async () => {
+    setIsOAuthLoading(true);
+    try {
+      const {error} = await authClient.signIn.social({provider: 'google'});
 
-        if(error){
-          toast.error("Unable to sign in with Google. Please try again.");
-          return;
-        }
-      } catch (error) {
-        console.error("OAUTH error: ", error);
+      if(error){
         toast.error("Unable to sign in with Google. Please try again.");
-      }finally{
-        setIsOAuthLoading(false);
+        return;
       }
+    } catch (error) {
+      console.error("OAUTH error: ", error);
+      toast.error("Unable to sign in with Google. Please try again.");
+    }finally{
+      setIsOAuthLoading(false);
     }
+  }
 
   const form = useForm<AuthFormType>({
     resolver: zodResolver(type === 'sign-in' ? signInSchema : signUpSchema),

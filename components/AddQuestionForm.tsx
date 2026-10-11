@@ -92,7 +92,7 @@ const AddQuestionForm = ({ user }: UserProps) => {
         <div className="space-y-2">
           <input
             type="url"
-            placeholder="LeetCode Link (Optional)"
+            placeholder="Question Link (Optional)"
             {...register('link')}
             className="input-field"
           />

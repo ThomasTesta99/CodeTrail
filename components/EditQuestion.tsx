@@ -326,13 +326,13 @@ const EditQuestion = ({
             htmlFor="edit-link"
             className="block text-sm font-medium mb-1"
           >
-            LeetCode Link (optional)
+            Problem Link (optional)
           </label>
 
           <input
             id="edit-link"
             type="url"
-            placeholder="LeetCode Link (Optional)"
+            placeholder="Problem Link (Optional)"
             {...register('link')}
             className="input-field"
             aria-invalid={!!errors.link}

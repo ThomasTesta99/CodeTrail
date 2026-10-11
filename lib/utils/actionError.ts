@@ -8,6 +8,10 @@ const PUBLIC_ERROR_MESSAGES: Record<ActionErrorCode, string> = {
   RATE_LIMITED: "Too many requests. Please try again later.",
   SERVICE_UNAVAILABLE: "This feature is temporarily unavailable. Please try again later.",
   INTERNAL_ERROR: "An unexpected error occurred. Please try again.",
+  LAST_SIGN_IN_METHOD: "Connect another sign-in method before unlinking this one.",
+  INVALID_PASSWORD: "Your current password is incorrect.",
+  REAUTH_REQUIRED: "For security, please sign out and sign back in before trying again.",
+  ACCOUNT_DELETION_BLOCKED: "Account deletion is disabled for this account."
 };
 
 export const getPublicError = (code: ActionErrorCode) => {

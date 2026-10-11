@@ -7,6 +7,7 @@ import { sendEmail, sendVerifiation } from './email'
 import { MIN_PASSWORD_LENGTH } from '@/constants'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { validateAuthRate } from './arcjet'
+import { isAccountDeletionBlocked } from './security/protectedAccount'
 
 
 
@@ -16,16 +17,19 @@ export const auth = betterAuth({
         provider: 'pg',
         schema,
     }),
+    session: {
+        freshAge: 60 * 5, 
+    },
     socialProviders:{
         google:{
             prompt: "select_account",
             clientId: process.env.GOOGLE_CLIENT_ID!, 
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
-        // github: { 
-            //     clientId: process.env.GITHUB_CLIENT_ID!, 
-            //     clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
-            // }, 
+        github: { 
+            clientId: process.env.GITHUB_CLIENT_ID!, 
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!, 
+        }, 
         },
         emailAndPassword:{
             enabled: true,
@@ -48,9 +52,44 @@ export const auth = betterAuth({
                     templateParams: {
                         user_name: user.name ?? "there", 
                         action_url: url, 
-                        type: "Verify your email",
+                        type_header: "Verify your email",
+                        type_body: "verfiy your email"
                     }
                 })
+            }
+        },
+        account: {
+            accountLinking: {
+                enabled: true, 
+                disableImplicitLinking: true, 
+            }
+        },
+        user: {
+            changeEmail: {
+                enabled: true, 
+                sendChangeEmailConfirmation: async ({user, url}) => {
+                    await sendVerifiation({
+                        to: user.email, 
+                        subject: "Approve Email Change", 
+                        templateParams: {
+                            user_name: user.name ?? "there", 
+                            action_url: url, 
+                            type_header: "Change your email",
+                            type_body: "change your email",
+                        }
+                    })
+                }
+            },
+            deleteUser: {
+                enabled: true, 
+                beforeDelete: async (user) => {
+                    if(isAccountDeletionBlocked(user.id)){
+                        throw new APIError("FORBIDDEN", {
+                            code: "ACCOUNT_DELETION_BLOCKED",
+                            message: "Account deletion is disabled for this account.",
+                        });
+                    }
+                }
             }
         },
         hooks: {
@@ -60,6 +99,7 @@ export const auth = betterAuth({
                     "/sign-up/email": "sign-up",
                     "/request-password-reset": "password-reset",
                     "/send-verification-email": "verify-email",
+                    "/change-email": "change-email",
                 } as const;
     
                 const action = 
@@ -69,10 +109,9 @@ export const auth = betterAuth({
                 
                 if(!action) return;
     
-                const email = 
-                    typeof ctx.body?.email === "string"
-                        ? ctx.body.email
-                        : null;
+                const email = ctx.path === "/change-email"
+                    ? typeof ctx.body?.newEmail === "string" ? ctx.body.newEmail : null
+                    : typeof ctx.body?.email === "string" ? ctx.body.email : null;
     
                 if(!email?.trim()) return;
     

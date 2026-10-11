@@ -12,6 +12,7 @@ import { signInUser, signUpUser } from '@/lib/user-actions/authActions';
 import { CreateUserInfo, SignInUserInfo } from '@/types/types';
 import toast from 'react-hot-toast';
 import { passwordSchema } from '@/lib/validations/password';
+import { SOCIAL_PROVIDERS, SocialProviderId } from '@/lib/socialProviders';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email').min(1, 'Email is required'),
@@ -27,33 +28,28 @@ const signUpSchema = z.object({
 type SignInType = z.infer<typeof signInSchema>;
 type SignUpType = z.infer<typeof signUpSchema>;
 type AuthFormType = SignInType | SignUpType;
-
-
-// const handleGitHubSignIn = async () => {
-  //   return await authClient.signIn.social({provider: 'github'})
-  // }
   
-  const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [isOAuthLoading, setIsOAuthLoading] = useState(false);
-    
-    const handleGoogleSignIn = async () => {
-      setIsOAuthLoading(true);
-      try {
-        const {error} = await authClient.signIn.social({provider: 'google'});
+const AuthForm = ({ type }: { type: 'sign-in' | 'sign-up' }) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [oauthLoadingProvider, setOAuthLoadingProvider] = useState<SocialProviderId | null>(null);
 
-        if(error){
-          toast.error("Unable to sign in with Google. Please try again.");
-          return;
-        }
-      } catch (error) {
-        console.error("OAUTH error: ", error);
-        toast.error("Unable to sign in with Google. Please try again.");
-      }finally{
-        setIsOAuthLoading(false);
+  const handleOAuthSignIn = async (provider: SocialProviderId) => {
+    if(oauthLoadingProvider) return;
+    setOAuthLoadingProvider(provider);
+    try {
+      const {error} = await authClient.signIn.social({provider: provider});
+      if(error){
+        toast.error(`Unable to sign in with ${provider}. Please try again.`);
+        return;
       }
+    } catch (error) {
+      console.error("OAUTH error: ", error);
+      toast.error(`Unable to sign in with ${provider}. Please try again.`);
+    }finally{
+      setOAuthLoadingProvider(null);
     }
+  }
 
   const form = useForm<AuthFormType>({
     resolver: zodResolver(type === 'sign-in' ? signInSchema : signUpSchema),
@@ -156,24 +152,18 @@ type AuthFormType = SignInType | SignUpType;
         <>
           <div className="auth-divider"></div>
           <div className='flex flex-col space-y-3'>
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={isOAuthLoading}
-              className="auth-social-btn"
-
-            >
-              <Image src="/assets/icons/google.svg" alt="Google" width={20} height={20} />
-              {isOAuthLoading 
-                ? "Connecting to Google..."
-                : "Sign In with Google"}
-            </button>
-            {/* <button
-              onClick={() => handleGitHubSignIn()}
-              className="auth-social-btn" 
-            >
-              <Image src="/assets/icons/github.svg" alt="GitHub" width={20} height={20} />
-              Sign In with GitHub
-            </button> */}
+            {SOCIAL_PROVIDERS.map(provider => (
+              <button
+                key={provider.id}
+                type="button"
+                onClick={() => handleOAuthSignIn(provider.id)}
+                disabled={oauthLoadingProvider !== null}
+                className="auth-social-btn"
+              >
+                <Image src={provider.image} alt={provider.name} width={20} height={20}/>
+                {oauthLoadingProvider === provider.id ? `Connecting to ${provider.name}...` : `Sign In with ${provider.name}`}
+              </button>
+            ))}
           </div>
           <div className="auth-extra-links">
             <Link href="/forgot-password" className="auth-link">Forgot Password?</Link>

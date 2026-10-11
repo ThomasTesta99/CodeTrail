@@ -81,7 +81,7 @@ const QuestionCard = ({
           rel="noopener noreferrer"
           className="question-card-external"
         >
-          View on LeetCode →
+          View Problem →
         </a>
       )}
     </div>

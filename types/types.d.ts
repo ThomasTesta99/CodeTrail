@@ -70,7 +70,11 @@ export type ActionErrorCode =
   | "DATABASE_ERROR"
   | "RATE_LIMITED"
   | "SERVICE_UNAVAILABLE"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  | "LAST_SIGN_IN_METHOD"
+  | "INVALID_PASSWORD"
+  | "REAUTH_REQUIRED"
+  | "ACCOUNT_DELETION_BLOCKED";
 
  export type RateLimitResult =
   | {
@@ -124,3 +128,17 @@ export type Question = Omit<QuestionRow, "difficulty"> & {
 export type QuestionDetailsHandle = {
   updateAttempts: (updatedAttempts: Attempt[]) => void;
 }
+
+export type SettingsSectionProps = {
+    title: string;
+    description?: string;
+    danger?: boolean;
+    children: ReactNode;
+};
+
+export type SettingsRowProps = {
+    title: string;
+    description: ReactNode;
+    badge?: ReactNode;
+    action?: ReactNode;
+};

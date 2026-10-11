@@ -116,7 +116,6 @@ const page = async ({searchParams}: {searchParams:Promise<SearchParams>}) => {
   
 
   if(userQuestions.length === 0){
-
     return (
       <div className="all-questions-container">
         {(q.trim().length > 0 || label.length > 0 || pageNumber > 1) && (

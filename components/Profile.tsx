@@ -19,9 +19,7 @@ const Profile = ({ user }: { user: User}) => {
                 return;
             }
 
-            const result = await sendVerificationEmail({
-                url: `${window.location.origin}/email-verified`
-            });
+            const result = await sendVerificationEmail();
 
             if (!result.success) {
                 toast.error(result.message);

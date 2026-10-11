@@ -13,7 +13,6 @@ import {
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
-import { redirect } from "next/navigation";
 import { isSocialProviderId } from "../socialProviders";
 
 
@@ -307,6 +306,7 @@ export const getUserAccounts = async () => {
     return {
       success: true as const,
       accounts: accounts.map(account => ({
+        id: account.id,
         providerId: account.providerId,
       }))
     }
@@ -346,5 +346,48 @@ export const connectSocialAccount = async ({provider}: {provider: unknown}) => {
     };
   } catch(error) {
     return handleActionError(error, "connectSocialAccount");
+  }
+};
+
+export const unlinkSocialAccount = async ({provider}: {provider: unknown}) => {
+  try {
+    const session = await getUserSession();
+    if(!session?.user){
+      return getPublicError("UNAUTHORIZED");
+    }
+
+    if(!isSocialProviderId(provider)){
+      return getPublicError("VALIDATION_ERROR");
+    }
+
+    const requestHeaders = await headers();
+    const accounts = await auth.api.listUserAccounts({headers: requestHeaders});
+    const linkedAccount = accounts.find(account => account.providerId === provider);
+
+    if(!linkedAccount){
+      return getPublicError("NOT_FOUND");
+    }
+
+    if(accounts.length <= 1){
+      return getPublicError("LAST_SIGN_IN_METHOD");
+    }
+
+    const result = await auth.api.unlinkAccount({
+      body: {
+        accountId: linkedAccount.id,
+      },
+      headers: requestHeaders,
+    });
+
+    if(!result.status){
+      return getPublicError("INTERNAL_ERROR");
+    }
+
+    return {
+      success: true as const,
+      message: "Sign-in method unlinked successfully.",
+    };
+  } catch(error) {
+    return handleActionError(error, "unlinkSocialAccount");
   }
 };

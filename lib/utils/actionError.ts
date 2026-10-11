@@ -8,6 +8,7 @@ const PUBLIC_ERROR_MESSAGES: Record<ActionErrorCode, string> = {
   RATE_LIMITED: "Too many requests. Please try again later.",
   SERVICE_UNAVAILABLE: "This feature is temporarily unavailable. Please try again later.",
   INTERNAL_ERROR: "An unexpected error occurred. Please try again.",
+  LAST_SIGN_IN_METHOD: "Connect another sign-in method before unlinking this one."
 };
 
 export const getPublicError = (code: ActionErrorCode) => {

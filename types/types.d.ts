@@ -70,7 +70,8 @@ export type ActionErrorCode =
   | "DATABASE_ERROR"
   | "RATE_LIMITED"
   | "SERVICE_UNAVAILABLE"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  | "LAST_SIGN_IN_METHOD";
 
  export type RateLimitResult =
   | {

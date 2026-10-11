@@ -1,6 +1,7 @@
 import ChangeName from "@/components/settings/ChangeName";
 import EmailSettings from "@/components/settings/EmailSettings";
 import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
+import UnlinkSocialButton from "@/components/settings/UnlinkButton";
 import { SOCIAL_PROVIDERS } from "@/lib/socialProviders";
 import {  connectSocialAccount, getUserAccounts } from "@/lib/user-actions/authActions";
 import { getUserSession } from "@/lib/user-actions/authHelpers";
@@ -121,20 +122,30 @@ const page = async ({searchParams} : {searchParams: Promise<{linkError? : string
 
                                             return (
                                                 <div key={provider.id} className="settings-connected-method">
-                                                    <div>
+                                                    <div className="min-w-0">
                                                         <div className="flex flex-row items-center gap-2">
                                                             {provider.image && (
                                                                 <Image src={provider.image} alt={`${provider.name} logo`} width={24} height={24}/>
                                                             )}
                                                             <p className="settings-connected-method-title">{provider.name}</p>
                                                         </div>
+
                                                         <p className="settings-connected-method-description">
                                                             {connected ? `${provider.name} account connected.` : `Connect your ${provider.name} account to sign in.`}
                                                         </p>
+
+                                                        {connected && accounts.length <= 1 && (
+                                                            <p className="settings-connected-method-description">
+                                                                Connect another sign-in method before unlinking this one.
+                                                            </p>
+                                                        )}
                                                     </div>
 
                                                     {connected ? (
-                                                        <span className="settings-status settings-status-verified">Connected</span>
+                                                        <div className="flex shrink-0 items-center gap-2">
+                                                            <span className="settings-status settings-status-verified">Connected</span>
+                                                            <UnlinkSocialButton provider={provider.id} providerName={provider.name} disabled={accounts.length <= 1}/>
+                                                        </div>
                                                     ) : (
                                                         <form action={handleConnectSocial}>
                                                             <input type="hidden" name="provider" value={provider.id}/>

@@ -1,4 +1,4 @@
-import { SettingsButtonProps, SettingsRowProps, SettingsSectionProps } from "@/types/types";
+import { SettingsRowProps, SettingsSectionProps } from "@/types/types";
 
 export const SettingsSection = ({
     title,
@@ -65,21 +65,5 @@ export const SettingsRow = ({
 
             {action}
         </div>
-    );
-};
-
-export const SettingsButton = ({
-    children,
-    danger = false,
-}: SettingsButtonProps) => {
-    return (
-        <button
-            type="button"
-            className={`settings-button ${
-                danger ? "settings-button-danger" : ""
-            }`}
-        >
-            {children}
-        </button>
     );
 };

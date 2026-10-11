@@ -327,7 +327,7 @@ export const connectSocialAccount = async ({provider}: {provider: unknown}) => {
       body: {
         provider,
         callbackURL: "/settings",
-        errorCallbackURL: "/auth/link-error",
+        errorCallbackURL: "/api/auth/link-error",
       },
       headers: await headers(),
     });
@@ -560,10 +560,11 @@ export const deleteUserAccount = async ({password, confirmation}: {password: str
       message: "Your CodeTrail account has been permanently deleted.",
     };
   } catch(error) {
-    if(error instanceof APIError && error.body?.code === "SESSION_EXPIRED"){
+    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
       return getPublicError("INVALID_PASSWORD");
     }
-    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
+
+    if(error instanceof APIError && (error.body?.code === "SESSION_EXPIRED" || error.body?.code === "SESSION_NOT_FRESH")){
       return getPublicError("REAUTH_REQUIRED");
     }
     if(error instanceof APIError && error.body?.code === "ACCOUNT_DELETION_BLOCKED"){

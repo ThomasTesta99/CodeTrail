@@ -136,11 +136,6 @@ export type SettingsSectionProps = {
     children: ReactNode;
 };
 
-export type SettingsButtonProps = {
-    children: ReactNode;
-    danger?: boolean;
-};
-
 export type SettingsRowProps = {
     title: string;
     description: ReactNode;

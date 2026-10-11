@@ -3,7 +3,7 @@ import ChangePassword from "@/components/settings/ChangePassword";
 import DeleteAccount from "@/components/settings/DeleteAccount";
 import EmailSettings from "@/components/settings/EmailSettings";
 import SetPassword from "@/components/settings/SetPassword";
-import { SettingsButton, SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
+import { SettingsRow, SettingsSection } from "@/components/settings/SettingsHelpers";
 import SignOutOtherSessions from "@/components/settings/SignOutOtherSessions";
 import UnlinkSocialButton from "@/components/settings/UnlinkButton";
 import { isAccountDeletionBlocked } from "@/lib/security/protectedAccount";

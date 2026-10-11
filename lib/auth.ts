@@ -50,7 +50,7 @@ export const auth = betterAuth({
                     to: user.email, 
                     subject: "Verify your email",
                     templateParams: {
-                        user_name: user.name ?? "their", 
+                        user_name: user.name ?? "there", 
                         action_url: url, 
                         type_header: "Verify your email",
                         type_body: "verfiy your email"
@@ -72,7 +72,7 @@ export const auth = betterAuth({
                         to: user.email, 
                         subject: "Approve Email Change", 
                         templateParams: {
-                            user_name: user.name ?? "their", 
+                            user_name: user.name ?? "there", 
                             action_url: url, 
                             type_header: "Change your email",
                             type_body: "change your email",

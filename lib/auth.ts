@@ -49,12 +49,16 @@ export const auth = betterAuth({
         emailVerification:{
             autoSignInAfterVerification: true,
             sendVerificationEmail: async ({user, url}) => {
+                const verificationUrl = new URL(url);
+                if(verificationUrl.searchParams.get("callbackURL") === "/email-change-approved"){
+                    verificationUrl.searchParams.set("callbackURL", "/email-verified");
+                }
                 await sendVerifiation({
                     to: user.email, 
                     subject: "Verify your email",
                     templateParams: {
                         user_name: user.name ?? "there", 
-                        action_url: url, 
+                        action_url: verificationUrl.toString(), 
                         type_header: "Verify your email",
                         type_body: "verfiy your email"
                     }

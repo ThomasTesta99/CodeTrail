@@ -11,6 +11,7 @@ import { normalizeQuestionLabel } from "../utils/normalizeLabel";
 import { revalidatePath } from "next/cache";
 import { getUserSession } from "./authHelpers";
 import { ATTEMPT_BATCH_SIZE } from "@/constants";
+import { validateCreationRate } from "../arcjet";
 
 const escapeLikePattern = (value: string) => {
     return value
@@ -38,7 +39,19 @@ export const addQuestion = async ({q} : {q : QuestionFormData}) => {
             }
         }
 
-        const data = parsed.data
+        const data = parsed.data;
+
+        
+        const rateLimit = await validateCreationRate(userId, "question");
+
+        if(rateLimit.status !== "allowed") {
+          return {
+            ...getPublicError(rateLimit.status === "denied" ? "RATE_LIMITED" : "SERVICE_UNAVAILABLE"),
+            message: rateLimit.message,
+            question: null,
+          };
+        }
+
 
         const [insertedQuestion] = await db
             .insert(question)
@@ -517,6 +530,18 @@ export const addAttempt = async ({
         attempt: null,
       };
     }
+
+    
+    const rateLimit = await validateCreationRate(session.user.id, "attempt");
+
+    if(rateLimit.status !== "allowed") {
+      return {
+        ...getPublicError(rateLimit.status === "denied" ? "RATE_LIMITED" : "SERVICE_UNAVAILABLE"),
+        message: rateLimit.message,
+        attempt: null,
+      };
+    }
+
 
     const [newAttempt] = await db
       .insert(attempts)

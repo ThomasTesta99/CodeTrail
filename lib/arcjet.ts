@@ -416,3 +416,50 @@ export const validateSensitiveAuthRate = async (userId: string): Promise<RateLim
     return unavailable;
   }
 };
+
+
+type CreationAction = "question" | "attempt";
+
+const questionCreationLimiter = aj
+  .withRule(fixedWindow({mode: "LIVE", window: "1m", max: 10, characteristics: ["questionCreationUserId"]}))
+  .withRule(fixedWindow({mode: "LIVE", window: "1d", max: 200, characteristics: ["questionCreationUserId"]}));
+
+const attemptCreationLimiter = aj
+  .withRule(fixedWindow({mode: "LIVE", window: "1m", max: 20, characteristics: ["attemptCreationUserId"]}))
+  .withRule(fixedWindow({mode: "LIVE", window: "1d", max: 500, characteristics: ["attemptCreationUserId"]}));
+
+export const validateCreationRate = async (userId: string, action: CreationAction): Promise<RateLimitResult> => {
+  const unavailable: RateLimitResult = {
+    status: "unavailable",
+    valid: false,
+    message: "Creation is temporarily unavailable. Please try again later.",
+  };
+
+  if(!userId.trim()) return unavailable;
+
+  try {
+    const req = await request();
+
+    const decision = action === "question"
+      ? await questionCreationLimiter.protect(req, {questionCreationUserId: userId})
+      : await attemptCreationLimiter.protect(req, {attemptCreationUserId: userId});
+
+    if(decision.isErrored()) {
+      console.error("[creation-rate] Rate limiter unavailable:", action);
+      return unavailable;
+    }
+
+    if(decision.isDenied()) {
+      return {
+        status: "denied",
+        valid: false,
+        message: "You've reached your creation rate limit. Please try again later.",
+      };
+    }
+
+    return {status: "allowed", valid: true, message: ""};
+  } catch {
+    console.error("[creation-rate] Rate-limit check failed:", action);
+    return unavailable;
+  }
+};

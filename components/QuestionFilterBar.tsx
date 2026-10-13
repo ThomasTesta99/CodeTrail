@@ -120,7 +120,7 @@ export default function QuestionFilterBar({
 
     searchParamsRef.current = qs;
 
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   const handleSearchChange = (value: string) => {
@@ -132,7 +132,7 @@ export default function QuestionFilterBar({
       searchTimeout.current = null;
 
       pushParams({ q: value });
-    }, 300);
+    }, 500);
   };
 
   const handleLabelChange = (value: string) => {
@@ -172,7 +172,7 @@ export default function QuestionFilterBar({
 
     searchParamsRef.current = qs;
 
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   return (

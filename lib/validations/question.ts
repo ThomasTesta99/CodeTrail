@@ -84,13 +84,34 @@ export const questionSchema = z.object({
     ),
 });
 
+export const allQuestionsPaginationSchema = z.object({
+  limit: z.number().int().min(1).max(50).default(6),
+  offset: z.number().int().min(0).max(100_000).default(0),
+  label: z.string().max(MAX_LABEL_LENGTH).default("all"),
+  sort: z.enum(["oldest", "newest", "difficultyAsc", "difficultyDesc"]).default("newest"),
+  q: z.string().max(MAX_TITLE_LENGTH).default(""),
+}).strict();
+
+export const recentQuestionsPaginationSchema = z.object({
+  limit: z.number().int().min(1).max(50),
+}).strict();
+
+export type AllQuestionsPaginationSchema = z.infer<
+  typeof allQuestionsPaginationSchema
+>;
+
+export type RecentQuestionsPaginationSchema = z.infer<
+  typeof recentQuestionsPaginationSchema
+>;
+
 
 export type Difficulty = z.infer<typeof difficultySchema>;
 
 export const editQuestionSchema =
   questionSchema.extend({
     attempts: z.array(editableAttemptSchema),
-  });
+  }
+);
 
 export type AttemptFormData = z.infer<
   typeof attemptSchema

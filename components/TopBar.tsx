@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils/utils";
 import { useState } from "react";
 import { UserProps } from "@/types/types";
 import { useLogout } from "@/app/hooks/useLogout";
+import UserAvatar from "./UserAvatar";
 
 const Topbar = ({ user }: UserProps) => {
   const pathName = usePathname();
@@ -63,19 +64,13 @@ const Topbar = ({ user }: UserProps) => {
             title="View your profile"
             className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-500"
           >
-            {user?.image ? (
-              <Image
-                src={user.image}
-                alt="User profile"
-                width={32}
-                height={32}
-                className="size-8 rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-sm font-semibold text-white">
-                {user?.name?.[0] ?? "U"}
-              </span>
-            )}
+            <UserAvatar
+              image={user?.image}
+              name={user?.name}
+              size={40}
+              className="footer-name bg-gray-600"
+              fallbackClassName="text-xl font-bold text-white"
+            />
           </Link>
         </div>
       </div>

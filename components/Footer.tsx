@@ -4,6 +4,7 @@ import { UserProps } from "@/types/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useLogout } from "@/app/hooks/useLogout";
+import UserAvatar from "./UserAvatar";
 
 const Footer = ({ user }: UserProps) => {
 
@@ -20,27 +21,13 @@ const Footer = ({ user }: UserProps) => {
         title="View your profile"
         className="flex min-w-0 items-center gap-2 max-xl:justify-center"
       >
-        <div
-          className={`footer-name ${
-            user?.image
-              ? "bg-transparent"
-              : "bg-gray-600"
-          }`}
-        >
-          {user?.image ? (
-            <Image
-              src={user.image}
-              alt="User profile"
-              width={40}
-              height={40}
-              className="size-10 rounded-full object-cover"
-            />
-          ) : (
-            <p className="text-xl font-bold text-white">
-              {user?.name?.[0] ?? "U"}
-            </p>
-          )}
-        </div>
+        <UserAvatar
+          image={user?.image}
+          name={user?.name}
+          size={40}
+          className="footer-name bg-gray-600"
+          fallbackClassName="text-xl font-bold text-white"
+        />
 
         <div className="footer-email">
           <h1 className="text-sm truncate font-semibold text-white">

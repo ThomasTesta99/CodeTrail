@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { auth } from "../auth";
 import {CreateUserInfo,SignInUserInfo} from "@/types/types";
-import {getPublicError,handleActionError} from "../utils/actionError";
+import {getPublicError,handleActionError, logSafeActionError} from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
@@ -40,10 +40,7 @@ export const logoutUser = async () => {
     });
 
     if (!result.success) {
-      console.error(
-        "[logoutUser] Sign-out did not succeed."
-      );
-
+      logSafeActionError("logoutUser", "INTERNAL_ERROR");
       return getPublicError("INTERNAL_ERROR");
     }
 
@@ -188,7 +185,7 @@ export const sendVerificationEmail = async () => {
     });
 
     if (!result.status) {
-      console.error("[sendVerificationEmail] Verification email was not sent.");
+      logSafeActionError("sendVerificationEmail", "INTERNAL_ERROR");
       return getPublicError("INTERNAL_ERROR");
     }
 
@@ -479,12 +476,28 @@ export const changeUserPassword = async ({currentPassword, newPassword, confirmP
       message: "Password changed successfully.",
     };
   } catch(error) {
+     if(error instanceof APIError && error.body?.code === "RATE_LIMITED"){
+        return {
+            success: false as const,
+            code: "RATE_LIMITED" as const,
+            message: "Too many attempts. Please try again later.",
+        };
+    }
+
+    if(error instanceof APIError && error.body?.code === "RATE_LIMIT_UNAVAILABLE"){
+        return {
+            success: false as const,
+            code: "RATE_LIMIT_UNAVAILABLE" as const,
+            message: "Authentication is temporarily unavailable. Please try again later.",
+        };
+    }
+
     if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
-      return {
-        success: false as const,
-        code: "INVALID_PASSWORD" as const,
-        message: "Your current password is incorrect.",
-      };
+        return {
+            success: false as const,
+            code: "INVALID_PASSWORD" as const,
+            message: "Your current password is incorrect.",
+        };
     }
 
     return handleActionError(error, "changeUserPassword");
@@ -560,6 +573,21 @@ export const deleteUserAccount = async ({password, confirmation}: {password: str
       message: "Your CodeTrail account has been permanently deleted.",
     };
   } catch(error) {
+    if(error instanceof APIError && error.body?.code === "RATE_LIMITED"){
+        return {
+            success: false as const,
+            code: "RATE_LIMITED" as const,
+            message: "Too many attempts. Please try again later.",
+        };
+    }
+
+    if(error instanceof APIError && error.body?.code === "RATE_LIMIT_UNAVAILABLE"){
+        return {
+            success: false as const,
+            code: "RATE_LIMIT_UNAVAILABLE" as const,
+            message: "Authentication is temporarily unavailable. Please try again later.",
+        };
+    }
     if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
       return getPublicError("INVALID_PASSWORD");
     }

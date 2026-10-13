@@ -362,3 +362,104 @@ export const validateAuthRate = async (
     };
   }
 };
+
+const sensitiveAuthByUser = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  characteristics: ["securityUserId"],
+  rules: [fixedWindow({mode: "LIVE", window: "10m", max: 5})],
+});
+
+const sensitiveAuthByIP = arcjet({
+  key: process.env.ARCJET_API_KEY!,
+  rules: [fixedWindow({mode: "LIVE", window: "10m", max: 20})],
+});
+
+export const validateSensitiveAuthRate = async (userId: string): Promise<RateLimitResult> => {
+  const unavailable: RateLimitResult = {
+    status: "unavailable",
+    valid: false,
+    message: "Authentication is temporarily unavailable. Please try again later.",
+  };
+
+  const denied: RateLimitResult = {
+    status: "denied",
+    valid: false,
+    message: "Too many attempts. Please try again later.",
+  };
+
+  if(!userId.trim()) return unavailable;
+
+  try {
+    const req = await request();
+
+    const userDecision = await sensitiveAuthByUser.protect(req, {securityUserId: userId});
+
+    if(userDecision.isErrored()) {
+      console.error("[sensitive-auth] User rate limiter unavailable.");
+      return unavailable;
+    }
+
+    if(userDecision.isDenied()) return denied;
+
+    const ipDecision = await sensitiveAuthByIP.protect(req);
+
+    if(ipDecision.isErrored()) {
+      console.error("[sensitive-auth] IP rate limiter unavailable.");
+      return unavailable;
+    }
+
+    if(ipDecision.isDenied()) return denied;
+
+    return {status: "allowed", valid: true, message: ""};
+  } catch {
+    console.error("[sensitive-auth] Rate-limit check failed.");
+    return unavailable;
+  }
+};
+
+
+type CreationAction = "question" | "attempt";
+
+const questionCreationLimiter = aj
+  .withRule(fixedWindow({mode: "LIVE", window: "1m", max: 10, characteristics: ["questionCreationUserId"]}))
+  .withRule(fixedWindow({mode: "LIVE", window: "1d", max: 200, characteristics: ["questionCreationUserId"]}));
+
+const attemptCreationLimiter = aj
+  .withRule(fixedWindow({mode: "LIVE", window: "1m", max: 20, characteristics: ["attemptCreationUserId"]}))
+  .withRule(fixedWindow({mode: "LIVE", window: "1d", max: 500, characteristics: ["attemptCreationUserId"]}));
+
+export const validateCreationRate = async (userId: string, action: CreationAction): Promise<RateLimitResult> => {
+  const unavailable: RateLimitResult = {
+    status: "unavailable",
+    valid: false,
+    message: "Creation is temporarily unavailable. Please try again later.",
+  };
+
+  if(!userId.trim()) return unavailable;
+
+  try {
+    const req = await request();
+
+    const decision = action === "question"
+      ? await questionCreationLimiter.protect(req, {questionCreationUserId: userId})
+      : await attemptCreationLimiter.protect(req, {attemptCreationUserId: userId});
+
+    if(decision.isErrored()) {
+      console.error("[creation-rate] Rate limiter unavailable:", action);
+      return unavailable;
+    }
+
+    if(decision.isDenied()) {
+      return {
+        status: "denied",
+        valid: false,
+        message: "You've reached your creation rate limit. Please try again later.",
+      };
+    }
+
+    return {status: "allowed", valid: true, message: ""};
+  } catch {
+    console.error("[creation-rate] Rate-limit check failed:", action);
+    return unavailable;
+  }
+};

@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { auth } from "../auth";
 import {CreateUserInfo,SignInUserInfo} from "@/types/types";
 import {getPublicError,handleActionError, logSafeActionError} from "../utils/actionError";
-import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
 import { isSocialProviderId } from "../socialProviders";
@@ -114,49 +113,24 @@ export const signInUser = async ({
   }
 };
 
-export const sendResetPasswordEmail = async ({
-  email,
-}: {
-  email: string;
-}) => {
+
+export const sendResetPasswordEmail = async ({email}: {email: string}) => {
   try {
     const normalizedEmail = email.trim().toLowerCase();
+    const publicMessage = "If an eligible account exists for this email, a reset link has been sent.";
 
-    const publicMessage =
-      "If an eligible account exists for this email, a reset link has been sent.";
-
-    const eligible = await canChangePasswordInternal(
-      normalizedEmail
-    );
-
-    if (!eligible) {
-      return {
-        success: true as const,
-        message: publicMessage,
-      };
-    }
-
-    const redirectTo =
-      `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`;
+    const redirectTo = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`;
 
     await auth.api.requestPasswordReset({
-      body: {
-        email: normalizedEmail,
-        redirectTo,
-      },
+      body: {email: normalizedEmail, redirectTo},
     });
 
-    return {
-      success: true as const,
-      message: publicMessage,
-    };
+    return {success: true as const, message: publicMessage};
   } catch (error) {
-    return handleActionError(
-      error,
-      "sendResetPasswordEmail"
-    );
+    return handleActionError(error, "sendResetPasswordEmail");
   }
 };
+
 
 export const sendVerificationEmail = async () => {
   try {

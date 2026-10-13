@@ -22,28 +22,20 @@ export const getPublicError = (code: ActionErrorCode) => {
   };
 };
 
-export const handleActionError = (
-  error: unknown,
-  actionName: string
-) => {
-  console.error(`[${actionName}]`, error);
+export const logSafeActionError = (actionName: string, code: ActionErrorCode) => {
+  console.error("[CodeTrail]", { operation: actionName, code });
+};
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "body" in error &&
-    typeof error.body === "object" &&
-    error.body !== null &&
-    "code" in error.body
-  ) {
-    if (error.body.code === "RATE_LIMITED") {
-      return getPublicError("RATE_LIMITED");
-    }
+export const handleActionError = (error: unknown, actionName: string) => {
+  let publicCode: ActionErrorCode = "INTERNAL_ERROR";
 
-    if (error.body.code === "SERVICE_UNAVAILABLE") {
-      return getPublicError("SERVICE_UNAVAILABLE");
-    }
+  if (typeof error === "object" && error !== null && "body" in error && typeof error.body === "object" && error.body !== null && "code" in error.body) {
+    if (error.body.code === "RATE_LIMITED") publicCode = "RATE_LIMITED";
+    else if (error.body.code === "SERVICE_UNAVAILABLE") publicCode = "SERVICE_UNAVAILABLE";
   }
 
-  return getPublicError("INTERNAL_ERROR");
+  const logCode: ActionErrorCode = publicCode === "INTERNAL_ERROR" && error instanceof Error && error.name === "DrizzleQueryError" ? "DATABASE_ERROR" : publicCode;
+
+  logSafeActionError(actionName, logCode);
+  return getPublicError(publicCode);
 };

@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { auth } from "../auth";
 import {CreateUserInfo,SignInUserInfo} from "@/types/types";
-import {getPublicError,handleActionError} from "../utils/actionError";
+import {getPublicError,handleActionError, logSafeActionError} from "../utils/actionError";
 import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
@@ -40,10 +40,7 @@ export const logoutUser = async () => {
     });
 
     if (!result.success) {
-      console.error(
-        "[logoutUser] Sign-out did not succeed."
-      );
-
+      logSafeActionError("logoutUser", "INTERNAL_ERROR");
       return getPublicError("INTERNAL_ERROR");
     }
 
@@ -188,7 +185,7 @@ export const sendVerificationEmail = async () => {
     });
 
     if (!result.status) {
-      console.error("[sendVerificationEmail] Verification email was not sent.");
+      logSafeActionError("sendVerificationEmail", "INTERNAL_ERROR");
       return getPublicError("INTERNAL_ERROR");
     }
 

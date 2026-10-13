@@ -10,7 +10,8 @@ export const difficultySchema = z.enum([
 export const durationMinutesSchema = z
   .number()
   .int("Must be a whole number")
-  .min(1, "Duration must be at least 1 minute");
+  .min(1, "Duration must be at least 1 minute")
+  .max(2147483647, "Duration is too large");
 
 export const attemptSchema = z.object({
   solutionCode: z

@@ -74,7 +74,8 @@ export type ActionErrorCode =
   | "LAST_SIGN_IN_METHOD"
   | "INVALID_PASSWORD"
   | "REAUTH_REQUIRED"
-  | "ACCOUNT_DELETION_BLOCKED";
+  | "ACCOUNT_DELETION_BLOCKED"
+  | "INVALID_CREDENTIALS";
 
  export type RateLimitResult =
   | {

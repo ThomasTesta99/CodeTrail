@@ -47,9 +47,13 @@ const PrivacyPage = () => {
         </p>
 
         <p className="text-sm text-gray-300 leading-relaxed text-center">
-          CodeTrail does not currently provide a self-service account deletion
-          feature. This privacy policy will be updated when an account or data
-          deletion process is made available.
+          You can delete your CodeTrail account by signing in, navigating to
+          Settings, and selecting Delete account under Danger Zone. You must
+          type DELETE to confirm your request and, if your account uses password
+          sign-in, provide your current password. After confirming deletion,
+          your account, linked sign-in methods, sessions, saved questions, and
+          associated coding attempts are removed from CodeTrail&apos;s application
+          database. This action cannot be undone.
         </p>
 
         <p className="text-sm text-gray-300 leading-relaxed text-center">

@@ -3,8 +3,8 @@
 import { db } from "@/database/drizzle";
 import { attempts, question } from "@/database/schema";
 import {  and, asc, desc, eq, ilike, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { Question, SortKey} from "@/types/types";
-import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, QuestionFormData, difficultySchema} from "../validations/question";
+import { Question} from "@/types/types";
+import { attemptSchema, questionSchema, editQuestionSchema, EditFormData, QuestionFormData, difficultySchema, AllQuestionsPaginationSchema, allQuestionsPaginationSchema, RecentQuestionsPaginationSchema, recentQuestionsPaginationSchema} from "../validations/question";
 import { z } from "zod";
 import { getPublicError, handleActionError } from "../utils/actionError";
 import { normalizeQuestionLabel } from "../utils/normalizeLabel";
@@ -83,19 +83,7 @@ export const addQuestion = async ({q} : {q : QuestionFormData}) => {
     }
 }
 
-export const getAllUserQuestions = async ({
-    limit = 6,
-    offset = 0,
-    label,
-    sort = "newest",
-    q,
-}: {
-    limit?: number;
-    offset?: number;
-    label: string;
-    sort: SortKey;
-    q: string;
-}) => {
+export const getAllUserQuestions = async (params: AllQuestionsPaginationSchema) => {
     try {
         const session = await getUserSession();
 
@@ -107,6 +95,17 @@ export const getAllUserQuestions = async ({
         }
 
         const userId = session.user.id;
+
+        const parsed = allQuestionsPaginationSchema.safeParse(params);
+
+        if (!parsed.success) {
+          return {
+            ...getPublicError("VALIDATION_ERROR"),
+            questions: [],
+          };
+        }
+
+        const { limit, offset, label, sort, q } = parsed.data;
 
         let whereClause = eq(question.userId, userId);
         if (label === "__unlabeled__") {
@@ -213,7 +212,7 @@ export const getAllUserQuestions = async ({
     }
 };
 
-export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) => {
+export const getMostRecentUserQuestions = async (params: RecentQuestionsPaginationSchema) => {
     try {
         const session = await getUserSession();
 
@@ -225,6 +224,17 @@ export const getMostRecentUserQuestions = async ({ limit }: { limit: number }) =
         }
 
         const userId = session.user.id;
+
+        const parsed = recentQuestionsPaginationSchema.safeParse(params);
+
+        if (!parsed.success) {
+            return {
+                ...getPublicError("VALIDATION_ERROR"),
+                questions: [],
+            };
+        }
+
+        const { limit } = parsed.data;
 
         const latestActivity = sql<Date>`
             COALESCE(MAX(${attempts.createdAt}), ${question.createdAt})

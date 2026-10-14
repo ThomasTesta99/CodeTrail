@@ -4,34 +4,11 @@ import { headers } from "next/headers";
 import { auth } from "../auth";
 import {CreateUserInfo,SignInUserInfo} from "@/types/types";
 import {getPublicError,handleActionError, logSafeActionError} from "../utils/actionError";
-import { canChangePasswordInternal } from "./canChangePassword";
 import { getUserSession } from "./authHelpers";
 import { changeEmailSchema, changeNameSchema } from "../validations/settings";
 import { isSocialProviderId } from "../socialProviders";
 import { changePasswordSchema, setPasswordSchema } from "../validations/password";
-import { APIError } from "better-auth/api";
 import { isAccountDeletionBlocked } from "../security/protectedAccount";
-
-
-const isInvalidCredentialsError = (
-  error: unknown
-): boolean => {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  if (!("code" in error)) {
-    return false;
-  }
-
-  const code = error.code;
-
-  return (
-    code === "INVALID_EMAIL_OR_PASSWORD" ||
-    code === "INVALID_PASSWORD" ||
-    code === "INVALID_CREDENTIALS"
-  );
-};
 
 export const logoutUser = async () => {
   try {
@@ -102,61 +79,28 @@ export const signInUser = async ({
       user: signedInUser,
     };
   } catch (error) {
-    if (isInvalidCredentialsError(error)) {
-      return {
-        success: false as const,
-        code: "INVALID_CREDENTIALS" as const,
-        message: "Invalid email or password.",
-      };
-    }
-
     return handleActionError(error, "signInUser");
   }
 };
 
-export const sendResetPasswordEmail = async ({
-  email,
-}: {
-  email: string;
-}) => {
+
+export const sendResetPasswordEmail = async ({email}: {email: string}) => {
   try {
     const normalizedEmail = email.trim().toLowerCase();
+    const publicMessage = "If an eligible account exists for this email, a reset link has been sent.";
 
-    const publicMessage =
-      "If an eligible account exists for this email, a reset link has been sent.";
-
-    const eligible = await canChangePasswordInternal(
-      normalizedEmail
-    );
-
-    if (!eligible) {
-      return {
-        success: true as const,
-        message: publicMessage,
-      };
-    }
-
-    const redirectTo =
-      `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`;
+    const redirectTo = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`;
 
     await auth.api.requestPasswordReset({
-      body: {
-        email: normalizedEmail,
-        redirectTo,
-      },
+      body: {email: normalizedEmail, redirectTo},
     });
 
-    return {
-      success: true as const,
-      message: publicMessage,
-    };
+    return {success: true as const, message: publicMessage};
   } catch (error) {
-    return handleActionError(
-      error,
-      "sendResetPasswordEmail"
-    );
+    return handleActionError(error, "sendResetPasswordEmail");
   }
 };
+
 
 export const sendVerificationEmail = async () => {
   try {
@@ -476,30 +420,6 @@ export const changeUserPassword = async ({currentPassword, newPassword, confirmP
       message: "Password changed successfully.",
     };
   } catch(error) {
-     if(error instanceof APIError && error.body?.code === "RATE_LIMITED"){
-        return {
-            success: false as const,
-            code: "RATE_LIMITED" as const,
-            message: "Too many attempts. Please try again later.",
-        };
-    }
-
-    if(error instanceof APIError && error.body?.code === "RATE_LIMIT_UNAVAILABLE"){
-        return {
-            success: false as const,
-            code: "RATE_LIMIT_UNAVAILABLE" as const,
-            message: "Authentication is temporarily unavailable. Please try again later.",
-        };
-    }
-
-    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
-        return {
-            success: false as const,
-            code: "INVALID_PASSWORD" as const,
-            message: "Your current password is incorrect.",
-        };
-    }
-
     return handleActionError(error, "changeUserPassword");
   }
 };
@@ -573,32 +493,6 @@ export const deleteUserAccount = async ({password, confirmation}: {password: str
       message: "Your CodeTrail account has been permanently deleted.",
     };
   } catch(error) {
-    if(error instanceof APIError && error.body?.code === "RATE_LIMITED"){
-        return {
-            success: false as const,
-            code: "RATE_LIMITED" as const,
-            message: "Too many attempts. Please try again later.",
-        };
-    }
-
-    if(error instanceof APIError && error.body?.code === "RATE_LIMIT_UNAVAILABLE"){
-        return {
-            success: false as const,
-            code: "RATE_LIMIT_UNAVAILABLE" as const,
-            message: "Authentication is temporarily unavailable. Please try again later.",
-        };
-    }
-    if(error instanceof APIError && error.body?.code === "INVALID_PASSWORD"){
-      return getPublicError("INVALID_PASSWORD");
-    }
-
-    if(error instanceof APIError && (error.body?.code === "SESSION_EXPIRED" || error.body?.code === "SESSION_NOT_FRESH")){
-      return getPublicError("REAUTH_REQUIRED");
-    }
-    if(error instanceof APIError && error.body?.code === "ACCOUNT_DELETION_BLOCKED"){
-      return getPublicError("ACCOUNT_DELETION_BLOCKED");
-    }
-
     return handleActionError(error, "deleteUserAccount");
   }
 };

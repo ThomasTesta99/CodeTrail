@@ -60,7 +60,7 @@ const Page = async ({
           href={isSuccess ? "/" : session?.user ? "/settings" : "/sign-in"}
           className="auth-submit-btn mt-6 block w-full text-center"
         >
-          {isSuccess ? "Continue to CodeTrail" : "Go to Profile"}
+          {isSuccess ? "Continue to CodeTrail" : "Go to Sign In"}
         </Link>
 
         {isSuccess && (

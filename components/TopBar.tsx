@@ -62,7 +62,7 @@ const Topbar = ({ user }: UserProps) => {
             href="/profile"
             aria-label="View your profile"
             title="View your profile"
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-500"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-500"
           >
             <UserAvatar
               image={user?.image}

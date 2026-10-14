@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     }
 
     const completion = await openAi.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      reasoning_effort: 'medium',
       max_completion_tokens: MAX_AI_OUTPUT_TOKENS
     });
 

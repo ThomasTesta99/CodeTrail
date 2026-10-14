@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, timestamp, boolean, uuid, index, check } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, uuid, index, check, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text('id').primaryKey(),
@@ -43,6 +43,7 @@ export const account = pgTable("account", {
 }, 
   (table) => [
     index("account_user_id_idx").on(table.userId),
+    uniqueIndex("account_provider_identity_uidx").on(table.providerId, table.accountId),
   ]
 );
 

@@ -7,9 +7,12 @@ import { and, desc, eq, ne } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import {OpenAI} from 'openai'
 
+export const maxDuration = 120;
 
 const openAi = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
+  timeout: 90_000,
+  maxRetries: 0,
 });
 
 export async function POST(req: NextRequest) {
@@ -150,6 +153,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (req.signal.aborted) {
+      return new NextResponse(null, { status: 499 });
+    }
+
     const completion = await openAi.chat.completions.create({
       model: 'gpt-6.1-sol',
       messages: [
@@ -164,6 +171,8 @@ export async function POST(req: NextRequest) {
       ],
       reasoning_effort: 'medium',
       max_completion_tokens: MAX_AI_OUTPUT_TOKENS
+    }, {
+      signal: req.signal
     });
 
     const choice = completion.choices[0];
@@ -189,26 +198,22 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('AI feedback error:', error);
 
-    if (
-      error instanceof OpenAI.APIError &&
-      error.code === 'credit_balance_exhausted'
-    ) {
-      return aiError(
-        'AI feedback is temporarily unavailable. Please try again later.',
-        503
-      );
+    if (req.signal.aborted || error instanceof OpenAI.APIUserAbortError) {
+      return new NextResponse(null, { status: 499 });
+    }
+
+    if (error instanceof OpenAI.APIConnectionTimeoutError) {
+      return aiError('AI feedback timed out. Please try again.', 504);
+    }
+
+    if (error instanceof OpenAI.APIError && error.code === 'credit_balance_exhausted') {
+      return aiError('AI feedback is temporarily unavailable. Please try again later.', 503);
     }
 
     if (error instanceof OpenAI.APIError) {
-      return aiError(
-        'AI feedback is temporarily unavailable. Please try again later.',
-        502
-      );
+      return aiError('AI feedback is temporarily unavailable. Please try again later.', 502);
     }
 
-    return aiError(
-      'Failed to generate feedback',
-      500
-    );
+    return aiError('Failed to generate feedback', 500);
   }
 }

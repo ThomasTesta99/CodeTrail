@@ -16,6 +16,7 @@ const openAi = new OpenAI({
 });
 
 export async function POST(req: NextRequest) {
+  const deadlineSignal = AbortSignal.timeout(90_000);
   try {
     const session = await getUserSession();
 
@@ -172,7 +173,7 @@ export async function POST(req: NextRequest) {
       reasoning_effort: 'medium',
       max_completion_tokens: MAX_AI_OUTPUT_TOKENS
     }, {
-      signal: req.signal
+      signal: AbortSignal.any([req.signal, deadlineSignal])
     });
 
     const choice = completion.choices[0];
@@ -198,12 +199,16 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('AI feedback error:', error);
 
-    if (req.signal.aborted || error instanceof OpenAI.APIUserAbortError) {
+    if (req.signal.aborted) {
       return new NextResponse(null, { status: 499 });
     }
 
-    if (error instanceof OpenAI.APIConnectionTimeoutError) {
+    if (deadlineSignal.aborted || error instanceof OpenAI.APIConnectionTimeoutError) {
       return aiError('AI feedback timed out. Please try again.', 504);
+    }
+
+    if (error instanceof OpenAI.APIUserAbortError) {
+      return new NextResponse(null, { status: 499 });
     }
 
     if (error instanceof OpenAI.APIError && error.code === 'credit_balance_exhausted') {
